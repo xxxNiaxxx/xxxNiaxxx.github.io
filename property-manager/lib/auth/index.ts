@@ -5,6 +5,9 @@ import { auth } from "@/lib/auth/config";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { hasRole, type OrgContext } from "@/lib/permissions";
+import { resolveMembership } from "./membership";
+
+export { resolveMembership };
 
 export const ACTIVE_ORG_COOKIE = "apm_org";
 
@@ -19,20 +22,6 @@ export async function requireUser() {
   });
   if (!user) throw new AppError("UNAUTHORIZED", "You need to sign in");
   return user;
-}
-
-/**
- * Resolves the organization the user is working in. The cookie is only a
- * preference among the user's own memberships; it can never grant access.
- */
-export async function resolveMembership(userId: string, preferredOrgId?: string | null) {
-  const memberships = await db.organizationMember.findMany({
-    where: { userId },
-    orderBy: { createdAt: "asc" },
-    include: { organization: { select: { id: true, name: true } } },
-  });
-  if (memberships.length === 0) return null;
-  return memberships.find((m) => m.organizationId === preferredOrgId) ?? memberships[0];
 }
 
 /** The active organization of the signed-in user. */
