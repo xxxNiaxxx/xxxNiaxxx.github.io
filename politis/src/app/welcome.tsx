@@ -3,6 +3,7 @@ import { BellRing, CalendarDays, ListChecks, ShieldCheck, Sparkles, type LucideI
 import { StyleSheet, View } from 'react-native';
 import { Disclaimer, NOT_GOVERNMENT_NOTICE } from '@/components/Disclaimer';
 import { AppText, Button, Screen } from '@/components/ui';
+import { APP_INITIAL, APP_NAME_CAPS, APP_TAGLINE } from '@/lib/brand';
 import { useAppStore } from '@/store/appStore';
 import { colors, radius, shadows, spacing } from '@/theme';
 
@@ -32,14 +33,14 @@ export default function Welcome() {
       <View style={styles.hero}>
         <View style={[styles.logo, shadows.floating]}>
           <AppText style={styles.logoText} color={colors.onPrimary}>
-            Π
+            {APP_INITIAL}
           </AppText>
         </View>
         <AppText variant="caption" color={colors.primary} style={styles.brand}>
-          POLITIS
+          {APP_NAME_CAPS}
         </AppText>
         <AppText variant="screenTitle" align="center">
-          Μάθε τι δικαιούσαι, τι πρέπει να κάνεις και πότε.
+          {APP_TAGLINE}
         </AppText>
         <AppText variant="subtitle" color={colors.textSecondary} align="center">
           Ο προσωπικός σου ψηφιακός βοηθός για τις παροχές, τις διαδικασίες και τις προθεσμίες σου.

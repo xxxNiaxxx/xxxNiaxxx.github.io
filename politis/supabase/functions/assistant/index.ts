@@ -23,7 +23,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SYSTEM_PROMPT = `Είσαι ο βοηθός της εφαρμογής Politis, ενός ενημερωτικού ψηφιακού βοηθού για πολίτες στην Ελλάδα.
+const SYSTEM_PROMPT = `Είσαι ο βοηθός της εφαρμογής «Ξεμπέρδεψα», ενός ενημερωτικού ψηφιακού βοηθού για πολίτες στην Ελλάδα.
 Δεν είσαι κρατική υπηρεσία και δεν εκπροσωπείς κανέναν δημόσιο φορέα.
 
 Κανόνες:

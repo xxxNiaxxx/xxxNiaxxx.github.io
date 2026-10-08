@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAppStore } from './appStore';
 import { useNotificationStore } from './notificationStore';
+import { usePremiumStore } from './premiumStore';
 import { useProfileStore } from './profileStore';
 import { useTaskStore } from './taskStore';
 
-const stores = [useAppStore, useProfileStore, useTaskStore, useNotificationStore];
+const stores = [useAppStore, useProfileStore, useTaskStore, useNotificationStore, usePremiumStore];
 
 function allHydrated() {
   return stores.every((s) => s.persist.hasHydrated());

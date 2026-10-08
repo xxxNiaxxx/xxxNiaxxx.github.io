@@ -8,7 +8,10 @@ import { EligibilityBadge } from '@/components/EligibilityBadge';
 import { AppText, Badge, Button, Chip } from '@/components/ui';
 import { createId } from '@/lib/id';
 import { logger } from '@/lib/logger';
+import { PLUS_NAME } from '@/lib/brand';
+import { FREE_ASSISTANT_QUESTIONS_PER_MONTH } from '@/lib/premium';
 import { assistantService } from '@/services/assistant';
+import { usePremium, usePremiumStore } from '@/store/premiumStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useTaskStore } from '@/store/taskStore';
 import type { AssistantResponse } from '@/types/models';
@@ -24,7 +27,8 @@ const SUGGESTED_PROMPTS = [
 type Message =
   | { id: string; role: 'user'; text: string }
   | { id: string; role: 'assistant'; response: AssistantResponse }
-  | { id: string; role: 'error'; question: string };
+  | { id: string; role: 'error'; question: string }
+  | { id: string; role: 'limit' };
 
 function AssistantBubble({ response }: { response: AssistantResponse }) {
   return (
@@ -96,12 +100,18 @@ export default function Assistant() {
   const [thinking, setThinking] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const isMock = assistantService.mode === 'mock';
+  const { isPlus, remaining, canAskAssistant } = usePremium();
+  const recordQuestion = usePremiumStore((s) => s.recordAssistantQuestion);
 
   const ask = async (raw: string) => {
     const text = raw.trim();
     if (!text || thinking) return;
     setInput('');
     setMessages((m) => [...m, { id: createId('msg'), role: 'user', text }]);
+    if (!canAskAssistant) {
+      setMessages((m) => [...m, { id: createId('msg'), role: 'limit' }]);
+      return;
+    }
     setThinking(true);
     try {
       const response = await assistantService.ask(text, {
@@ -109,6 +119,7 @@ export default function Assistant() {
         pendingTasks: tasks.filter((t) => t.status === 'pending').map((t) => ({ title: t.title, dueDate: t.dueDate })),
       });
       setMessages((m) => [...m, { id: createId('msg'), role: 'assistant', response }]);
+      recordQuestion();
     } catch (error) {
       logger.error('assistant.ask', error);
       setMessages((m) => [...m, { id: createId('msg'), role: 'error', question: text }]);
@@ -137,6 +148,11 @@ export default function Assistant() {
               Ρώτησέ με για παροχές, διαδικασίες και υποχρεώσεις.
             </AppText>
             {isMock ? <Badge label="Δοκιμαστική λειτουργία — προκαθορισμένες απαντήσεις" tone="warning" /> : null}
+            {isPlus ? (
+              <Badge label={`${PLUS_NAME} · απεριόριστες ερωτήσεις`} tone="accent" />
+            ) : (
+              <Badge label={`${remaining} από ${FREE_ASSISTANT_QUESTIONS_PER_MONTH} δωρεάν ερωτήσεις αυτόν τον μήνα`} tone="neutral" />
+            )}
           </View>
 
           {messages.length === 0 ? (
@@ -157,6 +173,14 @@ export default function Assistant() {
               </View>
             ) : m.role === 'assistant' ? (
               <AssistantBubble key={m.id} response={m.response} />
+            ) : m.role === 'limit' ? (
+              <View key={m.id} style={[styles.bubble, styles.assistantBubble]}>
+                <AppText variant="bodyStrong">Έφτασες τις {FREE_ASSISTANT_QUESTIONS_PER_MONTH} δωρεάν ερωτήσεις αυτού του μήνα.</AppText>
+                <AppText color={colors.textSecondary}>
+                  Με το {PLUS_NAME} ρωτάς όσο θέλεις. Οι παροχές, ο έλεγχος επιλεξιμότητας και οι διαδικασίες μένουν πάντα δωρεάν.
+                </AppText>
+                <Button label={`Δες το ${PLUS_NAME}`} size="md" fullWidth={false} onPress={() => router.push('/plus')} />
+              </View>
             ) : (
               <View key={m.id} style={[styles.bubble, styles.assistantBubble]} accessibilityRole="alert">
                 <AppText variant="bodyStrong">Κάτι πήγε στραβά.</AppText>

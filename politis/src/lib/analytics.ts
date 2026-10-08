@@ -22,7 +22,9 @@ export type AnalyticsEvent =
   | 'official_link_clicked'
   | 'task_created'
   | 'task_completed'
-  | 'notification_opened';
+  | 'notification_opened'
+  | 'paywall_viewed'
+  | 'plus_activated';
 
 export interface AnalyticsProps {
   /** Content id (benefit / procedure / task) — never a user identifier. */

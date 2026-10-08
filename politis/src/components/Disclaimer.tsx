@@ -1,13 +1,14 @@
 import { Info } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import { colors, radius, spacing } from '@/theme';
+import { APP_NAME } from '@/lib/brand';
 import { AppText } from './ui';
 
 export const ELIGIBILITY_DISCLAIMER =
   'Αυτός ο έλεγχος είναι ενημερωτικός. Η τελική απόφαση λαμβάνεται από τον αρμόδιο φορέα.';
 
 export const NOT_GOVERNMENT_NOTICE =
-  'Το Politis είναι ενημερωτικός βοηθός και δεν αποτελεί κρατική υπηρεσία. Για επίσημες αιτήσεις χρησιμοποίησε πάντα τις επίσημες πηγές.';
+  `Το ${APP_NAME} είναι ενημερωτικός βοηθός και δεν αποτελεί κρατική υπηρεσία. Για επίσημες αιτήσεις χρησιμοποίησε πάντα τις επίσημες πηγές.`;
 
 export function Disclaimer({ text = ELIGIBILITY_DISCLAIMER }: { text?: string }) {
   return (

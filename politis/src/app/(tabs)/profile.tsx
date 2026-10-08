@@ -10,6 +10,7 @@ import {
   MapPin,
   Moon,
   ShieldCheck,
+  Sparkles,
   Trash2,
   User,
   Users,
@@ -19,6 +20,8 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 import { Disclaimer, NOT_GOVERNMENT_NOTICE } from '@/components/Disclaimer';
 import { AppText, Card, ListRow, Screen } from '@/components/ui';
+import { APP_INITIAL, APP_NAME, PLUS_NAME } from '@/lib/brand';
+import { usePremium } from '@/store/premiumStore';
 import { showMessage } from '@/lib/dialog';
 import { regionLabels } from '@/lib/labels';
 import { cancelAllReminders, ensureNotificationPermission, remindersAvailable } from '@/lib/notifications';
@@ -46,6 +49,7 @@ export default function Profile() {
   const prefs = useAppStore((s) => s.preferences);
   const setPreference = useAppStore((s) => s.setPreference);
   const savedCount = useAppStore((s) => s.savedBenefitIds.length);
+  const { isPlus, source: premiumSource } = usePremium();
 
   const value = (field: ProfileField) => displayValue(profile, field) ?? 'Δεν έχει συμπληρωθεί';
   const edit = (field: ProfileField | 'firstName') => router.push({ pathname: '/profile-edit', params: { field } });
@@ -64,7 +68,7 @@ export default function Profile() {
 
   const signOut = () => confirmSignOut(session?.mode === 'demo');
 
-  const initial = (profile?.firstName?.[0] ?? 'Π').toUpperCase();
+  const initial = (profile?.firstName?.[0] ?? APP_INITIAL).toUpperCase();
   const place = profile?.region ? `${profile.municipality ? `${profile.municipality}, ` : ''}${regionLabels[profile.region]}` : 'Δεν έχει συμπληρωθεί';
 
   return (
@@ -86,6 +90,16 @@ export default function Profile() {
           </View>
         </View>
       </Card>
+
+      <View style={styles.groupCard}>
+        <ListRow
+          icon={Sparkles}
+          iconColor={colors.accent}
+          title={PLUS_NAME}
+          subtitle={isPlus ? (premiumSource === 'demo' ? 'Ενεργό (δοκιμαστικά)' : 'Ενεργό') : 'Απεριόριστος βοηθός και περισσότερα'}
+          onPress={() => router.push('/plus')}
+        />
+      </View>
 
       <Group title="Τα στοιχεία μου">
         <ListRow icon={User} title="Όνομα" subtitle={profile?.firstName || 'Δεν έχει συμπληρωθεί'} onPress={() => edit('firstName')} />
@@ -137,7 +151,7 @@ export default function Profile() {
 
       <Disclaimer text={NOT_GOVERNMENT_NOTICE} />
       <AppText variant="caption" color={colors.textMuted} align="center">
-        Politis · Έκδοση 1.0.0 (MVP)
+        {APP_NAME} · Έκδοση 1.0.0 (MVP)
       </AppText>
     </Screen>
   );

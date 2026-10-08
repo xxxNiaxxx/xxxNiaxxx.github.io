@@ -35,13 +35,13 @@ if (existsSync(out) && !force) {
 }
 
 const wb = new ExcelJS.Workbook();
-wb.creator = 'Politis';
+wb.creator = 'Ξεμπέρδεψα';
 
 // ---- Instructions ----
 const guide = wb.addWorksheet(SHEETS.guide, { properties: { tabColor: { argb: BRAND } } });
 guide.getColumn(1).width = 110;
 const lines: [string, boolean?][] = [
-  ['Politis — Περιεχόμενο εφαρμογής', true],
+  ['Ξεμπέρδεψα — Περιεχόμενο εφαρμογής', true],
   [''],
   ['Σε αυτό το αρχείο συμπληρώνετε τις παροχές και τις διαδικασίες που εμφανίζει η εφαρμογή.'],
   ['Κάθε πληροφορία πρέπει να προέρχεται από επίσημη πηγή. Συμπληρώστε τον επίσημο σύνδεσμο και την ημερομηνία που την ελέγξατε.'],

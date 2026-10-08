@@ -69,6 +69,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
           <Stack.Screen name="tasks/new" options={{ presentation: 'modal' }} />
           <Stack.Screen name="profile-edit" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="plus" options={{ presentation: 'modal' }} />
         </Stack>
         <DialogHost />
       </SafeAreaProvider>

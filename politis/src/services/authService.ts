@@ -8,6 +8,7 @@ import { hasPublishedContent } from '@/data/content';
 import { buildMockTasks } from '@/data/mock';
 import { useAppStore } from '@/store/appStore';
 import { useNotificationStore } from '@/store/notificationStore';
+import { usePremiumStore } from '@/store/premiumStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useTaskStore } from '@/store/taskStore';
 import { profileService } from './profileService';
@@ -105,6 +106,7 @@ export const authService = {
     useProfileStore.getState().setProfile(null);
     useTaskStore.getState().setTasks([]);
     useNotificationStore.getState().clear();
+    usePremiumStore.getState().reset();
     useAppStore.getState().setSession(null);
   },
 };
