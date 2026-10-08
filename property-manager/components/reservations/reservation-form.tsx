@@ -67,7 +67,7 @@ export function ReservationFormDialog({ properties, guests, reservation, pricing
   const climateFee = property && nights && entered > 0 ? climateFeeForStay({ checkIn, checkOut, totalAmount: entered }, { kind: property.kind as PropertyKind, areaSqm: property.areaSqm }) : 0;
   const room = includesFee ? Math.max(0, Math.round((entered - climateFee) * 100) / 100) : entered;
   const rate = pricing.commissionRates[source] ?? 0;
-  const autoCommission = room > 0 && rate > 0 ? commissionFor(room, rate, pricing.regime) : 0;
+  const autoCommission = room > 0 && rate > 0 ? commissionFor(room, rate, source) : 0;
   const activeProperties = useMemo(() => properties.filter((p) => p.status === "ACTIVE" || p.id === reservation?.propertyId), [properties, reservation]);
 
   function onOpenChange(next: boolean) {

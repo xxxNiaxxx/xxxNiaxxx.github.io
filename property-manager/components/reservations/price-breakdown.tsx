@@ -1,5 +1,6 @@
 import { SOURCE_LABELS } from "@/components/ui/status";
 import { formatMoney } from "@/lib/format";
+import { commissionBase } from "@/lib/tax/gr";
 import type { getStayTax } from "@/lib/services/tax";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +34,7 @@ export function PriceBreakdown({ tax, source }: { tax: StayTax; source: string }
         </>
       )}
       <Row label={`Προμήθεια ${SOURCE_LABELS[source] ?? ""}`.trim()} value={tax.commission} minus
-        sub={tax.commissionRate ? `${tax.commissionRate}% πάνω σε ${formatMoney(tax.regime === "BUSINESS" ? tax.totalAmount - tax.presenceFee : tax.totalAmount)}` : undefined} />
+        sub={tax.commissionRate ? `${tax.commissionRate}% πάνω σε ${formatMoney(commissionBase(tax.totalAmount, source))}${source === "BOOKING_COM" ? " (τιμή χωρίς το τέλος 0,5%)" : ""}` : undefined} />
       <Row label="Φόρος εισοδήματος (εκτίμηση)" value={tax.incomeTax} minus
         sub={tax.incomeTaxRate !== null ? `${pct(tax.incomeTaxRate)} — ${tax.regime === "BUSINESS" ? "πάνω στο κέρδος (μίσθωμα χωρίς ΦΠΑ − προμήθεια)" : "μέσος συντελεστής Ε2 του έτους, στο μίσθωμα − 5%"}` : undefined} />
       <div className="my-1 border-t border-border" />

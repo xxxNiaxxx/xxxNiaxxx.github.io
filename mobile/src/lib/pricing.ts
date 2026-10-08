@@ -22,8 +22,8 @@ export function climateFeeForStay(checkIn: string, checkOut: string, property: {
   return round2(total);
 }
 
-/** Booking.com charges on the room price without the 0,5% presence fee (business regime). */
-export function commissionFor(roomPrice: number, ratePercent: number, regime: string) {
-  const presenceFee = regime === "BUSINESS" ? round2((roomPrice / (1.005 * 1.13)) * 0.005) : 0;
+/** Booking.com charges on the room price without its 0,5% municipal fee (room × 0,005 / 1,135). */
+export function commissionFor(roomPrice: number, ratePercent: number, source: string) {
+  const presenceFee = source === "BOOKING_COM" ? round2((roomPrice * 0.005) / 1.135) : 0;
   return round2((round2(roomPrice - presenceFee) * ratePercent) / 100);
 }

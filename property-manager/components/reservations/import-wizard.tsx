@@ -88,11 +88,11 @@ export function ImportWizard({ properties, pricing }: { properties: Property[]; 
     const fee = p && r.checkIn && r.checkOut && r.checkOut > r.checkIn ? climateFeeForStay({ checkIn: r.checkIn, checkOut: r.checkOut, totalAmount: Math.max(r.amount, 1) }, { kind: p.kind as PropertyKind, areaSqm: p.areaSqm }) : 0;
     return { ...r, property: p, climateFee: fee };
   });
-  const detected = detectAmountMode(withFee, { ratePercent: rate, regime: pricing.regime, fallback: source === "AIRBNB" ? "PAYOUT" : "GUEST_TOTAL" });
+  const detected = detectAmountMode(withFee, { ratePercent: rate, source });
   const mode = amountMode ?? detected.mode;
   const preview = withFee.map((r) => {
     const charged = r.status !== "CANCELLED" || (r.commission ?? 0) > 0;
-    const calc = charged ? roomAndCommission(mode, r.amount, { commission: r.commission, climateFee: r.climateFee, ratePercent: r.commissionPercent ?? rate, regime: pricing.regime }) : { room: 0, commission: 0 };
+    const calc = charged ? roomAndCommission(mode, r.amount, { commission: r.commission, climateFee: r.climateFee, ratePercent: r.commissionPercent ?? rate, source }) : { room: 0, commission: 0 };
     const problems = [...r.problems, ...(r.property ? [] : ["Διαλέξτε ακίνητο"])];
     return { ...r, ...calc, problems };
   });

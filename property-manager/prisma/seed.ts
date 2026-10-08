@@ -164,7 +164,7 @@ async function main() {
         guestsCount: Math.min(property.maxGuests, between(1, property.maxGuests)),
         totalAmount,
         // Demo Hospitality has 5 properties with an AMA → business regime; Booking/Airbnb 15%.
-        commission: source === "BOOKING_COM" || source === "AIRBNB" ? commissionFor(totalAmount, 15, "BUSINESS") : 0,
+        commission: source === "BOOKING_COM" || source === "AIRBNB" ? commissionFor(totalAmount, 15, source) : 0,
         currency: "EUR",
         status,
         notes: i % 9 === 0 ? "Ζήτησε βρεφικό κρεβάτι." : null,

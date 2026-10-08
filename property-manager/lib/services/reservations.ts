@@ -172,8 +172,8 @@ export async function createReservation(ctx: OrgContext, input: unknown) {
     if (!data.complimentary) {
       if (data.commission !== undefined) commission = data.commission;
       else {
-        const { regime, commissionRates } = await getTaxContext(ctx);
-        commission = commissionFor(totalAmount, commissionRates[data.source] ?? 0, regime);
+        const { commissionRates } = await getTaxContext(ctx);
+        commission = commissionFor(totalAmount, commissionRates[data.source] ?? 0, data.source);
       }
     }
 
