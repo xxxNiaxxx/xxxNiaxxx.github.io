@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { addDaysISO, isoToDate, monthRange, todayISO, zonedDateTime, zonedDayRange } from "@/lib/dates";
+import { formatDateTime } from "@/lib/format";
 import type { OrgContext } from "@/lib/permissions";
 import { getOccupancy } from "./financials";
 import { serializeReservation, serializeTask, toNumber } from "./serializers";
@@ -111,7 +112,7 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
       kind: "OVERDUE_TASK",
       severity: t.priority === "URGENT" || t.priority === "HIGH" ? "high" : "medium",
       title: `Overdue: ${t.title}`,
-      detail: `${t.property.name} · due ${t.dueAt?.toISOString()}`,
+      detail: `${t.property.name} · due ${t.dueAt ? formatDateTime(t.dueAt.toISOString()) : "—"}`,
       href: `/tasks?tab=overdue`,
     });
   }
@@ -163,7 +164,7 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
       kind: "AI_ACTION",
       severity: "medium",
       title: `AI action awaiting approval: ${humanizeActionType(a.type)}`,
-      detail: `Proposed ${a.createdAt.toISOString()}`,
+      detail: `Proposed ${formatDateTime(a.createdAt.toISOString())}`,
       href: a.conversationId ? `/ai?c=${a.conversationId}` : "/ai",
     });
   }
