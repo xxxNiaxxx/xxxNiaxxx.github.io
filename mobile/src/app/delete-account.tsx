@@ -1,8 +1,9 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { Text, TextInput, View } from "react-native";
+import { Text } from "react-native";
 import { Button, Card, Screen, styles } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
+import { PasswordField } from "@/components/form";
 import { useSession } from "@/lib/session";
 import { colors } from "@/theme";
 
@@ -37,10 +38,7 @@ export default function DeleteAccount() {
           αφαιρείται μόνο η συμμετοχή σας. Η ενέργεια δεν αναιρείται.
         </Text>
       </Card>
-      <View>
-        <Text style={styles.label}>Επιβεβαίωση με τον κωδικό σας</Text>
-        <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" />
-      </View>
+      <PasswordField label="Επιβεβαίωση με τον κωδικό σας" value={password} onChangeText={setPassword} />
       {error && <Text style={{ color: colors.danger, backgroundColor: colors.dangerSoft, padding: 12, borderRadius: 10 }}>{error}</Text>}
       <Button title="Οριστική διαγραφή" variant="danger" loading={busy} disabled={!password} onPress={confirm} />
       <Button title="Ακύρωση" variant="ghost" onPress={() => router.back()} />

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from "react-native";
 import { Button, Loading, styles } from "@/components/ui";
 import { ApiError } from "@/lib/api";
+import { PasswordField } from "@/components/form";
 import { useSession } from "@/lib/session";
 import { colors } from "@/theme";
 
@@ -46,10 +47,7 @@ export default function Login() {
           <Text style={styles.label}>Email</Text>
           <TextInput style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" autoComplete="email" keyboardType="email-address" placeholder="email@example.com" placeholderTextColor={colors.subtleText} />
         </View>
-        <View>
-          <Text style={styles.label}>Κωδικός</Text>
-          <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" onSubmitEditing={submit} />
-        </View>
+        <PasswordField label="Κωδικός" value={password} onChangeText={setPassword} onSubmitEditing={submit} />
         {error && <Text style={{ color: colors.danger, backgroundColor: colors.dangerSoft, padding: 12, borderRadius: 10 }}>{error}</Text>}
         <Button title="Σύνδεση" loading={busy} disabled={!email || !password} onPress={submit} />
         <Button title="Δημιουργία λογαριασμού" variant="outline" onPress={() => Linking.openURL(`${server}/register`)} />

@@ -169,6 +169,7 @@ export async function createReservation(ctx: OrgContext, input: unknown) {
         propertyId: data.propertyId,
         guestId,
         source: data.source,
+        externalId: data.externalId,
         confirmationCode: data.confirmationCode,
         checkIn: isoToDate(data.checkIn),
         checkOut: isoToDate(data.checkOut),

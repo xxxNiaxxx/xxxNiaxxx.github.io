@@ -1,4 +1,5 @@
-import { NotebookTabs, Plus } from "lucide-react";
+import { NotebookTabs, Plus, Upload } from "lucide-react";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { ReservationFormDialog } from "@/components/reservations/reservation-form";
 import { ReservationTable } from "@/components/reservations/reservation-table";
@@ -34,6 +35,8 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
         title="Κρατήσεις"
         description={`${reservations.length} ${reservations.length === 1 ? "κράτηση" : "κρατήσεις"}${filtered ? " με τα φίλτρα" : ""}`}
         actions={
+          <>
+          <Button asChild variant="outline"><Link href="/reservations/import"><Upload /> Εισαγωγή από Booking/Airbnb</Link></Button>
           <ReservationFormDialog
             key={sp.new ? `new-${sp.propertyId}-${sp.checkIn}` : "new"}
             properties={options.properties}
@@ -43,6 +46,7 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
             defaultOpen={sp.new === "1"}
             trigger={<Button><Plus /> Νέα κράτηση</Button>}
           />
+          </>
         }
       />
       <div className="mb-5 flex flex-col gap-2 sm:flex-row">

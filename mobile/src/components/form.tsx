@@ -264,3 +264,20 @@ export function SearchBox({ value, onChange, placeholder = "Αναζήτηση�
     </View>
   );
 }
+
+/** Password input with a show/hide eye button. */
+export function PasswordField({ label, value, onChangeText, onSubmitEditing, autoComplete = "password" }: { label: string; value: string; onChangeText: (v: string) => void; onSubmitEditing?: () => void; autoComplete?: TextInputProps["autoComplete"] }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <Field label={label}>
+      <View style={[styles.input, { flexDirection: "row", alignItems: "center", paddingRight: 0 }]}>
+        <TextInput value={value} onChangeText={onChangeText} secureTextEntry={!visible} autoComplete={autoComplete} autoCapitalize="none" autoCorrect={false}
+          onSubmitEditing={onSubmitEditing} style={{ flex: 1, fontSize: 15, color: colors.text, height: "100%" }} />
+        <Pressable onPress={() => setVisible((v) => !v)} hitSlop={8} accessibilityRole="button" accessibilityLabel={visible ? "Απόκρυψη κωδικού" : "Εμφάνιση κωδικού"}
+          style={{ paddingHorizontal: 12, height: "100%", justifyContent: "center" }}>
+          <Ionicons name={visible ? "eye-off-outline" : "eye-outline"} size={20} color={colors.mutedText} />
+        </Pressable>
+      </View>
+    </Field>
+  );
+}

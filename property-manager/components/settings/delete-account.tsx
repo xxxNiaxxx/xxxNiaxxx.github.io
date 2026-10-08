@@ -4,7 +4,8 @@ import { useState } from "react";
 import { logoutAction } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { Field, Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { api } from "@/lib/client/api";
 import { useMutation } from "@/lib/client/use-mutation";
 
@@ -31,7 +32,7 @@ export function DeleteAccount() {
           }}
         >
           <Field label="Επιβεβαίωση με τον κωδικό σας" htmlFor="delete-password" error={fieldErrors.password}>
-            <Input id="delete-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <PasswordInput id="delete-password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </Field>
           <DialogFooter>
             <Button type="submit" variant="danger" loading={pending} disabled={!password}>Οριστική διαγραφή</Button>
