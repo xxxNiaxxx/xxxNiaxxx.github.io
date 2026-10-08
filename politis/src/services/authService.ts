@@ -4,6 +4,7 @@ import { createId } from '@/lib/id';
 import { logger } from '@/lib/logger';
 import { cancelAllReminders } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
+import { hasPublishedContent } from '@/data/content';
 import { buildMockTasks } from '@/data/mock';
 import { useAppStore } from '@/store/appStore';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -63,12 +64,12 @@ export const authService = {
     }
   },
 
-  /** Local demo mode: no account, data stays on the device, sample tasks are seeded. */
+  /** Local demo mode: no account, data stays on the device. Sample tasks are seeded only while the app runs on mock content. */
   startDemo() {
     const userId = createId('demo');
     useAppStore.getState().setSession({ mode: 'demo', userId });
     useProfileStore.getState().setProfile(profileService.createEmpty(userId));
-    useTaskStore.getState().setTasks(buildMockTasks());
+    useTaskStore.getState().setTasks(hasPublishedContent ? [] : buildMockTasks());
     analytics.track('signup_completed', { method: 'demo' });
   },
 

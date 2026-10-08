@@ -1,9 +1,11 @@
 /**
- * Content (benefits & procedures) repository.
- * - With Supabase configured: reads the public `benefits` / `procedures` tables.
- * - Otherwise (or when the tables are empty): serves clearly-labelled MOCK data.
+ * Content (benefits & procedures) repository. Sources, in order:
+ * 1. Supabase `benefits` / `procedures` tables, when configured and not empty.
+ * 2. Verified content bundled with the app (`npm run content:import`), when not empty.
+ * 3. Clearly-labelled MOCK data, so the app is usable before any real content exists.
  */
 import type { Benefit, BenefitRule, Procedure, ProcedureStep, Source } from '@/types/models';
+import { hasPublishedContent, publishedContent } from '@/data/content';
 import { buildMockBenefits, buildMockProcedures } from '@/data/mock';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
@@ -108,6 +110,7 @@ export const contentService = {
   async getBenefits(): Promise<Benefit[]> {
     const remote = await fetchRemoteBenefits();
     if (remote) return remote;
+    if (hasPublishedContent) return publishedContent.benefits;
     await wait(MOCK_LATENCY_MS);
     return getMockBenefits();
   },
@@ -118,6 +121,7 @@ export const contentService = {
   async getProcedures(): Promise<Procedure[]> {
     const remote = await fetchRemoteProcedures();
     if (remote) return remote;
+    if (hasPublishedContent) return publishedContent.procedures;
     await wait(MOCK_LATENCY_MS);
     return getMockProcedures();
   },
