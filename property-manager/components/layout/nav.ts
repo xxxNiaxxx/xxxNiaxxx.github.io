@@ -2,6 +2,7 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
+  Landmark,
   LayoutDashboard,
   type LucideIcon,
   NotebookTabs,
@@ -25,6 +26,7 @@ export const mainNav: NavItem[] = [
   { href: "/guests", label: "Guests", icon: Users },
   { href: "/tasks", label: "Tasks", icon: ClipboardList },
   { href: "/financials", label: "Financials", icon: Wallet },
+  { href: "/tax", label: "Tax & AADE", icon: Landmark },
   { href: "/ai", label: "AI Assistant", icon: Sparkles },
 ];
 

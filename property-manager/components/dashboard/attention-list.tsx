@@ -1,4 +1,4 @@
-import { AlertCircle, CalendarClock, CheckCircle2, ClipboardX, FileWarning, MessageSquareWarning, Sparkles } from "lucide-react";
+import { AlertCircle, CalendarClock, CheckCircle2, ClipboardX, FileWarning, Landmark, MessageSquareWarning, ShieldAlert, Sparkles } from "lucide-react";
 import Link from "next/link";
 import type { AttentionItem, AttentionKind } from "@/lib/services/dashboard";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,8 @@ const icons: Record<AttentionKind, typeof AlertCircle> = {
   MISSING_INFO: FileWarning,
   NO_CHECKIN_MESSAGE: MessageSquareWarning,
   AI_ACTION: Sparkles,
+  TAX_DEADLINE: Landmark,
+  COMPLIANCE: ShieldAlert,
 };
 
 const severityStyles = {

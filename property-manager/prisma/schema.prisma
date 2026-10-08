@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   /// Direct (non-pooled) connection used by migrations. Same as DATABASE_URL locally;
   /// on Neon/Supabase use the pooled URL above and the direct URL here.
@@ -34,11 +34,19 @@ enum Role {
   MEMBER
 }
 
+/// AUTO: individual up to 2 properties with an AMA, business from the 3rd (Greek rules).
+enum TaxRegimeSetting {
+  AUTO
+  INDIVIDUAL
+  BUSINESS
+}
+
 model Organization {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  taxRegime TaxRegimeSetting @default(AUTO)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
   members         OrganizationMember[]
   properties      Property[]
@@ -49,6 +57,7 @@ model Organization {
   transactions    Transaction[]
   aiConversations AIConversation[]
   aiActions       AIAction[]
+  taxFilings      TaxFiling[]
 }
 
 model OrganizationMember {
@@ -66,6 +75,11 @@ model OrganizationMember {
 }
 
 // ─── Operations ──────────────────────────────────────────────────────
+
+enum PropertyKind {
+  APARTMENT
+  DETACHED_HOUSE
+}
 
 enum PropertyStatus {
   ACTIVE
@@ -86,6 +100,12 @@ model Property {
   status         PropertyStatus @default(ACTIVE)
   basePrice      Decimal        @db.Decimal(12, 2)
   currency       String         @default("EUR") @db.Char(3)
+  /// Αριθμός Μητρώου Ακινήτου (AADE short-term rental registry)
+  ama            String?
+  kind           PropertyKind   @default(APARTMENT)
+  areaSqm        Int?
+  /// Safety checklist and insurance: { fireExtinguisher: true, …, insuranceExpiresOn: "YYYY-MM-DD" }
+  compliance     Json           @default("{}")
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -134,23 +154,26 @@ enum ReservationStatus {
 }
 
 model Reservation {
-  id               String            @id @default(cuid())
-  organizationId   String
-  propertyId       String
-  guestId          String
-  source           ReservationSource @default(MANUAL)
+  id                String                @id @default(cuid())
+  organizationId    String
+  propertyId        String
+  guestId           String
+  source            ReservationSource     @default(MANUAL)
   /// Id of the reservation in the source channel (set by future integrations).
-  externalId       String?
-  confirmationCode String?
-  checkIn          DateTime          @db.Date
-  checkOut         DateTime          @db.Date
-  guestsCount      Int               @default(1)
-  totalAmount      Decimal           @db.Decimal(12, 2)
-  currency         String            @default("EUR") @db.Char(3)
-  status           ReservationStatus @default(CONFIRMED)
-  notes            String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  externalId        String?
+  confirmationCode  String?
+  checkIn           DateTime              @db.Date
+  checkOut          DateTime              @db.Date
+  guestsCount       Int                   @default(1)
+  totalAmount       Decimal               @db.Decimal(12, 2)
+  currency          String                @default("EUR") @db.Char(3)
+  status            ReservationStatus     @default(CONFIRMED)
+  notes             String?
+  cancelledAt       DateTime?
+  declarationStatus StayDeclarationStatus @default(PENDING)
+  declaredAt        DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   property     Property      @relation(fields: [propertyId], references: [id], onDelete: Restrict)
@@ -162,6 +185,13 @@ model Reservation {
   @@unique([organizationId, source, externalId])
   @@index([organizationId, checkIn])
   @@index([propertyId, checkIn, checkOut])
+}
+
+/// Δήλωση Βραχυχρόνιας Διαμονής status for a stay.
+enum StayDeclarationStatus {
+  PENDING
+  DECLARED
+  NOT_REQUIRED
 }
 
 enum TaskType {
@@ -362,4 +392,29 @@ model AIAction {
   reviewedBy   User?           @relation("AIActionReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, status])
+}
+
+// ─── Tax filings ─────────────────────────────────────────────────────
+
+enum TaxFilingKind {
+  CLIMATE_FEE
+  PRESENCE_FEE
+  VAT
+}
+
+/// A periodic return the organization marked as filed (e.g. monthly climate-fee return).
+model TaxFiling {
+  id             String        @id @default(cuid())
+  organizationId String
+  kind           TaxFilingKind
+  /// "YYYY-MM"
+  period         String
+  amount         Decimal       @db.Decimal(12, 2)
+  reference      String?
+  filedAt        DateTime      @default(now())
+  filedByUserId  String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, kind, period])
 }

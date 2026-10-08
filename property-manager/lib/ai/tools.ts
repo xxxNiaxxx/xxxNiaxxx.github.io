@@ -9,6 +9,7 @@ import { getGuestDetails, listGuests } from "@/lib/services/guests";
 import { getPropertyDetails, listProperties } from "@/lib/services/properties";
 import { getReservationDetails, listReservations } from "@/lib/services/reservations";
 import { listTasks } from "@/lib/services/tasks";
+import { getAnnualReport, getTaxOverview } from "@/lib/services/tax";
 import { serializeReservation } from "@/lib/services/serializers";
 import { proposeAction } from "./actions";
 import type { ToolSpec } from "./provider";
@@ -161,6 +162,29 @@ export const tools = [
       "Income, expenses, net and occupancy for a period [from, to) (defaults to the current month), overall and per property. Use for 'how much did I make' and 'which property performs best'.",
     input: z.object({ from: isoDate.optional(), to: isoDate.optional(), propertyId: z.string().optional() }),
     run: (i, tc) => getRevenueSummary(tc.org, i, tc.now),
+  }),
+  tool({
+    name: "get_tax_obligations",
+    description:
+      "Greek short-term-rental tax obligations: stay declarations to AADE that are due (Δήλωση Βραχυχρόνιας Διαμονής), monthly climate resilience fee (ΤΑΚΚ) amounts and deadlines, VAT/presence fee if a business, compliance gaps (AMA, insurance, safety). Amounts come from configured rules; remind the user to confirm with their accountant.",
+    input: z.object({}),
+    run: async (_i, tc) => {
+      const o = await getTaxOverview(tc.org, tc.now);
+      return {
+        today: o.today,
+        regime: o.regime,
+        pendingStayDeclarations: o.pendingDeclarations.slice(0, 20).map((s) => ({ guest: s.guestName, property: s.propertyName, checkOut: s.checkOut, deadline: s.declaration.deadline, overdue: s.declaration.overdue })),
+        climateFeeByMonth: o.monthly.filter((m) => m.climateFee > 0).slice(0, 6).map((m) => ({ period: m.period, amount: m.climateFee, deadline: m.climateFeeDeadline, filed: Boolean(m.climateFeeFiled) })),
+        warnings: o.warnings,
+        compliance: o.compliance.filter((c) => c.missing.length || !c.ama || c.insuranceStatus !== "OK"),
+      };
+    },
+  }),
+  tool({
+    name: "get_annual_tax_estimate",
+    description: "Annual rental income summary for a year: gross, 5% flat deduction and estimated income tax (individual, Ε2) or VAT/presence fee totals (business). An estimate, not tax advice.",
+    input: z.object({ year: z.number().int().min(2018).max(2100), otherPropertyIncome: z.number().min(0).optional() }),
+    run: (i, tc) => getAnnualReport(tc.org, i.year, i.otherPropertyIncome ?? 0, tc.now),
   }),
   tool({
     name: "create_task",

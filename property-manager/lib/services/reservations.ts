@@ -178,10 +178,15 @@ export async function updateReservation(ctx: OrgContext, id: string, input: unkn
     if (data.guestId) await assertGuest(ctx, data.guestId, tx);
     if (BLOCKING.includes(next.status)) await assertNoOverlap(tx, ctx, { ...next, excludeId: id });
 
+    const statusChange =
+      data.status && data.status !== current.status
+        ? { cancelledAt: data.status === "CANCELLED" ? new Date() : null }
+        : {};
     const updated = await tx.reservation.update({
       where: { id },
       data: {
         ...data,
+        ...statusChange,
         checkIn: data.checkIn ? isoToDate(data.checkIn) : undefined,
         checkOut: data.checkOut ? isoToDate(data.checkOut) : undefined,
       },
@@ -195,8 +200,17 @@ export async function updateReservation(ctx: OrgContext, id: string, input: unkn
 
 export async function cancelReservation(ctx: OrgContext, id: string) {
   const row = await db.$transaction(async (tx) => {
-    await assertReservation(ctx, id, tx);
-    const updated = await tx.reservation.update({ where: { id }, data: { status: "CANCELLED" }, include });
+    const current = await assertReservation(ctx, id, tx);
+    const updated = await tx.reservation.update({
+      where: { id },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: current.cancelledAt ?? new Date(),
+        // Cancellations without any payment need no AADE stay declaration.
+        ...(Number(current.totalAmount) === 0 && current.declarationStatus === "PENDING" ? { declarationStatus: "NOT_REQUIRED" as const } : {}),
+      },
+      include,
+    });
     await syncBookingIncome(tx, updated);
     // Open tasks tied to a cancelled stay no longer make sense.
     await tx.task.updateMany({

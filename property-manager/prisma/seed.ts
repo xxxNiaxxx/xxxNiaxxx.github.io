@@ -4,7 +4,7 @@
  *
  * Sign in with demo@demo-hospitality.test / demo1234
  */
-import { PrismaClient, type ReservationStatus, type TaskType } from "@prisma/client";
+import { PrismaClient, type PropertyKind, type ReservationStatus, type TaskType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDaysISO, isoToDate, todayISO, zonedDateTime } from "../lib/dates";
 
@@ -26,12 +26,12 @@ const DEMO_USERS = [
 ];
 
 const PROPERTIES = [
-  { name: "Villa Elia", city: "Kassandra, Halkidiki", address: "Olive Grove Rd 12, Pefkochori", bedrooms: 4, bathrooms: 3, maxGuests: 8, basePrice: 320, description: "Stone villa among olive trees with a private pool, 5 minutes from the beach." },
-  { name: "Sea View Apartment", city: "Thessaloniki", address: "Nikis Ave 41", bedrooms: 2, bathrooms: 1, maxGuests: 4, basePrice: 140, description: "Bright waterfront apartment with balcony views of the Thermaic Gulf." },
-  { name: "Blue Horizon Villa", city: "Chania, Crete", address: "Kalamaki Beach Rd 7", bedrooms: 3, bathrooms: 2, maxGuests: 6, basePrice: 260, description: "Modern villa with infinity pool overlooking the Cretan Sea." },
-  { name: "Old Town Studio", city: "Athens", address: "Adrianou 88, Plaka", bedrooms: 1, bathrooms: 1, maxGuests: 2, basePrice: 95, description: "Cosy studio in Plaka with an Acropolis-view rooftop." },
-  { name: "Sunset Residence", city: "Sithonia, Halkidiki", address: "Neos Marmaras Seafront 3", bedrooms: 3, bathrooms: 2, maxGuests: 6, basePrice: 210, description: "Seafront residence famous for its sunsets over Mount Athos." },
-] as const;
+  { name: "Villa Elia", ama: "00001842367", kind: "DETACHED_HOUSE", areaSqm: 180, city: "Kassandra, Halkidiki", address: "Olive Grove Rd 12, Pefkochori", bedrooms: 4, bathrooms: 3, maxGuests: 8, basePrice: 320, description: "Stone villa among olive trees with a private pool, 5 minutes from the beach." },
+  { name: "Sea View Apartment", ama: "00002934715", kind: "APARTMENT", areaSqm: 72, city: "Thessaloniki", address: "Nikis Ave 41", bedrooms: 2, bathrooms: 1, maxGuests: 4, basePrice: 140, description: "Bright waterfront apartment with balcony views of the Thermaic Gulf." },
+  { name: "Blue Horizon Villa", ama: "00003561208", kind: "DETACHED_HOUSE", areaSqm: 140, city: "Chania, Crete", address: "Kalamaki Beach Rd 7", bedrooms: 3, bathrooms: 2, maxGuests: 6, basePrice: 260, description: "Modern villa with infinity pool overlooking the Cretan Sea." },
+  { name: "Old Town Studio", ama: "00004108932", kind: "APARTMENT", areaSqm: 32, city: "Athens", address: "Adrianou 88, Plaka", bedrooms: 1, bathrooms: 1, maxGuests: 2, basePrice: 95, description: "Cosy studio in Plaka with an Acropolis-view rooftop." },
+  { name: "Sunset Residence", ama: "00005277481", kind: "DETACHED_HOUSE", areaSqm: 95, city: "Sithonia, Halkidiki", address: "Neos Marmaras Seafront 3", bedrooms: 3, bathrooms: 2, maxGuests: 6, basePrice: 210, description: "Seafront residence famous for its sunsets over Mount Athos." },
+] as const satisfies readonly { name: string; kind: PropertyKind; [key: string]: unknown }[];
 
 const GUESTS = [
   ["Maria", "Papadopoulou", "GR"], ["John", "Carter", "GB"], ["Sophie", "Laurent", "FR"], ["Lukas", "Becker", "DE"],
@@ -72,10 +72,16 @@ async function main() {
   const [owner, cleaner, handyman] = users;
 
   const properties = [];
-  for (const p of PROPERTIES) {
+  const fullCompliance = { fireExtinguisher: true, smokeDetectors: true, firstAidKit: true, emergencyLighting: true, electricianDeclaration: true, amaDisplayed: true };
+  for (const [i, p] of PROPERTIES.entries()) {
+    // One property has gaps so the compliance screens have something to show.
+    const compliance =
+      i === 3
+        ? { fireExtinguisher: true, smokeDetectors: false, firstAidKit: true, emergencyLighting: false, electricianDeclaration: false, amaDisplayed: true, insuranceExpiresOn: addDaysISO(today, 12) }
+        : { ...fullCompliance, insuranceExpiresOn: addDaysISO(today, 120 + i * 30) };
     properties.push(
       await db.property.create({
-        data: { ...p, organizationId: org.id, country: "Greece", currency: "EUR", status: "ACTIVE" },
+        data: { ...p, compliance, organizationId: org.id, country: "Greece", currency: "EUR", status: "ACTIVE" },
       }),
     );
   }
@@ -155,6 +161,17 @@ async function main() {
       },
     });
     reservations.push(r);
+  }
+
+  // AADE stay declarations: everything that left before this month is declared; recent departures are pending.
+  const monthStart = `${today.slice(0, 7)}-01`;
+  for (const r of reservations) {
+    const out = r.checkOut.toISOString().slice(0, 10);
+    if (r.status === "CANCELLED") {
+      await db.reservation.update({ where: { id: r.id }, data: { cancelledAt: new Date(r.checkIn.getTime() - 20 * 86_400_000), declarationStatus: "NOT_REQUIRED" } });
+    } else if (out < monthStart) {
+      await db.reservation.update({ where: { id: r.id }, data: { declarationStatus: "DECLARED", declaredAt: new Date(r.checkOut.getTime() + 5 * 86_400_000) } });
+    }
   }
 
   // Income for booked stays + expenses.

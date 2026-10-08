@@ -64,6 +64,18 @@ export function PropertyFormDialog({ property, trigger }: { property?: PropertyD
           <Field label="Currency" htmlFor="currency" error={err.currency} className="sm:col-span-2">
             <Input id="currency" name="currency" maxLength={3} defaultValue={property?.currency ?? "EUR"} />
           </Field>
+          <Field label="AMA (registry no.)" htmlFor="ama" error={err.ama} hint="ΑΜΑ from the AADE short-term rental registry" className="sm:col-span-2">
+            <Input id="ama" name="ama" inputMode="numeric" defaultValue={property?.ama ?? ""} aria-invalid={!!err.ama} placeholder="00000000000" />
+          </Field>
+          <Field label="Type" htmlFor="kind" hint="Affects the climate fee" className="sm:col-span-2">
+            <Select id="kind" name="kind" defaultValue={property?.kind ?? "APARTMENT"}>
+              <option value="APARTMENT">Apartment / room</option>
+              <option value="DETACHED_HOUSE">Detached house (μονοκατοικία)</option>
+            </Select>
+          </Field>
+          <Field label="Area (m²)" htmlFor="areaSqm" error={err.areaSqm} className="sm:col-span-2">
+            <Input id="areaSqm" name="areaSqm" type="number" min={5} defaultValue={property?.areaSqm ?? ""} />
+          </Field>
           <Field label="Description" htmlFor="description" error={err.description} className="sm:col-span-6">
             <Textarea id="description" name="description" defaultValue={property?.description ?? ""} />
           </Field>

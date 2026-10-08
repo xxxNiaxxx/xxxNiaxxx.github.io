@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/ui/status";
 import { getPageContext, orNotFound } from "@/lib/auth/page";
 import { formatDay, formatMoney, formatPercent } from "@/lib/format";
 import { getPropertyDetails } from "@/lib/services/properties";
+import { ComplianceChecklist } from "@/components/tax/compliance-card";
 
 export const metadata: Metadata = { title: "Property" };
 
@@ -87,9 +88,17 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
                   { label: "Bathrooms", value: p.bathrooms },
                   { label: "Max guests", value: p.maxGuests },
                   { label: "Currency", value: p.currency },
+                  { label: "AMA", value: p.ama ?? <span className="text-danger">Missing</span> },
+                  { label: "Type", value: `${p.kind === "DETACHED_HOUSE" ? "Detached house" : "Apartment"}${p.areaSqm ? ` · ${p.areaSqm} m²` : ""}` },
                 ]}
               />
               {p.description && <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{p.description}</p>}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader title="Compliance" description="Safety & insurance (required since 1 Oct 2025)" />
+            <CardContent>
+              <ComplianceChecklist propertyId={p.id} compliance={p.compliance} />
             </CardContent>
           </Card>
           <Card>

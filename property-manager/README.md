@@ -11,6 +11,9 @@ basic financials and an AI manager that answers from your real data and
 > (`app-ads.txt`) keeps working. See [`docs/architecture.md`](docs/architecture.md)
 > and [`docs/api.md`](docs/api.md).
 
+🇬🇷 **Tax & AADE:** stay declarations, climate fee (ΤΑΚΚ), VAT/presence fee, Ε2 estimate,
+compliance checklist and CSV exports for the accountant — rules in [`docs/tax-greece.md`](docs/tax-greece.md).
+
 📱 **Mobile:** a companion Expo app that runs in **Expo Go** lives in
 [`../mobile`](../mobile/README.md). Start this server with `npm run dev:lan`
 so your phone can reach it.

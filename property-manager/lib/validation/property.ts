@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { currency, money, optionalQuery, optionalText, positiveInt, requiredText } from "./common";
+import { currency, isoDate, money, optionalQuery, optionalText, positiveInt, requiredText } from "./common";
 
 export const propertyStatus = z.enum(["ACTIVE", "INACTIVE"]);
 
@@ -15,6 +15,20 @@ export const propertyCreateSchema = z.object({
   status: propertyStatus.default("ACTIVE"),
   basePrice: money,
   currency,
+  ama: optionalText(20).refine((v) => !v || /^\d{6,15}$/.test(v), "AMA is the numeric registry number from AADE"),
+  kind: z.enum(["APARTMENT", "DETACHED_HOUSE"]).default("APARTMENT"),
+  areaSqm: z.preprocess((v) => (v === "" || v == null ? null : v), z.coerce.number().int().min(5).max(5000).nullable()).optional(),
+  compliance: z
+    .object({
+      fireExtinguisher: z.boolean().optional(),
+      smokeDetectors: z.boolean().optional(),
+      firstAidKit: z.boolean().optional(),
+      emergencyLighting: z.boolean().optional(),
+      electricianDeclaration: z.boolean().optional(),
+      amaDisplayed: z.boolean().optional(),
+      insuranceExpiresOn: isoDate.nullish(),
+    })
+    .optional(),
 });
 
 export const propertyUpdateSchema = propertyCreateSchema.partial();

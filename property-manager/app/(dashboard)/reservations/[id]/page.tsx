@@ -14,13 +14,20 @@ import { getPageContext, orNotFound } from "@/lib/auth/page";
 import { formatDay, formatMoney } from "@/lib/format";
 import { getFormOptions } from "@/lib/services/options";
 import { getReservationDetails } from "@/lib/services/reservations";
+import { getStayTax } from "@/lib/services/tax";
+import { DeclareButton } from "@/components/tax/actions";
+import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = { title: "Reservation" };
 
 export default async function ReservationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { ctx } = await getPageContext();
-  const [{ reservation: r, tasks, messages }, options] = await Promise.all([orNotFound(getReservationDetails(ctx, id)), getFormOptions(ctx)]);
+  const [{ reservation: r, tasks, messages }, options, tax] = await Promise.all([
+    orNotFound(getReservationDetails(ctx, id)),
+    getFormOptions(ctx),
+    orNotFound(getStayTax(ctx, id)),
+  ]);
   const open = r.status === "CONFIRMED" || r.status === "PENDING";
 
   return (
@@ -65,6 +72,37 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
           </Card>
         </div>
         <div className="grid min-w-0 content-start gap-6">
+          <Card>
+            <CardHeader title="Tax & AADE" description={tax.ama ? `AMA ${tax.ama}` : "Property has no AMA"} />
+            <CardContent className="grid gap-3 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Climate fee (ΤΑΚΚ)</span><span className="font-medium tabular-nums">{formatMoney(tax.climateFee)}</span></div>
+              {tax.regime === "BUSINESS" && (
+                <>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Rent ex VAT</span><span className="tabular-nums">{formatMoney(tax.rent)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">VAT 13% · presence fee 0.5%</span><span className="tabular-nums">{formatMoney(tax.vat)} · {formatMoney(tax.presenceFee)}</span></div>
+                </>
+              )}
+              {tax.longStay ? (
+                <p className="text-[13px] text-muted-foreground">60+ nights: not a short-term rental — declare it as a regular lease.</p>
+              ) : tax.declaration.required ? (
+                <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+                  <div>
+                    <div className="text-[13px] text-muted-foreground">Stay declaration</div>
+                    {tax.declaration.status === "DECLARED" ? (
+                      <Badge tone="success">Declared</Badge>
+                    ) : (
+                      <Badge tone={tax.declaration.overdue ? "danger" : "neutral"}>
+                        {tax.declaration.overdue ? "Overdue · " : "Due "}{formatDay(tax.declaration.deadline, { day: "numeric", month: "short", year: "numeric" })}
+                      </Badge>
+                    )}
+                  </div>
+                  {tax.declaration.triggerDate <= new Date().toISOString().slice(0, 10) && <DeclareButton reservationId={r.id} declared={tax.declaration.status === "DECLARED"} />}
+                </div>
+              ) : (
+                <p className="text-[13px] text-muted-foreground">No stay declaration needed.</p>
+              )}
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader title="Contact" />
             <CardContent>

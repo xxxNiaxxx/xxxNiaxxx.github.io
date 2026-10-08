@@ -20,6 +20,10 @@ export function serializeProperty(p: Property) {
     status: p.status,
     basePrice: toNumber(p.basePrice),
     currency: p.currency,
+    ama: p.ama,
+    kind: p.kind,
+    areaSqm: p.areaSqm,
+    compliance: (p.compliance ?? {}) as Record<string, boolean | string | null>,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   };
@@ -67,6 +71,8 @@ export function serializeReservation(r: ReservationRow) {
     currency: r.currency,
     status: r.status,
     notes: r.notes,
+    declarationStatus: r.declarationStatus,
+    cancelledAt: r.cancelledAt?.toISOString() ?? null,
     createdAt: r.createdAt.toISOString(),
   };
 }

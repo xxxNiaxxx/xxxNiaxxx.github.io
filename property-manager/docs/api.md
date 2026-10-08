@@ -139,6 +139,24 @@ Revenue = `INCOME` transactions dated in the period (booking income is dated at
 check-in). Occupancy = booked nights of confirmed/completed stays ÷ (active
 properties × days).
 
+## Tax & AADE (Greece)
+
+Rules and assumptions: [`tax-greece.md`](tax-greece.md).
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/api/tax/overview` | regime, stay declarations due, monthly climate fee (ΤΑΚΚ) / VAT / presence fee with deadlines and filing status, compliance, warnings |
+| GET / PATCH | `/api/tax/settings` | `{ taxRegime: "AUTO" \| "INDIVIDUAL" \| "BUSINESS" }` (ADMIN+) |
+| GET | `/api/tax/stays?year=` | tax view of every stay checking out in the year |
+| GET | `/api/tax/annual?year=&otherIncome=` | Ε2 estimate (individual) or VAT/profit summary (business), per property |
+| POST / DELETE | `/api/tax/filings` | mark a monthly return filed `{ kind: CLIMATE_FEE\|VAT\|PRESENCE_FEE, period: "YYYY-MM", amount }` · undo with `?kind=&period=` |
+| POST | `/api/reservations/:id/declaration` | `{ status: "DECLARED" \| "PENDING" \| "NOT_REQUIRED" }` |
+| GET | `/api/tax/export?type=stays\|annual&year=` | CSV for the accountant |
+
+Properties accept `ama`, `kind` (`APARTMENT` \| `DETACHED_HOUSE`), `areaSqm` and a partial
+`compliance` object (`fireExtinguisher`, `smokeDetectors`, `firstAidKit`, `emergencyLighting`,
+`electricianDeclaration`, `amaDisplayed`, `insuranceExpiresOn`).
+
 ## AI
 
 | Method | Path | Notes |
@@ -158,5 +176,5 @@ can only *propose* them; ownership is re-validated at approval time.
 AI tools available to the model: `get_today_summary`, `get_upcoming_checkins`,
 `get_upcoming_checkouts`, `get_overdue_tasks`, `list_tasks`, `get_property`,
 `list_properties`, `get_reservation`, `list_reservations`, `get_guest`,
-`list_guests`, `get_revenue_summary`, `create_task` (proposes),
+`list_guests`, `get_revenue_summary`, `get_tax_obligations`, `get_annual_tax_estimate`, `create_task` (proposes),
 `create_message_draft` (proposes).

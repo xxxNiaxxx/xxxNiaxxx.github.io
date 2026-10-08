@@ -3,10 +3,11 @@ import { addDaysISO, isoToDate, monthRange, todayISO, zonedDateTime, zonedDayRan
 import { formatDateTime, formatDay } from "@/lib/format";
 import type { OrgContext } from "@/lib/permissions";
 import { getOccupancy } from "./financials";
+import { getTaxOverview } from "./tax";
 import { serializeReservation, serializeTask, toNumber } from "./serializers";
 import { OPEN_STATUSES } from "./tasks";
 
-export type AttentionKind = "OVERDUE_TASK" | "MISSING_CLEANING" | "MISSING_INFO" | "NO_CHECKIN_MESSAGE" | "AI_ACTION";
+export type AttentionKind = "OVERDUE_TASK" | "MISSING_CLEANING" | "MISSING_INFO" | "NO_CHECKIN_MESSAGE" | "AI_ACTION" | "TAX_DEADLINE" | "COMPLIANCE";
 
 export interface AttentionItem {
   kind: AttentionKind;
@@ -168,6 +169,7 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
       href: a.conversationId ? `/ai?c=${a.conversationId}` : "/ai",
     });
   }
+  attention.push(...(await taxAttention(ctx, now)));
   const severityRank = { high: 0, medium: 1, low: 2 };
   attention.sort((a, b) => severityRank[a.severity] - severityRank[b.severity]);
 
@@ -208,4 +210,48 @@ export function humanizeActionType(type: string) {
     default:
       return type.toLowerCase().replace(/_/g, " ");
   }
+}
+
+/** AADE deadlines and compliance gaps worth surfacing on the dashboard. */
+async function taxAttention(ctx: OrgContext, now: Date): Promise<AttentionItem[]> {
+  const tax = await getTaxOverview(ctx, now);
+  const items: AttentionItem[] = [];
+  const overdue = tax.pendingDeclarations.filter((s) => s.declaration.overdue);
+  const dueSoon = tax.pendingDeclarations.filter((s) => !s.declaration.overdue && s.declaration.daysLeft <= 7);
+  if (overdue.length) {
+    items.push({
+      kind: "TAX_DEADLINE",
+      severity: "high",
+      title: `${overdue.length} stay declaration${overdue.length > 1 ? "s" : ""} to AADE overdue`,
+      detail: `Late filing carries a €100 fine each · e.g. ${overdue[0].guestName}, ${overdue[0].propertyName}`,
+      href: "/tax",
+    });
+  }
+  if (dueSoon.length) {
+    items.push({
+      kind: "TAX_DEADLINE",
+      severity: "medium",
+      title: `${dueSoon.length} stay declaration${dueSoon.length > 1 ? "s" : ""} due by ${formatDay(dueSoon[0].declaration.deadline)}`,
+      detail: "Δήλωση Βραχυχρόνιας Διαμονής in myAADE",
+      href: "/tax",
+    });
+  }
+  for (const m of tax.monthly.filter((x) => x.closed && !x.climateFeeFiled && x.climateFee > 0)) {
+    const daysLeft = Math.round((new Date(`${m.climateFeeDeadline}T00:00:00Z`).getTime() - new Date(`${tax.today}T00:00:00Z`).getTime()) / 86_400_000);
+    if (daysLeft > 10) continue;
+    items.push({
+      kind: "TAX_DEADLINE",
+      severity: m.climateFeeOverdue ? "high" : "medium",
+      title: `Climate fee for ${m.period}: €${m.climateFee} ${m.climateFeeOverdue ? "overdue" : `due ${formatDay(m.climateFeeDeadline)}`}`,
+      detail: "Monthly ΤΑΚΚ return in myAADE",
+      href: "/tax",
+    });
+  }
+  for (const p of tax.compliance) {
+    if (!p.ama) items.push({ kind: "COMPLIANCE", severity: "high", title: `${p.name} has no AMA registration number`, detail: "Required to host short-term guests", href: `/properties/${p.propertyId}` });
+    if (p.insuranceStatus === "EXPIRED" || p.insuranceStatus === "EXPIRING") {
+      items.push({ kind: "COMPLIANCE", severity: p.insuranceStatus === "EXPIRED" ? "high" : "medium", title: `${p.name}: liability insurance ${p.insuranceStatus === "EXPIRED" ? "expired" : "expires soon"}`, detail: `Expiry ${p.insuranceExpiresOn}`, href: `/properties/${p.propertyId}` });
+    }
+  }
+  return items;
 }

@@ -42,6 +42,10 @@ async function answer(t: string, original: string, call: Call, tc: ToolContext):
   if (has(t, "create task", "add task", "new task", "schedule clean", "schedule a clean", "book a clean", "remind"))
     return proposeTask(t, call, tc);
 
+  if (has(t, "aade", "ααδε", "tax", "φόρ", "φορ", "τακκ", "takk", "climate fee", "τέλος", "declar", "δήλωσ", "δηλωσ", "vat", "φπα", "e2", "ε2")) {
+    return taxSummary(call);
+  }
+
   if (has(t, "check in", "check-in", "checkin", "checks in", "arriv")) {
     const day = has(t, "tomorrow") ? addDaysISO(today, 1) : has(t, "today") ? today : null;
     const window = day ? (day === today ? 0 : 1) : 7;
@@ -143,6 +147,23 @@ function periodArgs(t: string, today: string) {
 }
 const periodLabel = (t: string) =>
   has(t, "last month") ? "last month" : has(t, "this year", "year to date", "ytd") ? "this year" : "this month";
+
+async function taxSummary(call: Call) {
+  const o = await call<{
+    regime: string;
+    pendingStayDeclarations: { guest: string; property: string; deadline: string; overdue: boolean }[];
+    climateFeeByMonth: { period: string; amount: number; deadline: string; filed: boolean }[];
+    warnings: { title: string }[];
+  }>("get_tax_obligations");
+  const lines = [
+    ...o.pendingStayDeclarations.map((d) => `Stay declaration: ${d.guest} at ${d.property} — ${d.overdue ? "**overdue**" : `due ${d.deadline}`}`),
+    ...o.climateFeeByMonth.filter((m) => !m.filed).map((m) => `Climate fee (ΤΑΚΚ) ${m.period}: €${m.amount}, due ${m.deadline}`),
+    ...o.warnings.map((w) => w.title),
+  ];
+  const regime = o.regime === "BUSINESS" ? "business (VAT 13% + 0.5% presence fee)" : "individual (property income, Ε2)";
+  if (!lines.length) return `Nothing is pending with AADE. Tax regime: ${regime}.`;
+  return `AADE obligations — regime: ${regime}\n\n${list(lines.slice(0, 15))}\n\n_Confirm amounts with your accountant._`;
+}
 
 async function todaySummary(call: Call) {
   const d = await call<{

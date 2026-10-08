@@ -96,9 +96,13 @@ export async function createProperty(ctx: OrgContext, input: unknown) {
 }
 
 export async function updateProperty(ctx: OrgContext, id: string, input: unknown) {
-  const data = propertyUpdateSchema.parse(input);
-  await assertProperty(ctx, id);
-  const row = await db.property.update({ where: { id }, data });
+  const { compliance, ...data } = propertyUpdateSchema.parse(input);
+  const current = await assertProperty(ctx, id);
+  const row = await db.property.update({
+    where: { id },
+    // Checklist updates are partial: merge with what is stored.
+    data: { ...data, ...(compliance ? { compliance: { ...((current.compliance as object) ?? {}), ...compliance } } : {}) },
+  });
   return serializeProperty(row);
 }
 
