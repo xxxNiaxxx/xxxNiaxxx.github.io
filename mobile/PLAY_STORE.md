@@ -82,7 +82,8 @@
 
 ## 3. Ρύθμιση της εφαρμογής Android
 
-1. Στο `mobile/eas.json` αλλάξτε **και τις δύο** τιμές `https://YOUR-APP.vercel.app` με τη διεύθυνση του Vercel.
+1. Το `mobile/eas.json` δείχνει ήδη στο `https://aivrachychronia.vercel.app` (και στα δύο profiles).
+   Αν αλλάξει η διεύθυνση του Vercel, αλλάξτε τη και εκεί.
 2. **Package name:** στο `mobile/app.json` είναι `ai.brachychronia.app`.
    **Αφού ανεβεί η πρώτη έκδοση στο Play, δεν αλλάζει ποτέ.** Αν θέλετε άλλο, αλλάξτε το τώρα
    (π.χ. `gr.toonomasas.brachychronia`).
