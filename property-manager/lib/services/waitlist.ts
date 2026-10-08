@@ -6,11 +6,11 @@ import { db } from "@/lib/db";
 import { platformAdminEmails, sendEmail } from "@/lib/email";
 import { AppError, conflict } from "@/lib/errors";
 import { email, optionalEmail, optionalText, requiredText } from "@/lib/validation/common";
+import { WAITLIST_PLATFORM_VALUES, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
 
 export const ACCESS_DAYS = 14;
 const REGISTRATION_KEY = "registrationOpen";
 
-export const WAITLIST_PLATFORMS = { BOOKING_COM: "Booking.com", AIRBNB: "Airbnb", DIRECT: "Απευθείας", OTHER: "Άλλη" } as const;
 export const WAITLIST_REGIMES = { INDIVIDUAL: "Ιδιώτης", BUSINESS: "Επιχείρηση (με έναρξη)" } as const;
 export const WAITLIST_DEVICES = { ANDROID: "Android", IPHONE: "iPhone", NONE: "Μόνο υπολογιστής" } as const;
 export const WAITLIST_STATUS_LABELS: Record<WaitlistStatus, string> = {
@@ -32,7 +32,7 @@ export const waitlistSchema = z.object({
     (v) => (v === "" || v == null ? null : v),
     z.coerce.number({ error: "Δώστε αριθμό" }).int("Δώστε ακέραιο αριθμό").min(1, "Τουλάχιστον 1").max(1000, "Πολύ μεγάλος αριθμός").nullable(),
   ),
-  platforms: z.array(z.enum(Object.keys(WAITLIST_PLATFORMS) as [keyof typeof WAITLIST_PLATFORMS])).max(4).default([]),
+  platforms: z.array(z.enum(WAITLIST_PLATFORM_VALUES)).max(WAITLIST_PLATFORM_VALUES.length).default([]),
   regime: z.preprocess((v) => (v === "" ? null : v), z.enum(["INDIVIDUAL", "BUSINESS"]).nullish()),
   device: z.preprocess((v) => (v === "" ? null : v), z.enum(["ANDROID", "IPHONE", "NONE"]).nullish()),
   playEmail: optionalEmail,
@@ -79,7 +79,7 @@ export async function joinWaitlist(input: unknown, origin: string, now = new Dat
   });
   const admins = platformAdminEmails();
   if (admins.length) {
-    const platforms = entry.platforms.map((p) => WAITLIST_PLATFORMS[p as keyof typeof WAITLIST_PLATFORMS] ?? p).join(", ");
+    const platforms = entry.platforms.map((p) => WAITLIST_PLATFORMS[p] ?? p).join(", ");
     await sendEmail({
       to: admins,
       subject: `Νέα αίτηση στη λίστα αναμονής: ${entry.name}`,
@@ -226,7 +226,7 @@ export async function waitlistCsv() {
     r.phone,
     r.city,
     r.propertiesCount,
-    r.platforms.map((p) => WAITLIST_PLATFORMS[p as keyof typeof WAITLIST_PLATFORMS] ?? p).join(", "),
+    r.platforms.map((p) => WAITLIST_PLATFORMS[p] ?? p).join(", "),
     r.regime ? WAITLIST_REGIMES[r.regime as keyof typeof WAITLIST_REGIMES] : "",
     r.device ? WAITLIST_DEVICES[r.device as keyof typeof WAITLIST_DEVICES] : "",
     r.playEmail,
