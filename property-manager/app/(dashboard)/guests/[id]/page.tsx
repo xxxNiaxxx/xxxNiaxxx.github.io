@@ -47,7 +47,7 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
           <Card>
             <CardHeader title="Μηνύματα" />
             <CardContent className="grid gap-4">
-              <MessageComposer guestId={g.id} />
+              <MessageComposer guestId={g.id} guestLanguageName={languageName(g.language)} aiEnabled={Boolean(process.env.AI_API_KEY)} />
               <MessageList messages={messages} />
             </CardContent>
           </Card>

@@ -15,6 +15,8 @@ import { formatDay, formatMoney } from "@/lib/format";
 import { getFormOptions } from "@/lib/services/options";
 import { getReservationDetails } from "@/lib/services/reservations";
 import { getStayTax } from "@/lib/services/tax";
+import { getGuest } from "@/lib/services/guests";
+import { languageName } from "@/lib/i18n/guest-language";
 import { DeclareButton } from "@/components/tax/actions";
 import { Badge } from "@/components/ui/badge";
 
@@ -29,6 +31,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
     orNotFound(getStayTax(ctx, id)),
   ]);
   const open = r.status === "CONFIRMED" || r.status === "PENDING";
+  const guest = await getGuest(ctx, r.guestId);
 
   return (
     <>
@@ -66,7 +69,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
           <Card>
             <CardHeader title="Μηνύματα επισκέπτη" description="Οδηγίες άφιξης και άλλη επικοινωνία" />
             <CardContent className="grid gap-4">
-              {open && <MessageComposer guestId={r.guestId} reservationId={r.id} />}
+              {open && <MessageComposer guestId={r.guestId} reservationId={r.id} guestLanguageName={languageName(guest.language)} aiEnabled={Boolean(process.env.AI_API_KEY)} />}
               <MessageList messages={messages} />
             </CardContent>
           </Card>

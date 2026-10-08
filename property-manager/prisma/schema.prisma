@@ -58,6 +58,7 @@ model Organization {
   aiConversations AIConversation[]
   aiActions       AIAction[]
   taxFilings      TaxFiling[]
+  aiMemories      AIMemory[]
 }
 
 model OrganizationMember {
@@ -113,6 +114,7 @@ model Property {
   reservations Reservation[]
   tasks        Task[]
   transactions Transaction[]
+  aiMemories   AIMemory[]
 
   @@index([organizationId, status])
 }
@@ -419,4 +421,44 @@ model TaxFiling {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, kind, period])
+}
+
+// ─── AI memory ───────────────────────────────────────────────────────
+
+enum AIMemoryKind {
+  /// Practical information for guests (Wi-Fi, parking, door code procedure…), usually per property.
+  GUEST_INFO
+  /// How the team wants things done ("sign messages as…", "no cleaning before 11:00").
+  PREFERENCE
+  /// A guest-message template learned from a manager's edited and approved draft.
+  MESSAGE_TEMPLATE
+}
+
+enum AIMemorySource {
+  MANUAL
+  CHAT
+  EDIT
+}
+
+/// What the assistant has learned from the organization's managers.
+model AIMemory {
+  id              String         @id @default(cuid())
+  organizationId  String
+  propertyId      String?
+  kind            AIMemoryKind
+  content         String
+  /// ISO 639-1 language of the content (templates and guest info).
+  language        String?
+  /// For MESSAGE_TEMPLATE: checkin | thanks | general
+  messageKind     String?
+  source          AIMemorySource @default(MANUAL)
+  active          Boolean        @default(true)
+  createdByUserId String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  property     Property?    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, kind, active])
 }

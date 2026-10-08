@@ -12,6 +12,7 @@ import { listTasks } from "@/lib/services/tasks";
 import { getAnnualReport, getTaxOverview } from "@/lib/services/tax";
 import { serializeReservation } from "@/lib/services/serializers";
 import { proposeAction } from "./actions";
+import { createMemory } from "./memory";
 import type { ToolSpec } from "./provider";
 
 /**
@@ -187,6 +188,17 @@ export const tools = [
     run: (i, tc) => getAnnualReport(tc.org, i.year, i.otherPropertyIncome ?? 0, tc.now),
   }),
   tool({
+    name: "save_memory",
+    description:
+      "Remember something a manager told you for future conversations. kind: GUEST_INFO = practical info for guests of a property (Wi-Fi, parking, door, rules); PREFERENCE = how the team wants things done. Only call when the user explicitly asks you to remember / note something.",
+    input: z.object({
+      kind: z.enum(["GUEST_INFO", "PREFERENCE"]),
+      content: z.string().min(3),
+      propertyId: z.string().optional(),
+    }),
+    run: async (i, tc) => ({ saved: await createMemory(tc.org, i, "CHAT") }),
+  }),
+  tool({
     name: "create_task",
     description:
       "PROPOSE a new task. It is NOT created until the user approves it in the UI. dueAt is an ISO 8601 date-time with offset.",
@@ -208,7 +220,12 @@ export const tools = [
     name: "create_message_draft",
     description:
       "PROPOSE a message to a guest (e.g. check-in instructions). It is NOT sent until the user approves it in the UI. Look up guestId (and reservationId if relevant) first, and write `message` in the guest's `language`.",
-    input: z.object({ guestId: z.string(), reservationId: z.string().optional(), message: z.string() }),
+    input: z.object({
+      guestId: z.string(),
+      reservationId: z.string().optional(),
+      message: z.string(),
+      messageKind: z.enum(["checkin", "thanks", "general"]).optional().describe("checkin = arrival instructions, thanks = after check-out, general = anything else"),
+    }),
     run: async (i, tc) => ({
       proposedAction: await proposeAction(tc.org, {
         type: "SEND_GUEST_MESSAGE",

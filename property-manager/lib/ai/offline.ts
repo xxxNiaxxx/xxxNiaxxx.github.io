@@ -7,6 +7,7 @@ import type { PropertyDTO, ReservationDTO, TaskDTO } from "@/lib/services/serial
 import type { AIActionDTO } from "./actions";
 import { guestLanguage, languageName } from "@/lib/i18n/guest-language";
 import { guestMessageTemplate } from "@/lib/i18n/guest-messages";
+import { fillTemplate, findTemplate, guestInfoFor } from "./memory";
 import { runTool, type ToolContext } from "./tools";
 
 /**
@@ -48,6 +49,8 @@ async function answer(t: string, original: string, call: Call, tc: ToolContext):
   const today = todayISO(tc.now);
   const when = has(t, ...TOMORROW) ? addDaysISO(today, 1) : has(t, ...TODAY) ? today : null;
   const whenLabel = when === today ? "σήμερα" : when ? "αύριο" : "τις επόμενες 7 ημέρες";
+
+  if (has(t, "remember", "keep in mind", "θυμησου", "να θυμασαι", "σημειωσε", "μαθε οτι", "μην ξεχνας")) return remember(original, t, call);
 
   if (has(t, "send", "message", "write to", "στειλ", "μηνυμα", "γραψε", "ενημερωσε τον", "ενημερωσε την"))
     return draftMessage(original, t, call, tc);
@@ -135,6 +138,7 @@ async function answer(t: string, original: string, call: Call, tc: ToolContext):
     "• Τι πρέπει να δηλώσω στην ΑΑΔΕ;",
     "• Στείλε οδηγίες άφιξης στη Maria Papadopoulou",
     "• Προγραμμάτισε καθαρισμό στη Villa Elia αύριο",
+    "• Θυμήσου ότι στη Villa Elia το πάρκινγκ είναι μπροστά από την πύλη",
     "",
     "_Λειτουργία εκτός σύνδεσης — ορίστε AI_API_KEY για ελεύθερες ερωτήσεις._",
   ].join("\n");
@@ -221,18 +225,59 @@ async function draftMessage(original: string, t: string, call: Call, tc: ToolCon
     : has(t, "thank", "review", "check-out", "checkout", "ευχαριστ", "κριτικ", "αναχωρ")
       ? "thanks"
       : "general";
+  const vars = { name: guest.firstName, property: reservation?.propertyName ?? undefined, checkIn: reservation?.checkIn, checkOut: reservation?.checkOut };
+  // Prefer the version a manager taught us (learned from an edited, approved draft).
+  const learned = reservation ? await findTemplate(tc.org, kind, lang) : null;
+  let message = learned ? fillTemplate(learned.content, { ...vars, language: lang }) : guestMessageTemplate(kind, lang, vars);
+  // Add the property's guest information (Wi-Fi, parking…) to arrival messages.
+  const info = kind === "checkin" && reservation ? await guestInfoFor(tc.org, reservation.propertyId, lang) : [];
+  const extra = info.filter((i) => !message.includes(i));
+  if (extra.length) {
+    const paragraphs = message.split("\n\n");
+    const signOff = paragraphs.length > 1 ? paragraphs.pop()! : "";
+    message = [...paragraphs, extra.map((i) => `• ${i}`).join("\n"), signOff].filter(Boolean).join("\n\n");
+  }
   const result = await call<{ proposedAction?: AIActionDTO; error?: string }>("create_message_draft", {
     guestId: guest.id,
     ...(reservation ? { reservationId: reservation.id } : {}),
-    message: guestMessageTemplate(kind, lang, {
-      name: guest.firstName,
-      property: reservation?.propertyName ?? undefined,
-      checkIn: reservation?.checkIn,
-      checkOut: reservation?.checkOut,
-    }),
+    message,
+    messageKind: kind,
   });
   if (!result.proposedAction) return `Δεν μπόρεσα να ετοιμάσω το μήνυμα: ${result.error ?? "άγνωστο σφάλμα"}.`;
-  return `Ετοίμασα μήνυμα προς **${guest.fullName}**${reservation ? ` για τη διαμονή στο ${reservation.propertyName}` : ""}, στα **${languageName(lang).toLowerCase()}** (γλώσσα του επισκέπτη). Δείτε το παρακάτω — δεν στέλνεται τίποτα χωρίς την έγκρισή σας.`;
+  const notes = [
+    learned ? "με βάση το πρότυπο που μου δείξατε" : null,
+    extra.length ? `με ${extra.length === 1 ? "μία πληροφορία" : `${extra.length} πληροφορίες`} του ακινήτου από όσα μου έχετε πει` : null,
+  ].filter(Boolean);
+  return `Ετοίμασα μήνυμα προς **${guest.fullName}**${reservation ? ` για τη διαμονή στο ${reservation.propertyName}` : ""}, στα **${languageName(lang).toLowerCase()}** (γλώσσα του επισκέπτη)${notes.length ? `, ${notes.join(" και ")}` : ""}. Δείτε το παρακάτω — αν το διορθώσετε πριν την έγκριση, θα θυμάμαι τη δική σας εκδοχή. Δεν στέλνεται τίποτα χωρίς την έγκρισή σας.`;
+}
+
+/** "Θυμήσου ότι στη Villa Elia το Wi-Fi είναι …" → saved for future drafts. */
+async function remember(original: string, t: string, call: Call) {
+  let content = original
+    .replace(/^.*?(θυμήσου|θυμησου|να θυμάσαι|να θυμασαι|σημείωσε|σημειωσε|μάθε|μαθε|μην ξεχνάς|μην ξεχνας|remember|keep in mind)\s*(ότι|οτι|πως|that)?\s*/iu, "")
+    .trim();
+  if (content.length < 3) return "Τι να θυμάμαι; Π.χ. «Θυμήσου ότι στη Villa Elia το πάρκινγκ είναι μπροστά από την πύλη».";
+  const { properties } = await call<{ properties: PropertyDTO[] }>("list_properties");
+  const property =
+    properties.find((p) => t.includes(normalize(p.name))) ??
+    properties.find((p) => normalize(p.name).split(" ").some((w) => w.length > 3 && t.includes(w)));
+  const guestFacing = has(t, "wifi", "wi-fi", "κωδικ", "παρκιν", "parking", "κλειδ", "πορτα", "check-in", "check in", "θερμοσιφ", "κλιματισ", "σκουπιδ", "παραλι", "σουπερ", "ταβερν", "εισοδ", "οδηγι", "πισιν");
+  const kind = property && guestFacing ? "GUEST_INFO" : "PREFERENCE";
+  if (property) {
+    // "στη Villa Elia το πάρκινγκ…" → "Το πάρκινγκ…" (the property is stored separately).
+    const prefix = new RegExp(`^(στη|στην|στο|στον|για τη|για την|για το|at|in|for)?\\s*${property.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[,:]?\\s*`, "iu");
+    const stripped = content.replace(prefix, "");
+    if (stripped.length >= 3) content = stripped.charAt(0).toUpperCase() + stripped.slice(1);
+  }
+  const saved = await call<{ saved?: { id: string }; error?: string }>("save_memory", {
+    kind,
+    content,
+    ...(property ? { propertyId: property.id } : {}),
+  });
+  if (!saved.saved) return `Δεν μπόρεσα να το αποθηκεύσω: ${saved.error ?? "άγνωστο σφάλμα"}.`;
+  return kind === "GUEST_INFO"
+    ? `Το κράτησα για το **${property!.name}**: «${content}». Θα το προσθέτω στις οδηγίες άφιξης των επισκεπτών. Μπορείτε να το αλλάξετε στις Γνώσεις AI.`
+    : `Το κράτησα${property ? ` για το **${property.name}**` : ""}: «${content}». Μπορείτε να το αλλάξετε στις Γνώσεις AI.`;
 }
 
 async function proposeTask(t: string, call: Call, tc: ToolContext) {

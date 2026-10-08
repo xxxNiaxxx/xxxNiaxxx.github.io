@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Brain } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { ActionCard } from "@/components/ai/action-card";
 import { Chat } from "@/components/ai/chat";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -26,7 +28,11 @@ export default async function AIPage({ searchParams }: { searchParams: Promise<{
 
   return (
     <>
-      <PageHeader title="Βοηθός AI" description="Ρωτήστε για τη λειτουργία των καταλυμάτων σας. Κάθε ενέργεια περιμένει την έγκρισή σας." />
+      <PageHeader
+        title="Βοηθός AI"
+        description="Ρωτήστε για τη λειτουργία των καταλυμάτων σας. Κάθε ενέργεια περιμένει την έγκρισή σας."
+        actions={<Button asChild variant="outline"><Link href="/ai/knowledge"><Brain /> Γνώσεις AI</Link></Button>}
+      />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <Chat key={current?.id ?? "new"} initial={current} mode={mode} />
         <aside className="grid min-w-0 content-start gap-6">

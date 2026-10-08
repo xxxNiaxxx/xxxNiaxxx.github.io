@@ -192,6 +192,18 @@ async function main() {
     await db.taxFiling.create({ data: { organizationId: org.id, kind: "CLIMATE_FEE", period, amount, reference: "myAADE" } });
   }
 
+  // What the AI assistant has been taught by the team.
+  await db.aIMemory.createMany({
+    data: [
+      { organizationId: org.id, propertyId: properties[0].id, kind: "GUEST_INFO", language: "el", source: "MANUAL", content: "Wi-Fi: VillaElia_Guest — κωδικός elia2026", createdByUserId: owner.id },
+      { organizationId: org.id, propertyId: properties[0].id, kind: "GUEST_INFO", language: "el", source: "CHAT", content: "Το πάρκινγκ είναι μπροστά από την κεντρική πύλη.", createdByUserId: owner.id },
+      { organizationId: org.id, propertyId: properties[0].id, kind: "GUEST_INFO", language: null, source: "MANUAL", content: "Wi-Fi: VillaElia_Guest — password elia2026", createdByUserId: owner.id },
+      { organizationId: org.id, propertyId: properties[3].id, kind: "GUEST_INFO", language: null, source: "MANUAL", content: "The key box is on the left of the entrance door, code 4821.", createdByUserId: owner.id },
+      { organizationId: org.id, kind: "PREFERENCE", language: "el", source: "MANUAL", content: "Υπογράφουμε τα μηνύματα: «Η ομάδα του Demo Hospitality».", createdByUserId: owner.id },
+      { organizationId: org.id, kind: "PREFERENCE", language: "el", source: "CHAT", content: "Οι καθαρισμοί αλλαγής γίνονται πάντα μετά τις 11:00.", createdByUserId: owner.id },
+    ],
+  });
+
   // Income for booked stays + expenses.
   for (const r of reservations) {
     if (r.status !== "CONFIRMED" && r.status !== "COMPLETED") continue;

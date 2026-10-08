@@ -34,7 +34,7 @@ export class OpenAICompatibleProvider implements ChatProvider {
     const res = await fetch(`${this.opts.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.opts.apiKey}` },
-      body: JSON.stringify({ model: this.opts.model, messages, tools, tool_choice: "auto", temperature: 0.2 }),
+      body: JSON.stringify({ model: this.opts.model, messages, ...(tools.length ? { tools, tool_choice: "auto" } : {}), temperature: 0.2 }),
       signal: AbortSignal.timeout(this.opts.timeoutMs ?? 60_000),
     });
     if (!res.ok) {

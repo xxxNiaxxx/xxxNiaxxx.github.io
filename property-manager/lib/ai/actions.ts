@@ -7,6 +7,7 @@ import { formatDay } from "@/lib/format";
 import { guestLanguage, languageName } from "@/lib/i18n/guest-language";
 import type { OrgContext } from "@/lib/permissions";
 import { createMessage } from "@/lib/services/messages";
+import { learnMessageTemplate } from "./memory";
 import { assertGuest, assertProperty, assertReservation } from "@/lib/services/scope";
 import { createTask } from "@/lib/services/tasks";
 import { taskCreateSchema } from "@/lib/validation/task";
@@ -23,6 +24,10 @@ export const sendGuestMessagePayload = z.object({
   context: z.string().optional(),
   language: z.string().optional(),
   languageName: z.string().optional(),
+  /** checkin | thanks | general — lets an edited, approved draft become a template. */
+  messageKind: z.enum(["checkin", "thanks", "general"]).optional(),
+  /** Set when a manager changed the text before approving. */
+  edited: z.boolean().optional(),
 });
 
 export const createTaskPayload = taskCreateSchema.extend({
@@ -121,7 +126,10 @@ export async function listActions(ctx: OrgContext, filter: { status?: AIAction["
 export async function updateActionPayload(ctx: OrgContext, id: string, patch: unknown) {
   const action = await findAction(ctx, id);
   if (action.status !== "PROPOSED") throw new AppError("CONFLICT", "Μόνο ενέργειες προς έγκριση μπορούν να επεξεργαστούν");
-  const merged = { ...(action.payload as object), ...(z.record(z.string(), z.unknown()).parse(patch)) };
+  const changes = z.record(z.string(), z.unknown()).parse(patch);
+  const previous = action.payload as Record<string, unknown>;
+  const edited = typeof changes.message === "string" && changes.message.trim() !== String(previous.message ?? "").trim();
+  const merged = { ...previous, ...changes, ...(edited ? { edited: true } : {}) };
   const payload = await normalizePayload(ctx, action.type as ActionType, merged);
   const row = await db.aIAction.update({ where: { id }, data: { payload: payload as Prisma.InputJsonValue } });
   return serializeAction(row);
@@ -178,7 +186,27 @@ async function execute(ctx: OrgContext, type: ActionType, rawPayload: unknown): 
         content: p.message,
         send: true,
       });
-      return { messageId: message.id, status: message.status, channel: message.channel, simulated: true };
+      // The manager corrected the draft: learn their version for next time.
+      let learnedTemplateId: string | null = null;
+      if (p.edited && p.messageKind) {
+        const [guest, reservation] = await Promise.all([
+          db.guest.findFirstOrThrow({ where: { id: p.guestId, organizationId: ctx.organizationId } }),
+          p.reservationId
+            ? db.reservation.findFirst({ where: { id: p.reservationId, organizationId: ctx.organizationId }, include: { property: { select: { name: true } } } })
+            : null,
+        ]);
+        const learned = await learnMessageTemplate(ctx, {
+          message: p.message,
+          messageKind: p.messageKind,
+          language: guestLanguage(guest),
+          firstName: guest.firstName,
+          property: reservation?.property.name,
+          checkIn: reservation ? dateToISO(reservation.checkIn) : null,
+          checkOut: reservation ? dateToISO(reservation.checkOut) : null,
+        });
+        learnedTemplateId = learned?.id ?? null;
+      }
+      return { messageId: message.id, status: message.status, channel: message.channel, simulated: true, learnedTemplateId };
     }
     case "CREATE_TASK": {
       const { propertyName, ...task } = await normalizeTaskPayload(ctx, rawPayload);

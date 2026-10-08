@@ -19,17 +19,33 @@ export default function ReservationScreen() {
   const { data, error, loading, refreshing, reload } = useQuery<Details>(`/api/reservations/${id}`);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [original, setOriginal] = useState<string | null>(null);
 
   if (loading && !data) return <Loading />;
   if (!data) return <Screen>{error && <ErrorBox message={error} onRetry={reload} />}</Screen>;
   const r = data.reservation;
   const open = r.status === "CONFIRMED" || r.status === "PENDING";
 
+  async function translate() {
+    setTranslating(true);
+    try {
+      const res = await api<{ text: string; languageName: string }>("/api/ai/translate", { body: { text: message, guestId: r.guestId } });
+      setOriginal(message);
+      setMessage(res.text);
+    } catch (e) {
+      Alert.alert("Η μετάφραση δεν έγινε", e instanceof ApiError ? e.message : "Δοκιμάστε ξανά.");
+    } finally {
+      setTranslating(false);
+    }
+  }
+
   async function send() {
     setSending(true);
     try {
       await api("/api/messages", { body: { reservationId: r.id, content: message, send: true } });
       setMessage("");
+      setOriginal(null);
       void reload();
     } catch (e) {
       Alert.alert("Η αποστολή απέτυχε", e instanceof ApiError ? e.message : "Δοκιμάστε ξανά.");
@@ -76,7 +92,11 @@ export default function ReservationScreen() {
           <View style={{ gap: 8, marginBottom: 8 }}>
             <TextInput value={message} onChangeText={setMessage} multiline placeholder="Γράψτε στον επισκέπτη…" placeholderTextColor={colors.subtleText}
               style={[styles.input, { height: 90, paddingTop: 10, textAlignVertical: "top" }]} />
-            <Button small title="Αποστολή" loading={sending} disabled={!message.trim()} onPress={send} style={{ alignSelf: "flex-end" }} />
+            <View style={{ flexDirection: "row", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+              {original !== null && <Button small variant="ghost" title="Αρχικό" onPress={() => { setMessage(original); setOriginal(null); }} />}
+              <Button small variant="outline" title="Μετάφραση" loading={translating} disabled={!message.trim()} onPress={translate} />
+              <Button small title="Αποστολή" loading={sending} disabled={!message.trim()} onPress={send} />
+            </View>
           </View>
         )}
         {data.messages.map((m) => (

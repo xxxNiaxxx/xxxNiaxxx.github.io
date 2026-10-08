@@ -3,6 +3,7 @@ import { todayISO, APP_TIMEZONE } from "@/lib/dates";
 import { notFound } from "@/lib/errors";
 import type { OrgContext } from "@/lib/permissions";
 import { listActions } from "./actions";
+import { memoriesForPrompt } from "./memory";
 import { runOfflineAssistant, type ToolTrace } from "./offline";
 import { getProvider, type ChatMessage, type ChatProvider } from "./provider";
 import { runTool, toolSpecs, type ToolContext } from "./tools";
@@ -11,8 +12,9 @@ const MAX_TOOL_ROUNDS = 6;
 const MAX_TOOL_RESULT_CHARS = 12_000;
 const HISTORY_LIMIT = 20;
 
-function systemPrompt(orgName: string, userName: string, now: Date) {
+function systemPrompt(orgName: string, userName: string, now: Date, memories: string) {
   return [
+    ...(memories ? [`What this team has taught you:\n${memories}`, ""] : []),
     `You are the AI operations manager for "${orgName}", a short-term rental business. You are talking to ${userName}.`,
     `Today is ${todayISO(now)} (time zone ${APP_TIMEZONE}). Amounts are in EUR unless stated.`,
     "Rules:",
@@ -21,6 +23,8 @@ function systemPrompt(orgName: string, userName: string, now: Date) {
     "- Before drafting a message, look up the guest (list_guests) and, when relevant, their reservation to get ids.",
     "- Always reply in Greek (Ελληνικά), unless the user writes in another language. Use Greek date formats (e.g. 8 Οκτωβρίου) and euro amounts like 1.234 €.",
     "- Guest messages you draft MUST be written in the guest's language: use the `language` field (ISO 639-1) returned for the guest by list_guests/get_guest — e.g. de → German, fr → French, el → Greek. Only use another language if the user explicitly asks. Tell the user (in Greek) which language you used.",
+    "- When drafting guest messages, use the team's guest information and follow the learned templates' structure and tone; pass messageKind to create_message_draft.",
+    "- If the user asks you to remember something, use save_memory and confirm in Greek.",
     "- Be concise and actionable. Prefer short numbered lists. Mention property names and dates.",
   ].join("\n");
 }
@@ -154,12 +158,13 @@ async function runModel(
   message: string,
   tc: ToolContext,
 ) {
-  const [org, user] = await Promise.all([
+  const [org, user, memories] = await Promise.all([
     db.organization.findUniqueOrThrow({ where: { id: ctx.organizationId }, select: { name: true } }),
     db.user.findUniqueOrThrow({ where: { id: ctx.userId }, select: { name: true, email: true } }),
+    memoriesForPrompt(ctx),
   ]);
   const messages: ChatMessage[] = [
-    { role: "system", content: systemPrompt(org.name, user.name ?? user.email, tc.now) },
+    { role: "system", content: systemPrompt(org.name, user.name ?? user.email, tc.now, memories) },
     ...history.map((m) =>
       m.role === "USER" ? { role: "user" as const, content: m.content } : { role: "assistant" as const, content: m.content },
     ),

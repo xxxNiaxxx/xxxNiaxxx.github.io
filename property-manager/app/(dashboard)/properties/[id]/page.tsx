@@ -13,6 +13,8 @@ import { getPageContext, orNotFound } from "@/lib/auth/page";
 import { formatDay, formatMoney, formatPercent } from "@/lib/format";
 import { getPropertyDetails } from "@/lib/services/properties";
 import { ComplianceChecklist } from "@/components/tax/compliance-card";
+import { AddMemoryForm, MemoryItem } from "@/components/ai/knowledge";
+import { listMemories } from "@/lib/ai/memory";
 
 export const metadata: Metadata = { title: "Ακίνητο" };
 
@@ -20,6 +22,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const { ctx } = await getPageContext();
   const d = await orNotFound(getPropertyDetails(ctx, id));
+  const guestInfo = await listMemories(ctx, { kind: "GUEST_INFO", propertyId: id });
   const p = d.property;
   const cur = d.currentReservation;
 
@@ -93,6 +96,17 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
                 ]}
               />
               {p.description && <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{p.description}</p>}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader
+              title="Πληροφορίες για επισκέπτες"
+              description="Ο βοηθός AI τις προσθέτει στις οδηγίες άφιξης"
+              action={<Button asChild variant="ghost" size="sm"><Link href="/ai/knowledge">Γνώσεις AI →</Link></Button>}
+            />
+            <CardContent className="grid gap-4">
+              {guestInfo.length > 0 && <ul className="grid gap-3">{guestInfo.map((m) => <MemoryItem key={m.id} memory={m} />)}</ul>}
+              <AddMemoryForm properties={[{ id: p.id, name: p.name }]} defaultPropertyId={p.id} />
             </CardContent>
           </Card>
           <Card>
