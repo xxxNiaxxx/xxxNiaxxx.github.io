@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   businessBreakdown,
+  climateFeeByMonth,
   climateFeeDeadline,
   climateFeeForStay,
   climateFeePerNight,
@@ -34,6 +35,23 @@ describe("climate resilience fee (ΤΑΚΚ)", () => {
     expect(climateFeeForStay({ checkIn: "2026-10-30", checkOut: "2026-11-02", totalAmount: 300 }, apartment)).toBe(18);
     // AADE example: 10 nights in July in an apartment = 80 €
     expect(climateFeeForStay({ checkIn: "2026-07-01", checkOut: "2026-07-11", totalAmount: 900 }, apartment)).toBe(80);
+  });
+
+  it("splits a stay that crosses months into each month's return", () => {
+    expect(climateFeeByMonth({ checkIn: "2026-10-30", checkOut: "2026-11-02", totalAmount: 300 }, apartment)).toEqual([
+      { period: "2026-10", nights: 2, amount: 16 },
+      { period: "2026-11", nights: 1, amount: 2 },
+    ]);
+    // Same season both sides: 2 nights in July, 3 in August, detached house > 80 m²
+    expect(climateFeeByMonth({ checkIn: "2026-07-30", checkOut: "2026-08-04", totalAmount: 1500 }, bigHouse)).toEqual([
+      { period: "2026-07", nights: 2, amount: 30 },
+      { period: "2026-08", nights: 3, amount: 45 },
+    ]);
+    // New Year: 31 Dec in December, 1 Jan in January
+    expect(climateFeeByMonth({ checkIn: "2026-12-31", checkOut: "2027-01-02", totalAmount: 200 }, apartment)).toEqual([
+      { period: "2026-12", nights: 1, amount: 2 },
+      { period: "2027-01", nights: 1, amount: 2 },
+    ]);
   });
 
   it("exempts free stays", () => {

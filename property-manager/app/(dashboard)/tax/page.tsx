@@ -156,7 +156,7 @@ function Obligations({ o, business }: { o: Awaited<ReturnType<typeof getTaxOverv
       <Card className="overflow-hidden">
         <CardHeader
           title={business ? "Monthly returns: ΤΑΚΚ, VAT and presence fee" : "Climate resilience fee (ΤΑΚΚ) — monthly return"}
-          description={`Per night per property: €8 Apr–Oct / €2 Nov–Mar; detached houses over 80 m²: €15 / €4. Filed in myAADE by the last day of the following month (reference month: check-out).${business ? " VAT 13% and the 0.5% presence fee are extracted from each stay's total." : ""}`}
+          description={`Per night per property: €8 Apr–Oct / €2 Nov–Mar; detached houses over 80 m²: €15 / €4. Nights are split by calendar month — a stay crossing into a new month goes into both returns. Filed in myAADE by the last day of the following month.${business ? " VAT 13% and the 0.5% presence fee are extracted from each stay's total." : ""}`}
         />
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -165,7 +165,7 @@ function Obligations({ o, business }: { o: Awaited<ReturnType<typeof getTaxOverv
                 <th className="px-5 py-2 font-medium">Month</th>
                 <th className="px-5 py-2 text-right font-medium">Stays</th>
                 <th className="px-5 py-2 text-right font-medium">Nights</th>
-                <th className="px-5 py-2 text-right font-medium">Gross</th>
+                <th className="px-5 py-2 text-right font-medium" title="Stays checking out this month">Gross (check-outs)</th>
                 <th className="px-5 py-2 text-right font-medium">ΤΑΚΚ</th>
                 <th className="px-5 py-2 font-medium">Due</th>
                 {business && <th className="px-5 py-2 text-right font-medium">VAT</th>}

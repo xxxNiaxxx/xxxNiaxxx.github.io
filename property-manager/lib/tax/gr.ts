@@ -29,6 +29,11 @@ export function resolveRegime(setting: "AUTO" | TaxRegime, propertiesWithAma: nu
 
 export type PropertyKind = "APARTMENT" | "DETACHED_HOUSE";
 
+/** "YYYY-MM" of an ISO date. */
+export function periodOf(isoDate: string) {
+  return isoDate.slice(0, 7);
+}
+
 interface ClimateFeeRates {
   /** €/night, April–October */
   high: { standard: number; detachedOver80: number };
@@ -62,21 +67,38 @@ export function climateFeePerNight(isoDate: string, property: { kind: PropertyKi
   return large ? season.detachedOver80 : season.standard;
 }
 
-/** Fee for a stay [checkIn, checkOut). Free stays (total 0) are exempt. */
+/**
+ * Fee for a stay [checkIn, checkOut), split by the calendar month of each night:
+ * a stay that crosses into a new month is declared separately in each month's
+ * return (e.g. 30 Oct → 2 Nov: two October nights in October, one in November).
+ * Free stays (total 0) are exempt.
+ */
+export function climateFeeByMonth(
+  stay: { checkIn: string; checkOut: string; totalAmount: number },
+  property: { kind: PropertyKind; areaSqm: number | null },
+): { period: string; nights: number; amount: number }[] {
+  if (stay.totalAmount <= 0) return [];
+  const months = new Map<string, { nights: number; amount: number }>();
+  for (let i = 0; i < diffDaysISO(stay.checkIn, stay.checkOut); i++) {
+    const night = addDaysISO(stay.checkIn, i);
+    const m = months.get(periodOf(night)) ?? { nights: 0, amount: 0 };
+    m.nights += 1;
+    m.amount += climateFeePerNight(night, property);
+    months.set(periodOf(night), m);
+  }
+  return [...months.entries()].map(([period, m]) => ({ period, nights: m.nights, amount: round2(m.amount) }));
+}
+
+/** Total fee for a stay. */
 export function climateFeeForStay(
   stay: { checkIn: string; checkOut: string; totalAmount: number },
   property: { kind: PropertyKind; areaSqm: number | null },
 ) {
-  if (stay.totalAmount <= 0) return 0;
-  let fee = 0;
-  for (let i = 0; i < diffDaysISO(stay.checkIn, stay.checkOut); i++) fee += climateFeePerNight(addDaysISO(stay.checkIn, i), property);
-  return round2(fee);
+  return round2(climateFeeByMonth(stay, property).reduce((a, m) => a + m.amount, 0));
 }
 
 // ─── Deadlines ───────────────────────────────────────────────────────
 
-/** "YYYY-MM" of an ISO date. */
-export const periodOf = (isoDate: string) => isoDate.slice(0, 7);
 
 function nextMonthFirst(isoDate: string) {
   return monthRange(isoDate).to;
@@ -87,7 +109,7 @@ export function stayDeclarationDeadline(departureOrCancellation: string) {
   return addDaysISO(nextMonthFirst(departureOrCancellation), 19);
 }
 
-/** Monthly climate-fee return: by the last day of the month after the reference month. */
+/** Monthly climate-fee return (for the nights of that month): by the last day of the following month. */
 export function climateFeeDeadline(period: string) {
   const following = nextMonthFirst(`${period}-01`);
   return addDaysISO(nextMonthFirst(following), -1);

@@ -7,7 +7,7 @@ import { hasRole, type OrgContext } from "@/lib/permissions";
 import {
   businessBreakdown,
   climateFeeDeadline,
-  climateFeeForStay,
+  climateFeeByMonth,
   COMPLIANCE_ITEMS,
   FLAT_DEDUCTION_RATE,
   periodOf,
@@ -67,7 +67,8 @@ export function stayTaxInfo(r: StayRow, regime: TaxRegime, today: string) {
   const requiresDeclaration = (booked || cancelledPaid) && !longStay && r.declarationStatus !== "NOT_REQUIRED";
   const deadline = stayDeclarationDeadline(trigger);
   const due = requiresDeclaration && r.declarationStatus === "PENDING" && trigger <= today;
-  const climateFee = booked ? climateFeeForStay({ checkIn, checkOut, totalAmount: total }, { kind: r.property.kind as PropertyKind, areaSqm: r.property.areaSqm }) : 0;
+  const climateFeeMonths = booked ? climateFeeByMonth({ checkIn, checkOut, totalAmount: total }, { kind: r.property.kind as PropertyKind, areaSqm: r.property.areaSqm }) : [];
+  const climateFee = round2(climateFeeMonths.reduce((a, m) => a + m.amount, 0));
   const business = regime === "BUSINESS" ? businessBreakdown(total) : null;
   return {
     reservationId: r.id,
@@ -83,7 +84,8 @@ export function stayTaxInfo(r: StayRow, regime: TaxRegime, today: string) {
     nights,
     totalAmount: total,
     climateFee,
-    climateFeePeriod: periodOf(checkOut),
+    /** ΤΑΚΚ split by the month of each night — each part goes into that month's return. */
+    climateFeeMonths,
     rent: business ? business.rent : total,
     vat: business?.vat ?? 0,
     presenceFee: business?.presenceFee ?? 0,
@@ -186,14 +188,24 @@ export async function getTaxOverview(ctx: OrgContext, now = new Date()) {
   const filed = (kind: TaxFilingKind, period: string) => filings.find((f) => f.kind === kind && f.period === period);
   const monthly = months
     .map((period) => {
-      const inMonth = stays.filter((s) => s.climateFeePeriod === period && (s.status === "CONFIRMED" || s.status === "COMPLETED") && s.checkOut <= today);
-      const climateFee = round2(inMonth.reduce((a, s) => a + s.climateFee, 0));
+      const booked = stays.filter((s) => s.status === "CONFIRMED" || s.status === "COMPLETED");
+      // ΤΑΚΚ: nights spent in this month, also from stays that started earlier or end later.
+      const nightsInMonth = booked.flatMap((s) => {
+        const part = s.climateFeeMonths.find((m) => m.period === period);
+        if (!part) return [];
+        // Only nights already spent count (relevant for the month in progress).
+        const spent = Math.min(part.nights, Math.max(0, diffDaysISO(s.checkIn > `${period}-01` ? s.checkIn : `${period}-01`, today)));
+        return spent > 0 ? [{ nights: spent, amount: spent === part.nights ? part.amount : round2((part.amount / part.nights) * spent) }] : [];
+      });
+      const climateFee = round2(nightsInMonth.reduce((a, m) => a + m.amount, 0));
+      // Revenue, VAT and presence fee follow the check-out (receipt) month.
+      const inMonth = booked.filter((s) => periodOf(s.checkOut) === period && s.checkOut <= today);
       const deadline = climateFeeDeadline(period);
       const climateFiling = filed("CLIMATE_FEE", period);
       return {
         period,
-        stays: inMonth.length,
-        nights: inMonth.reduce((a, s) => a + s.nights, 0),
+        stays: nightsInMonth.length,
+        nights: nightsInMonth.reduce((a, m) => a + m.nights, 0),
         gross: round2(inMonth.reduce((a, s) => a + s.totalAmount, 0)),
         climateFee,
         climateFeeDeadline: deadline,
@@ -336,9 +348,9 @@ function csv(rows: (string | number | null)[][]) {
 export async function exportStaysCsv(ctx: OrgContext, year: number) {
   const stays = await listStays(ctx, { from: `${year}-01-01`, to: `${year + 1}-01-01` });
   return csv([
-    ["AMA", "Property", "Guest", "Confirmation", "Source", "Status", "Check-in", "Check-out", "Nights", "Total (EUR)", "Rent ex VAT", "VAT 13%", "Presence fee 0.5%", "Climate fee (TAKK)", "TAKK month", "Declaration", "Declaration deadline"],
+    ["AMA", "Property", "Guest", "Confirmation", "Source", "Status", "Check-in", "Check-out", "Nights", "Total (EUR)", "Rent ex VAT", "VAT 13%", "Presence fee 0.5%", "Climate fee (TAKK)", "TAKK by month", "Declaration", "Declaration deadline"],
     ...stays.map((s) => [
-      s.ama, s.propertyName, s.guestName, s.confirmationCode, s.source, s.status, s.checkIn, s.checkOut, s.nights, s.totalAmount, s.rent, s.vat, s.presenceFee, s.climateFee, s.climateFeePeriod,
+      s.ama, s.propertyName, s.guestName, s.confirmationCode, s.source, s.status, s.checkIn, s.checkOut, s.nights, s.totalAmount, s.rent, s.vat, s.presenceFee, s.climateFee, s.climateFeeMonths.map((m) => `${m.period}: ${m.nights}n €${m.amount}`).join(" | "),
       s.declaration.required ? s.declaration.status : "NOT_REQUIRED", s.declaration.required ? s.declaration.deadline : null,
     ]),
   ]);
