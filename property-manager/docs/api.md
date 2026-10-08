@@ -36,6 +36,18 @@ is a decimal number in the record's `currency` (EUR by default).
 | POST | `/api/organizations/active` | `{ organizationId }` — switch to another organization **you are a member of** |
 | GET | `/api/members` | members of the active organization |
 
+## Mobile app session
+
+The Expo app cannot use the browser cookie, so it exchanges credentials for a
+30-day bearer token and sends `Authorization: Bearer <token>` on every call.
+Organization membership is still resolved server-side per request; an optional
+`X-Organization-Id` header only chooses among the user's own organizations.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| POST | `/api/mobile/session` | public · `{ email, password }` → `{ token, user, organization, role }` · 401 on bad credentials |
+| GET | `/api/mobile/session` | validates the token → `{ user, organization, role }` |
+
 ## Properties
 
 | Method | Path | Notes |

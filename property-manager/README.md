@@ -11,6 +11,10 @@ basic financials and an AI manager that answers from your real data and
 > (`app-ads.txt`) keeps working. See [`docs/architecture.md`](docs/architecture.md)
 > and [`docs/api.md`](docs/api.md).
 
+📱 **Mobile:** a companion Expo app that runs in **Expo Go** lives in
+[`../mobile`](../mobile/README.md). Start this server with `npm run dev:lan`
+so your phone can reach it.
+
 Stack: Next.js 15 · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui-style
 components · PostgreSQL · Prisma 6 · Zod · Auth.js v5 · Vitest.
 
@@ -54,6 +58,7 @@ simulated in Phase 1 (stored as `SENT` on the internal channel).
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | development server |
+| `npm run dev:lan` | development server reachable from your phone (for the Expo app) |
 | `npm run build` / `npm start` | production build / server |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint (next/core-web-vitals + TypeScript) |
