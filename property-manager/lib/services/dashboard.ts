@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { addDaysISO, isoToDate, monthRange, todayISO, zonedDateTime, zonedDayRange } from "@/lib/dates";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatDay } from "@/lib/format";
 import type { OrgContext } from "@/lib/permissions";
 import { getOccupancy } from "./financials";
 import { serializeReservation, serializeTask, toNumber } from "./serializers";
@@ -131,7 +131,7 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
           kind: "MISSING_CLEANING",
           severity: s.checkIn === today ? "high" : "medium",
           title: `No cleaning scheduled before ${guest}'s check-in`,
-          detail: `${s.propertyName} · check-in ${s.checkIn}`,
+          detail: `${s.propertyName} · check-in ${formatDay(s.checkIn)}`,
           href: `/reservations/${r.id}`,
         });
       }
@@ -140,7 +140,7 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
           kind: "NO_CHECKIN_MESSAGE",
           severity: "medium",
           title: `${guest} hasn't received check-in instructions`,
-          detail: `${s.propertyName} · check-in ${s.checkIn}`,
+          detail: `${s.propertyName} · check-in ${formatDay(s.checkIn)}`,
           href: `/reservations/${r.id}`,
         });
       }
@@ -154,7 +154,7 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
         kind: "MISSING_INFO",
         severity: "low",
         title: `${guest}'s reservation is missing ${missing.join(", ")}`,
-        detail: `${s.propertyName} · ${s.checkIn} → ${s.checkOut}`,
+        detail: `${s.propertyName} · ${formatDay(s.checkIn)} → ${formatDay(s.checkOut)}`,
         href: `/reservations/${r.id}`,
       });
     }

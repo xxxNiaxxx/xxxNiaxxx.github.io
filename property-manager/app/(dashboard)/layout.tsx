@@ -1,0 +1,26 @@
+import { MobileBottomNav, MobileTopBar } from "@/components/layout/mobile-nav";
+import { Sidebar } from "@/components/layout/sidebar";
+import { getPageContext } from "@/lib/auth/page";
+import { APP_NAME } from "@/lib/brand";
+import { db } from "@/lib/db";
+
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { ctx, user, organization } = await getPageContext();
+  const pendingActions = await db.aIAction.count({ where: { organizationId: ctx.organizationId, status: "PROPOSED" } });
+  return (
+    <div className="flex min-h-dvh">
+      <Sidebar
+        appName={APP_NAME}
+        orgName={organization.name}
+        userName={user.name ?? user.email}
+        userEmail={user.email}
+        pendingActions={pendingActions}
+      />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <MobileTopBar appName={APP_NAME} orgName={organization.name} />
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-10 lg:pt-10 lg:pb-12">{children}</main>
+      </div>
+      <MobileBottomNav pendingActions={pendingActions} />
+    </div>
+  );
+}
