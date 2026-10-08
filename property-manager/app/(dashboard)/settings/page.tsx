@@ -2,21 +2,23 @@ import type { Metadata } from "next";
 import { DeleteAccount } from "@/components/settings/delete-account";
 import { NameForm } from "@/components/settings/name-form";
 import { OrgSwitcher } from "@/components/settings/org-switcher";
-import { Badge } from "@/components/ui/badge";
+import { TeamPanel } from "@/components/settings/team";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DefinitionList, PageHeader } from "@/components/ui/misc";
 import { getPageContext } from "@/lib/auth/page";
 import { db } from "@/lib/db";
 import { humanize } from "@/lib/format";
 import { hasRole } from "@/lib/permissions";
+import { listInvitations } from "@/lib/services/invitations";
 import { listMembers } from "@/lib/services/members";
 
 export const metadata: Metadata = { title: "Ρυθμίσεις" };
 
 export default async function SettingsPage() {
   const { ctx, user, organization, role } = await getPageContext();
-  const [members, memberships] = await Promise.all([
+  const [members, invitations, memberships] = await Promise.all([
     listMembers(ctx),
+    listInvitations(ctx),
     db.organizationMember.findMany({ where: { userId: user.id }, include: { organization: { select: { id: true, name: true } } } }),
   ]);
   const ai = process.env.AI_API_KEY ? `Συνδεδεμένος · ${process.env.AI_MODEL || "gpt-4o-mini"}` : "Βοηθός εκτός σύνδεσης (χωρίς AI_API_KEY)";
@@ -45,19 +47,9 @@ export default async function SettingsPage() {
             <DefinitionList items={[{ label: "Βοηθός AI", value: ai }, { label: "Κανάλια", value: "Χειροκίνητες κρατήσεις (συγχρονισμός Airbnb / Booking.com σε επόμενη φάση)" }]} />
           </CardContent>
         </Card>
-        <Card>
+        <Card id="team">
           <CardHeader title="Ομάδα" description={`${members.length} ${members.length === 1 ? "μέλος" : "μέλη"}`} />
-          <ul className="divide-y divide-border">
-            {members.map((m) => (
-              <li key={m.userId} className="flex items-center justify-between gap-3 px-5 py-3">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium">{m.name}{m.userId === user.id && <span className="text-muted-foreground"> (εσείς)</span>}</div>
-                  <div className="truncate text-xs text-muted-foreground">{m.email}</div>
-                </div>
-                <Badge tone={m.role === "OWNER" ? "dark" : m.role === "ADMIN" ? "accent" : "neutral"}>{humanize(m.role)}</Badge>
-              </li>
-            ))}
-          </ul>
+          <TeamPanel members={members} invitations={invitations} currentUserId={user.id} currentRole={role} />
         </Card>
         <Card>
           <CardHeader title="Διαγραφή λογαριασμού" description="Οριστική διαγραφή του λογαριασμού σας και, όπου είστε το μόνο μέλος, των δεδομένων του οργανισμού." />

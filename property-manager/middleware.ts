@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const AUTH_PAGES = ["/login", "/register"];
 /** Readable without signing in (Google Play requires public URLs for these). */
-const PUBLIC = [...AUTH_PAGES, "/privacy", "/account-deletion"];
+const PUBLIC = [...AUTH_PAGES, "/privacy", "/account-deletion", "/invite"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

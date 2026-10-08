@@ -38,8 +38,14 @@ export async function registerAction(_prev: AuthFormState, form: FormData): Prom
     email: String(form.get("email") ?? ""),
     organizationName: String(form.get("organizationName") ?? ""),
   };
+  const invite = String(form.get("invite") ?? "") || undefined;
   try {
-    await registerAccount({ ...values, password: String(form.get("password") ?? "") });
+    await registerAccount({
+      ...values,
+      organizationName: values.organizationName || undefined,
+      invite,
+      password: String(form.get("password") ?? ""),
+    });
   } catch (e) {
     if (e instanceof ZodError) {
       const fieldErrors: Record<string, string> = {};
@@ -55,4 +61,10 @@ export async function registerAction(_prev: AuthFormState, form: FormData): Prom
 
 export async function logoutAction() {
   await signOut({ redirectTo: "/login" });
+}
+
+/** Signs out and comes back to the given page after signing in with another account. */
+export async function switchAccountAction(form: FormData) {
+  const next = safeNext(form.get("next"));
+  await signOut({ redirectTo: `/login?next=${encodeURIComponent(next)}` });
 }

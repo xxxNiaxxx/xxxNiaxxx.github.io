@@ -5,7 +5,9 @@ export const registerSchema = z.object({
   name: requiredText("Ονοματεπώνυμο", 100),
   email,
   password: z.string().min(8, "Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες").max(200),
-  organizationName: requiredText("Όνομα οργανισμού", 120),
-});
+  /** Not needed when joining an existing team through an invitation. */
+  organizationName: requiredText("Όνομα οργανισμού", 120).optional(),
+  invite: z.string().trim().min(1).max(200).optional(),
+}).refine((v) => v.invite || v.organizationName, { message: "Το πεδίο «Όνομα οργανισμού» είναι υποχρεωτικό", path: ["organizationName"] });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
