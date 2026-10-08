@@ -38,6 +38,7 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
             key={sp.new ? `new-${sp.propertyId}-${sp.checkIn}` : "new"}
             properties={options.properties}
             guests={options.guests}
+            pricing={options.pricing}
             defaults={defaults}
             defaultOpen={sp.new === "1"}
             trigger={<Button><Plus /> Νέα κράτηση</Button>}

@@ -50,7 +50,8 @@ interface Annual {
   byProperty: { propertyId: string; name: string; ama: string | null; stays: number; nights: number; gross: number; climateFee: number; expenses: number }[];
   climateFeeCollected: number;
   individual: { gross: number; deduction: number; taxable: number; estimatedTax: number };
-  business: { revenueExVat: number; vat: number; presenceFee: number; expenses: number; profitBeforeTax: number };
+  effectiveTaxRate: number;
+  business: { revenueExVat: number; vat: number; presenceFee: number; expenses: number; profitBeforeTax: number; estimatedTax: number; profitAfterTax: number; taxRateSource: "SETTING" | "SCALE" };
 }
 
 const MONTHS = ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"];
@@ -235,6 +236,9 @@ function AnnualTab({ tabs }: { tabs: React.ReactNode }) {
               <Row label="Τέλος παρεπιδημούντων" value={formatMoney(data.business.presenceFee)} />
               <Row label="Έξοδα" value={formatMoney(data.business.expenses)} />
               <Row label="Κέρδος προ φόρων" value={formatMoney(data.business.profitBeforeTax)} strong />
+              <Row label={`Φόρος εισοδήματος (εκτίμηση ${Math.round(data.effectiveTaxRate * 1000) / 10}%)`} value={formatMoney(data.business.estimatedTax)} />
+              <Row label="Καθαρά μετά φόρων" value={formatMoney(data.business.profitAfterTax)} strong />
+              <Text style={styles.rowSub}>{data.business.taxRateSource === "SETTING" ? "Με τον δικό σας συντελεστή (Ρυθμίσεις)." : "Από την κλίμακα επιχειρήσεων, χωρίς εισφορές ΕΦΚΑ."}</Text>
             </Card>
           )}
           <Card>

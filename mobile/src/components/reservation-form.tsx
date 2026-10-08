@@ -6,7 +6,8 @@ import { Button, Card, Loading, Screen, styles } from "@/components/ui";
 import { api } from "@/lib/api";
 import { RESERVATION_SOURCES } from "@/lib/constants";
 import { addDays, formatMoney, humanize } from "@/lib/format";
-import type { Guest, Property, Reservation } from "@/lib/types";
+import { climateFeeForStay, commissionFor } from "@/lib/pricing";
+import type { Guest, Property, Reservation, TaxSettings } from "@/lib/types";
 import { goBack, useMutation } from "@/lib/use-mutation";
 import { useQuery } from "@/lib/use-query";
 
@@ -16,6 +17,7 @@ export function ReservationForm({ reservation, defaults }: { reservation?: Reser
   const editing = Boolean(reservation);
   const properties = useQuery<Property[]>("/api/properties");
   const guests = useQuery<Guest[]>("/api/guests");
+  const pricing = useQuery<TaxSettings>("/api/tax/settings");
   const { run, pending, fieldErrors: err } = useMutation();
 
   const [propertyId, setPropertyId] = useState(reservation?.propertyId ?? defaults?.propertyId ?? "");
@@ -27,16 +29,24 @@ export function ReservationForm({ reservation, defaults }: { reservation?: Reser
   const [guestsCount, setGuestsCount] = useState(String(reservation?.guestsCount ?? 2));
   const [free, setFree] = useState(reservation?.complimentary ?? false);
   const [amount, setAmount] = useState(reservation ? String(reservation.totalAmount) : "");
+  // New bookings: the amount is what the guest pays (Booking's "Συνολική τιμή κράτησης", with ΤΑΚΚ).
+  const [includesFee, setIncludesFee] = useState(!reservation);
+  const [commission, setCommission] = useState(reservation && reservation.commission > 0 ? String(reservation.commission) : "");
   const [source, setSource] = useState(reservation?.source ?? "MANUAL");
   const [code, setCode] = useState(reservation?.confirmationCode ?? "");
   const [status, setStatus] = useState<string>(reservation?.status ?? "CONFIRMED");
   const [notes, setNotes] = useState(reservation?.notes ?? "");
 
-  if (!properties.data || !guests.data) return <Loading />;
+  if (!properties.data || !guests.data || !pricing.data) return <Loading />;
   const active = properties.data.filter((p) => p.status === "ACTIVE" || p.id === reservation?.propertyId);
   const property = properties.data.find((p) => p.id === (propertyId || active[0]?.id));
   const nights = checkIn && checkOut && checkOut > checkIn ? nightsBetween(checkIn, checkOut) : 0;
   const suggested = property && nights ? property.basePrice * nights : null;
+  const entered = Number(amount) || 0;
+  const climateFee = property && nights && entered > 0 ? climateFeeForStay(checkIn, checkOut, property) : 0;
+  const room = includesFee ? Math.max(0, Math.round((entered - climateFee) * 100) / 100) : entered;
+  const rate = pricing.data.commissionRates[source] ?? 0;
+  const autoCommission = room > 0 && rate > 0 ? commissionFor(room, rate, pricing.data.regime) : 0;
   const dateError = checkIn && checkOut && checkOut <= checkIn ? "Η αναχώρηση πρέπει να είναι μετά την άφιξη" : undefined;
 
   async function save() {
@@ -47,6 +57,7 @@ export function ReservationForm({ reservation, defaults }: { reservation?: Reser
       guestsCount: Number(guestsCount) || 0,
       totalAmount: free ? 0 : amount === "" ? undefined : Number(amount),
       complimentary: free,
+      ...(free ? {} : { amountIncludesClimateFee: includesFee, commission: commission === "" ? autoCommission : Number(commission) }),
       currency: property?.currency ?? "EUR",
       source,
       confirmationCode: code,
@@ -95,11 +106,18 @@ export function ReservationForm({ reservation, defaults }: { reservation?: Reser
         {free ? (
           <Text style={styles.rowSub}>Ποσό: χωρίς ενοίκιο</Text>
         ) : (
-          <NumberField label="Συνολικό ποσό (€)" value={amount} onChange={setAmount} error={err.totalAmount} placeholder={suggested ? String(suggested) : undefined}
-            hint={suggested ? `Πρόταση ${formatMoney(suggested)} (${nights} × βασική τιμή)` : undefined} />
+          <>
+            <NumberField label={includesFee ? "Συνολική τιμή κράτησης (€, με ΤΑΚΚ)" : "Τιμή δωματίου (€, χωρίς ΤΑΚΚ)"} value={amount} onChange={setAmount} error={err.totalAmount} placeholder={suggested ? String(suggested) : undefined}
+              hint={entered > 0 && nights > 0 ? (includesFee ? `Τιμή δωματίου ${formatMoney(room)} + ΤΑΚΚ ${formatMoney(climateFee)}` : `Ο επισκέπτης πληρώνει ${formatMoney(entered + climateFee)} με το ΤΑΚΚ`) : suggested ? `Πρόταση ${formatMoney(suggested)} (${nights} × βασική τιμή)` : undefined} />
+            <CheckRow label="Το ποσό περιλαμβάνει ΤΑΚΚ" detail="Όπως η «Συνολική τιμή κράτησης» του Booking" value={includesFee} onChange={setIncludesFee} />
+          </>
         )}
-        {suggested && !free && amount === "" && <Button small variant="outline" title={`Χρήση ${formatMoney(suggested)}`} onPress={() => setAmount(String(suggested))} style={{ alignSelf: "flex-start" }} />}
+        {suggested && !free && amount === "" && <Button small variant="outline" title={`Χρήση ${formatMoney(suggested)}`} onPress={() => setAmount(String(includesFee && property ? Math.round((suggested + climateFeeForStay(checkIn, checkOut, property)) * 100) / 100 : suggested))} style={{ alignSelf: "flex-start" }} />}
         <SelectField label="Πηγή" value={source} onChange={setSource} options={RESERVATION_SOURCES.map((s) => ({ value: s, label: humanize(s) }))} />
+        {!free && (
+          <NumberField label="Προμήθεια πλατφόρμας (€)" value={commission} onChange={setCommission} error={err.commission} placeholder={autoCommission ? String(autoCommission) : "0"}
+            hint={rate > 0 ? `Κενό = αυτόματα ${rate}%${autoCommission ? ` (${formatMoney(autoCommission)})` : ""}` : "Χωρίς προμήθεια για αυτή την πηγή"} />
+        )}
         <TextField label="Κωδικός κράτησης" value={code} onChangeText={setCode} placeholder="Προαιρετικό" error={err.confirmationCode} />
         <SelectField label="Κατάσταση" value={status} onChange={setStatus}
           options={["CONFIRMED", "PENDING", ...(editing ? ["COMPLETED", "CANCELLED"] : [])].map((s) => ({ value: s, label: humanize(s) }))} />

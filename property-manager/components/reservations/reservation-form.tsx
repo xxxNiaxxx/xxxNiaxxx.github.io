@@ -12,6 +12,7 @@ import { useMutation } from "@/lib/client/use-mutation";
 import { diffDaysISO } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import type { ReservationDTO } from "@/lib/services/serializers";
+import { climateFeeForStay, commissionFor, type PropertyKind, type TaxRegime } from "@/lib/tax/gr";
 import { cn } from "@/lib/utils";
 
 export interface PropertyOption {
@@ -21,6 +22,8 @@ export interface PropertyOption {
   currency: string;
   maxGuests: number;
   status: string;
+  kind: string;
+  areaSqm: number | null;
 }
 export interface GuestOption {
   id: string;
@@ -32,13 +35,14 @@ interface Props {
   properties: PropertyOption[];
   guests: GuestOption[];
   reservation?: ReservationDTO;
+  pricing: { regime: TaxRegime; commissionRates: Record<string, number> };
   defaults?: { propertyId?: string; checkIn?: string; checkOut?: string };
   trigger?: React.ReactNode;
   /** Controlled open state (used for ?new=1 deep links). */
   defaultOpen?: boolean;
 }
 
-export function ReservationFormDialog({ properties, guests, reservation, defaults, trigger, defaultOpen }: Props) {
+export function ReservationFormDialog({ properties, guests, reservation, pricing, defaults, trigger, defaultOpen }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -50,10 +54,20 @@ export function ReservationFormDialog({ properties, guests, reservation, default
   const [checkIn, setCheckIn] = useState(reservation?.checkIn ?? defaults?.checkIn ?? "");
   const [checkOut, setCheckOut] = useState(reservation?.checkOut ?? defaults?.checkOut ?? "");
   const [free, setFree] = useState(reservation?.complimentary ?? false);
+  // New bookings: the amount is what the guest pays (Booking's "Συνολική τιμή κράτησης", with ΤΑΚΚ).
+  const [includesFee, setIncludesFee] = useState(!reservation);
+  const [amount, setAmount] = useState(reservation ? String(reservation.totalAmount) : "");
+  const [source, setSource] = useState<string>(reservation?.source ?? "MANUAL");
+  const [commission, setCommission] = useState(reservation && reservation.commission > 0 ? String(reservation.commission) : "");
   const property = properties.find((p) => p.id === propertyId);
   const nights = checkIn && checkOut && checkOut > checkIn ? diffDaysISO(checkIn, checkOut) : 0;
   const suggested = property && nights ? property.basePrice * nights : null;
   const dateError = checkIn && checkOut && checkOut <= checkIn ? "Η αναχώρηση πρέπει να είναι μετά την άφιξη" : undefined;
+  const entered = Number(amount) || 0;
+  const climateFee = property && nights && entered > 0 ? climateFeeForStay({ checkIn, checkOut, totalAmount: entered }, { kind: property.kind as PropertyKind, areaSqm: property.areaSqm }) : 0;
+  const room = includesFee ? Math.max(0, Math.round((entered - climateFee) * 100) / 100) : entered;
+  const rate = pricing.commissionRates[source] ?? 0;
+  const autoCommission = room > 0 && rate > 0 ? commissionFor(room, rate, pricing.regime) : 0;
   const activeProperties = useMemo(() => properties.filter((p) => p.status === "ACTIVE" || p.id === reservation?.propertyId), [properties, reservation]);
 
   function onOpenChange(next: boolean) {
@@ -73,6 +87,11 @@ export function ReservationFormDialog({ properties, guests, reservation, default
     const body: Record<string, unknown> = Object.fromEntries(Object.entries(v).filter(([k]) => !k.startsWith("newGuest.")));
     body.complimentary = free;
     if (free) body.totalAmount = 0;
+    else {
+      body.totalAmount = amount === "" ? undefined : Number(amount);
+      body.amountIncludesClimateFee = includesFee;
+      body.commission = commission === "" ? autoCommission : Number(commission);
+    }
     if (!editing) {
       if (guestMode === "new") {
         body.newGuest = newGuest;
@@ -165,15 +184,15 @@ export function ReservationFormDialog({ properties, guests, reservation, default
           </label>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="6. Συνολικό ποσό" htmlFor="totalAmount" error={err.totalAmount} hint={free ? "Χωρίς ενοίκιο" : suggested ? `Πρόταση ${formatMoney(suggested, property?.currency)} (${nights} × βασική τιμή)` : undefined}>
+            <Field label={free ? "6. Ποσό" : includesFee ? "6. Συνολική τιμή κράτησης (με ΤΑΚΚ)" : "6. Τιμή δωματίου (χωρίς ΤΑΚΚ)"} htmlFor="totalAmount" error={err.totalAmount} hint={free ? "Χωρίς ενοίκιο" : suggested ? `Πρόταση ${formatMoney(suggested, property?.currency)} (${nights} × βασική τιμή)` : undefined}>
               {free ? (
                 <Input key="free" id="totalAmount" type="number" value={0} disabled readOnly />
               ) : (
-                <Input key="paid" id="totalAmount" name="totalAmount" type="number" min={0} step="0.01" required defaultValue={reservation?.totalAmount ?? ""} placeholder={suggested ? String(suggested) : ""} />
+                <Input key="paid" id="totalAmount" type="number" min={0} step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={suggested ? String(suggested) : ""} />
               )}
             </Field>
             <Field label="7. Πηγή" htmlFor="source">
-              <Select id="source" name="source" defaultValue={reservation?.source ?? "MANUAL"}>
+              <Select id="source" name="source" value={source} onChange={(e) => setSource(e.target.value)}>
                 {Object.entries(SOURCE_LABELS).map(([k, label]) => (
                   <option key={k} value={k}>{label}</option>
                 ))}
@@ -183,6 +202,26 @@ export function ReservationFormDialog({ properties, guests, reservation, default
               <Input id="confirmationCode" name="confirmationCode" defaultValue={reservation?.confirmationCode ?? ""} placeholder="Προαιρετικό" />
             </Field>
           </div>
+
+          {!free && (
+            <div className="grid gap-3 rounded-xl border border-border bg-muted/30 p-3 sm:grid-cols-[1fr_200px] sm:items-end">
+              <label className="flex cursor-pointer items-start gap-2.5 text-[13px]">
+                <input type="checkbox" checked={includesFee} onChange={(e) => setIncludesFee(e.target.checked)} className="mt-0.5 size-4 accent-[var(--color-accent)]" />
+                <span>
+                  <span className="font-medium">Το ποσό περιλαμβάνει ΤΑΚΚ</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Όπως η «Συνολική τιμή κράτησης» του Booking. {entered > 0 && nights > 0 && (includesFee
+                      ? `Τιμή δωματίου ${formatMoney(room)} + ΤΑΚΚ ${formatMoney(climateFee)}.`
+                      : `Ο επισκέπτης πληρώνει ${formatMoney(entered + climateFee)} με το ΤΑΚΚ.`)}
+                  </span>
+                </span>
+              </label>
+              <Field label="Προμήθεια πλατφόρμας (€)" htmlFor="commission" error={err.commission}
+                hint={rate > 0 ? `Κενό = αυτόματα ${rate}%${autoCommission ? ` (${formatMoney(autoCommission)})` : ""}` : "Χωρίς προμήθεια για αυτή την πηγή"}>
+                <Input id="commission" type="number" min={0} step="0.01" value={commission} onChange={(e) => setCommission(e.target.value)} placeholder={autoCommission ? String(autoCommission) : "0"} />
+              </Field>
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Κατάσταση" htmlFor="status">

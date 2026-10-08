@@ -75,3 +75,25 @@ export function OtherIncomeInput({ value }: { value: number }) {
     />
   );
 }
+
+/** Commission % per platform and an optional own business tax rate. */
+export function PricingSettings({ commissionRates, businessTaxRate, business, disabled }: { commissionRates: Record<string, number>; businessTaxRate: number | null; business: boolean; disabled?: boolean }) {
+  const { run, pending } = useMutation();
+  const save = (body: object) => run(() => api("/api/tax/settings", { method: "PATCH", body }), { success: "Αποθηκεύτηκε" });
+  const field = (label: string, value: number | string, onSave: (v: string) => void, placeholder?: string) => (
+    <label className="flex items-center gap-2 text-[13px]">
+      <span className="text-muted-foreground">{label}</span>
+      <Input type="number" min={0} max={60} step="0.5" defaultValue={value} placeholder={placeholder} disabled={disabled || pending} className="h-8 w-20"
+        onBlur={(e) => e.target.value !== String(value) && onSave(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} />
+      <span className="text-muted-foreground">%</span>
+    </label>
+  );
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <span className="text-[13px] font-medium">Προμήθειες:</span>
+      {field("Booking.com", commissionRates.BOOKING_COM ?? 0, (v) => save({ commissionRates: { BOOKING_COM: Number(v) || 0 } }))}
+      {field("Airbnb", commissionRates.AIRBNB ?? 0, (v) => save({ commissionRates: { AIRBNB: Number(v) || 0 } }))}
+      {business && field("Δικός σας συντελεστής φόρου", businessTaxRate ?? "", (v) => save({ businessTaxRate: v === "" ? null : Number(v) }), "κλίμακα")}
+    </div>
+  );
+}

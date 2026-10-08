@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MessageComposer } from "@/components/guests/message-composer";
 import { MessageList } from "@/components/guests/message-list";
 import { CancelReservationButton } from "@/components/reservations/cancel-button";
+import { PriceBreakdown } from "@/components/reservations/price-breakdown";
 import { ReservationFormDialog } from "@/components/reservations/reservation-form";
 import { TaskListCompact } from "@/components/tasks/task-list-compact";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
         actions={
           <>
             {open && <CancelReservationButton id={r.id} />}
-            <ReservationFormDialog properties={options.properties} guests={options.guests} reservation={r} trigger={<Button variant="outline"><Pencil /> Επεξεργασία</Button>} />
+            <ReservationFormDialog properties={options.properties} guests={options.guests} pricing={options.pricing} reservation={r} trigger={<Button variant="outline"><Pencil /> Επεξεργασία</Button>} />
           </>
         }
       />
@@ -58,7 +59,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
                   { label: "Άφιξη", value: formatDay(r.checkIn, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) },
                   { label: "Αναχώρηση", value: formatDay(r.checkOut, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) },
                   { label: "Άτομα", value: r.guestsCount },
-                  { label: "Σύνολο", value: r.complimentary ? "Δωρεάν φιλοξενία" : formatMoney(r.totalAmount, r.currency) },
+                  { label: "Τιμή δωματίου", value: r.complimentary ? "Δωρεάν φιλοξενία" : formatMoney(r.totalAmount, r.currency) },
                   { label: "Πηγή", value: SOURCE_LABELS[r.source] },
                   { label: "Κωδικός κράτησης", value: r.confirmationCode ?? <span className="text-warning">Λείπει</span> },
                 ]}
@@ -76,19 +77,13 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
         </div>
         <div className="grid min-w-0 content-start gap-6">
           <Card>
-            <CardHeader title="Φορολογικά & ΑΑΔΕ" description={tax.ama ? `ΑΜΑ ${tax.ama}` : "Το ακίνητο δεν έχει ΑΜΑ"} />
+            <CardHeader title="Ανάλυση τιμής & φόροι" description={tax.ama ? `ΑΜΑ ${tax.ama}` : "Το ακίνητο δεν έχει ΑΜΑ"} />
             <CardContent className="grid gap-3 text-sm">
               {tax.complimentary ? (
                 <p className="text-[13px] text-muted-foreground">Δωρεάν φιλοξενία: δεν είναι μίσθωση — χωρίς έσοδο, ΤΑΚΚ και δήλωση διαμονής.</p>
               ) : (
                 <>
-                  <div className="flex justify-between"><span className="text-muted-foreground">ΤΑΚΚ (τέλος ανθεκτικότητας)</span><span className="font-medium tabular-nums">{formatMoney(tax.climateFee)}</span></div>
-                  {tax.regime === "BUSINESS" && (
-                    <>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Μίσθωμα χωρίς ΦΠΑ</span><span className="tabular-nums">{formatMoney(tax.rent)}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">ΦΠΑ 13% · τέλος παρεπιδημούντων 0,5%</span><span className="tabular-nums">{formatMoney(tax.vat)} · {formatMoney(tax.presenceFee)}</span></div>
-                    </>
-                  )}
+                  <PriceBreakdown tax={tax} source={r.source} />
                   {tax.longStay ? (
                     <p className="text-[13px] text-muted-foreground">60+ νύχτες: δεν είναι βραχυχρόνια μίσθωση — δηλώνεται ως κανονική μίσθωση.</p>
                   ) : tax.declaration.required ? (
