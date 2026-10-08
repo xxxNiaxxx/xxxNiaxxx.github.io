@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const SUGGESTIONS = [
-  "Who checks in tomorrow?",
-  "What needs my attention today?",
-  "How much did I make this month?",
-  "Which property performs best?",
+  "Ποιος έρχεται αύριο;",
+  "Τι χρειάζεται την προσοχή μου σήμερα;",
+  "Πόσα έβγαλα αυτόν τον μήνα;",
+  "Ποιο ακίνητο αποδίδει καλύτερα;",
 ];
 
 export function AIPreview() {
@@ -21,7 +21,7 @@ export function AIPreview() {
         <span className="rounded-lg bg-accent-soft p-1.5 text-accent">
           <Sparkles className="size-4" />
         </span>
-        AI manager
+        Βοηθός AI
       </div>
       <form
         onSubmit={(e) => {
@@ -33,15 +33,15 @@ export function AIPreview() {
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Ask your AI manager…"
-          aria-label="Ask your AI manager"
+          placeholder="Ρωτήστε τον βοηθό AI…"
+          aria-label="Ρωτήστε τον βοηθό AI"
           className="h-8 flex-1 bg-transparent text-sm outline-none placeholder:text-subtle-foreground"
         />
         <button
           type="submit"
           disabled={!value.trim()}
           className="rounded-lg bg-primary p-1.5 text-primary-foreground disabled:opacity-30"
-          aria-label="Ask"
+          aria-label="Αποστολή"
         >
           <ArrowUp className="size-4" />
         </button>

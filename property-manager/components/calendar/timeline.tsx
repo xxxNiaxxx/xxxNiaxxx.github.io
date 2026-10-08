@@ -22,11 +22,11 @@ const taskDot: Record<string, string> = {
 export function CalendarLegend() {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
-      <span className="flex items-center gap-1.5"><span className="h-2.5 w-4 rounded-sm bg-accent" /> Confirmed</span>
-      <span className="flex items-center gap-1.5"><span className="h-2.5 w-4 rounded-sm bg-warning-soft ring-1 ring-warning/40" /> Pending</span>
-      <span className="flex items-center gap-1.5"><span className="h-2.5 w-4 rounded-sm bg-stone-400" /> Completed</span>
+      <span className="flex items-center gap-1.5"><span className="h-2.5 w-4 rounded-sm bg-accent" /> Επιβεβαιωμένη</span>
+      <span className="flex items-center gap-1.5"><span className="h-2.5 w-4 rounded-sm bg-warning-soft ring-1 ring-warning/40" /> Εκκρεμεί</span>
+      <span className="flex items-center gap-1.5"><span className="h-2.5 w-4 rounded-sm bg-stone-400" /> Ολοκληρώθηκε</span>
       <span className="mx-1 h-3 w-px bg-border" />
-      {Object.entries({ CLEANING: "Cleaning", MAINTENANCE: "Maintenance", CHECK_IN: "Check-in", INSPECTION: "Inspection" }).map(([k, l]) => (
+      {Object.entries({ CLEANING: "Καθαρισμός", MAINTENANCE: "Συντήρηση", CHECK_IN: "Check-in", INSPECTION: "Επιθεώρηση" }).map(([k, l]) => (
         <span key={k} className="flex items-center gap-1.5"><span className={cn("size-2 rounded-full", taskDot[k])} /> {l}</span>
       ))}
     </div>
@@ -50,7 +50,7 @@ export function Timeline({ data, today, compact }: { data: CalendarData; today: 
       <div className="min-w-max">
         {/* Header */}
         <div className="flex border-b border-border">
-          <div className="sticky left-0 z-20 w-36 shrink-0 bg-surface px-4 py-2 text-xs font-medium text-muted-foreground sm:w-48">Property</div>
+          <div className="sticky left-0 z-20 w-36 shrink-0 bg-surface px-4 py-2 text-xs font-medium text-muted-foreground sm:w-48">Ακίνητο</div>
           <div className="grid flex-1" style={{ gridTemplateColumns: cols }}>
             {days.map((d) => {
               const dow = new Date(`${d}T00:00:00Z`).getUTCDay();
@@ -70,7 +70,7 @@ export function Timeline({ data, today, compact }: { data: CalendarData; today: 
             <div key={p.id} className="flex border-b border-border last:border-b-0">
               <Link href={`/properties/${p.id}`} className="sticky left-0 z-20 flex w-36 shrink-0 items-center bg-surface px-4 py-3 text-sm font-medium hover:text-accent sm:w-48">
                 <span className="truncate">{p.name}</span>
-                {p.status === "INACTIVE" && <span className="ml-2 text-[10px] text-muted-foreground">inactive</span>}
+                {p.status === "INACTIVE" && <span className="ml-2 text-[10px] text-muted-foreground">ανενεργό</span>}
               </Link>
               <div className="relative grid flex-1" style={{ gridTemplateColumns: cols }}>
                 {days.map((d, i) => {
@@ -80,7 +80,7 @@ export function Timeline({ data, today, compact }: { data: CalendarData; today: 
                     <Link
                       key={d}
                       href={p.status === "ACTIVE" ? `/reservations?new=1&propertyId=${p.id}&checkIn=${d}&checkOut=${addDaysISO(d, 1)}` : `/properties/${p.id}`}
-                      title={p.status === "ACTIVE" ? `New reservation · ${p.name} · ${formatDay(d)}` : undefined}
+                      title={p.status === "ACTIVE" ? `Νέα κράτηση · ${p.name} · ${formatDay(d)}` : undefined}
                       className={cn("group relative h-14 border-l border-border hover:bg-muted/70", (dow === 0 || dow === 6) && "bg-muted/30", d === today && "bg-accent-soft/60")}
                       style={{ gridColumn: i + 1, gridRow: 1 }}
                     >
@@ -114,7 +114,7 @@ export function Timeline({ data, today, compact }: { data: CalendarData; today: 
                       )}
                     >
                       <span className="truncate">{r.guestName}</span>
-                      {!compact && <span className="ml-1.5 truncate opacity-75">· {r.guestsCount}p</span>}
+                      {!compact && <span className="ml-1.5 truncate opacity-75">· {r.guestsCount} άτ.</span>}
                     </Link>
                   );
                 })}

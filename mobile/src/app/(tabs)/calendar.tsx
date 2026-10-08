@@ -42,7 +42,7 @@ export default function Calendar() {
     <Screen refreshing={refreshing} onRefresh={reload}>
       {error && <ErrorBox message={error} onRetry={reload} />}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-        {[{ id: null, name: "All properties" }, ...properties].map((p) => {
+        {[{ id: null, name: "Όλα τα ακίνητα" }, ...properties].map((p) => {
           const active = propertyId === p.id;
           return (
             <Pressable key={p.id ?? "all"} onPress={() => setPropertyId(p.id)} style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: active ? colors.primary : colors.surface, borderWidth: 1, borderColor: active ? colors.primary : colors.border }}>
@@ -53,7 +53,7 @@ export default function Calendar() {
       </ScrollView>
 
       <Card>
-        <SectionTitle title="Next 14 days" />
+        <SectionTitle title="Επόμενες 14 ημέρες" />
         <View style={{ flexDirection: "row", marginLeft: 96, marginBottom: 4 }}>
           {stripDays.map((d) => (
             <Text key={d} style={{ flex: 1, textAlign: "center", fontSize: 10, color: d === today ? colors.accent : colors.mutedText, fontWeight: d === today ? "700" : "400" }}>{Number(d.slice(8))}</Text>
@@ -74,23 +74,23 @@ export default function Calendar() {
             })}
           </View>
         ))}
-        <Text style={[styles.rowSub, { marginTop: 8 }]}>Green = booked night · yellow = pending. Tap a block to open the stay.</Text>
+        <Text style={[styles.rowSub, { marginTop: 8 }]}>Πράσινο = κλεισμένη νύχτα · κίτρινο = εκκρεμεί. Πατήστε για να ανοίξει η κράτηση.</Text>
       </Card>
 
       <Card>
-        <SectionTitle title="Arrivals & departures" />
-        {days.length === 0 && <Empty title="Nothing in the next 30 days" />}
+        <SectionTitle title="Αφίξεις & αναχωρήσεις" />
+        {days.length === 0 && <Empty title="Τίποτα τις επόμενες 30 ημέρες" />}
         {days.map(({ day, arrivals, departures }) => (
           <View key={day} style={{ marginTop: 10 }}>
             <Text style={{ fontSize: 12, fontWeight: "700", color: day === today ? colors.accent : colors.mutedText, textTransform: "uppercase" }}>
-              {day === today ? "Today · " : day === addDays(today, 1) ? "Tomorrow · " : ""}{formatDay(day)}
+              {day === today ? "Σήμερα · " : day === addDays(today, 1) ? "Αύριο · " : ""}{formatDay(day)}
             </Text>
-            {[...arrivals.map((r) => ({ r, kind: "Check-in" })), ...departures.map((r) => ({ r, kind: "Check-out" }))].map(({ r, kind }) => (
+            {[...arrivals.map((r) => ({ r, kind: "Άφιξη" })), ...departures.map((r) => ({ r, kind: "Αναχώρηση" }))].map(({ r, kind }) => (
               <Pressable key={`${kind}-${r.id}`} onPress={() => router.push(`/reservation/${r.id}`)} style={styles.row}>
-                <View style={{ width: 4, alignSelf: "stretch", borderRadius: 2, backgroundColor: kind === "Check-in" ? colors.success : colors.subtleText }} />
+                <View style={{ width: 4, alignSelf: "stretch", borderRadius: 2, backgroundColor: kind === "Άφιξη" ? colors.success : colors.subtleText }} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.rowTitle}>{r.guestName}</Text>
-                  <Text style={styles.rowSub}>{kind} · {r.propertyName}{kind === "Check-in" ? ` · ${r.nights} nights` : ""}</Text>
+                  <Text style={styles.rowSub}>{kind} · {r.propertyName}{kind === "Άφιξη" ? ` · ${r.nights} νύχτες` : ""}</Text>
                 </View>
                 <Badge label={humanize(r.status)} tone={statusTone[r.status]} />
               </Pressable>

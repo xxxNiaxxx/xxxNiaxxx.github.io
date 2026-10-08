@@ -23,24 +23,24 @@ export function ActionCard({ action, onChange }: { action: AIAction; onChange: (
       onChange(await api<AIAction>(`/api/ai/actions/${action.id}${path}`, { method: body ? "PATCH" : "POST", body }));
       setEditing(false);
     } catch (e) {
-      Alert.alert("Action failed", e instanceof ApiError ? e.message : "Please try again.");
+      Alert.alert("Η ενέργεια απέτυχε", e instanceof ApiError ? e.message : "Δοκιμάστε ξανά.");
     } finally {
       setBusy(null);
     }
   }
 
-  const statusLabel = action.status === "EXECUTED" ? (isMessage ? "Sent" : "Created") : humanize(action.status);
+  const statusLabel = action.status === "EXECUTED" ? (isMessage ? "Στάλθηκε" : "Δημιουργήθηκε") : humanize(action.status);
 
   return (
     <Card style={{ borderColor: proposed ? "#FCD34D" : colors.border, borderWidth: 1 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <Text style={{ fontWeight: "700", color: colors.text }}>{proposed ? (isMessage ? "Ready to send" : "Ready to create") : isMessage ? "Guest message" : "Task"}</Text>
+        <Text style={{ fontWeight: "700", color: colors.text }}>{proposed ? (isMessage ? "Έτοιμο για αποστολή" : "Έτοιμο για δημιουργία") : isMessage ? "Μήνυμα σε επισκέπτη" : "Εργασία"}</Text>
         <Badge label={statusLabel} tone={statusTone[action.status]} />
       </View>
       {isMessage ? (
         <>
           <Text style={styles.rowSub}>
-            To <Text style={{ color: colors.text, fontWeight: "600" }}>{str(p.guestName)}</Text>
+            Προς <Text style={{ color: colors.text, fontWeight: "600" }}>{str(p.guestName)}</Text>
             {str(p.context) ? ` · ${str(p.context)}` : ""}
           </Text>
           {editing ? (
@@ -53,24 +53,24 @@ export function ActionCard({ action, onChange }: { action: AIAction; onChange: (
         <>
           <Text style={styles.rowTitle}>{str(p.title)}</Text>
           <Text style={styles.rowSub}>
-            {[str(p.propertyName), humanize(str(p.type) || "OTHER"), str(p.dueAt) && `due ${formatDateTime(str(p.dueAt))}`].filter(Boolean).join(" · ")}
+            {[str(p.propertyName), humanize(str(p.type) || "OTHER"), str(p.dueAt) && `έως ${formatDateTime(str(p.dueAt))}`].filter(Boolean).join(" · ")}
           </Text>
         </>
       )}
-      {action.status === "FAILED" && <Text style={{ color: colors.danger, marginTop: 8 }}>{str(action.result?.error) || "The action failed."}</Text>}
-      {action.status === "EXECUTED" && isMessage && <Text style={[styles.rowSub, { marginTop: 8 }]}>Recorded as sent (simulated in Phase 1).</Text>}
+      {action.status === "FAILED" && <Text style={{ color: colors.danger, marginTop: 8 }}>{str(action.result?.error) || "Η ενέργεια απέτυχε."}</Text>}
+      {action.status === "EXECUTED" && isMessage && <Text style={[styles.rowSub, { marginTop: 8 }]}>Καταγράφηκε ως σταλμένο (προσομοίωση στη Φάση 1).</Text>}
       {proposed && (
         <View style={{ flexDirection: "row", gap: 8, marginTop: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
           {editing ? (
             <>
-              <Button small variant="ghost" title="Discard" onPress={() => { setEditing(false); setDraft(str(p.message)); }} />
-              <Button small variant="outline" title="Save" loading={busy === "save"} disabled={!draft.trim()} onPress={() => call("save", "", { message: draft })} />
+              <Button small variant="ghost" title="Απόρριψη" onPress={() => { setEditing(false); setDraft(str(p.message)); }} />
+              <Button small variant="outline" title="Αποθήκευση" loading={busy === "save"} disabled={!draft.trim()} onPress={() => call("save", "", { message: draft })} />
             </>
           ) : (
             <>
-              <Button small variant="ghost" title="Cancel" loading={busy === "reject"} onPress={() => call("reject", "/reject")} />
-              {isMessage && <Button small variant="outline" title="Edit" onPress={() => setEditing(true)} />}
-              <Button small variant="accent" title="Approve" loading={busy === "approve"} onPress={() => call("approve", "/approve")} />
+              <Button small variant="ghost" title="Ακύρωση" loading={busy === "reject"} onPress={() => call("reject", "/reject")} />
+              {isMessage && <Button small variant="outline" title="Επεξεργασία" onPress={() => setEditing(true)} />}
+              <Button small variant="accent" title="Έγκριση" loading={busy === "approve"} onPress={() => call("approve", "/approve")} />
             </>
           )}
         </View>

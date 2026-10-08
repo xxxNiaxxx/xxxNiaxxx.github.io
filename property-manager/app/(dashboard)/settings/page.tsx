@@ -11,7 +11,7 @@ import { humanize } from "@/lib/format";
 import { hasRole } from "@/lib/permissions";
 import { listMembers } from "@/lib/services/members";
 
-export const metadata: Metadata = { title: "Settings" };
+export const metadata: Metadata = { title: "Ρυθμίσεις" };
 
 export default async function SettingsPage() {
   const { ctx, user, organization, role } = await getPageContext();
@@ -19,39 +19,39 @@ export default async function SettingsPage() {
     listMembers(ctx),
     db.organizationMember.findMany({ where: { userId: user.id }, include: { organization: { select: { id: true, name: true } } } }),
   ]);
-  const ai = process.env.AI_API_KEY ? `Connected · ${process.env.AI_MODEL || "gpt-4o-mini"}` : "Offline assistant (no AI_API_KEY)";
+  const ai = process.env.AI_API_KEY ? `Συνδεδεμένος · ${process.env.AI_MODEL || "gpt-4o-mini"}` : "Βοηθός εκτός σύνδεσης (χωρίς AI_API_KEY)";
 
   return (
     <>
-      <PageHeader title="Settings" description="Profile, organization and team" />
+      <PageHeader title="Ρυθμίσεις" description="Προφίλ, οργανισμός και ομάδα" />
       <div className="grid max-w-3xl gap-6">
         <Card id="profile">
-          <CardHeader title="Profile" />
+          <CardHeader title="Προφίλ" />
           <CardContent className="grid gap-4">
-            <NameForm endpoint="/api/me" label="Your name" initial={user.name ?? ""} success="Profile updated" />
-            <DefinitionList items={[{ label: "Email", value: user.email }, { label: "Role", value: humanize(role) }]} />
+            <NameForm endpoint="/api/me" label="Το όνομά σας" initial={user.name ?? ""} success="Το προφίλ ενημερώθηκε" />
+            <DefinitionList items={[{ label: "Email", value: user.email }, { label: "Ρόλος", value: humanize(role) }]} />
           </CardContent>
         </Card>
         <Card id="organization">
-          <CardHeader title="Organization" description="All data is private to this organization and its members." />
+          <CardHeader title="Οργανισμός" description="Τα δεδομένα είναι ιδιωτικά, μόνο για τον οργανισμό και τα μέλη του." />
           <CardContent className="grid gap-4">
-            <NameForm endpoint="/api/organization" label="Organization name" initial={organization.name} disabled={!hasRole(ctx, "ADMIN")} success="Organization renamed" />
+            <NameForm endpoint="/api/organization" label="Όνομα οργανισμού" initial={organization.name} disabled={!hasRole(ctx, "ADMIN")} success="Ο οργανισμός μετονομάστηκε" />
             {memberships.length > 1 && (
               <div className="grid gap-1.5">
-                <span className="text-[13px] font-medium">Active organization</span>
+                <span className="text-[13px] font-medium">Ενεργός οργανισμός</span>
                 <OrgSwitcher current={organization.id} organizations={memberships.map((m) => m.organization)} />
               </div>
             )}
-            <DefinitionList items={[{ label: "AI assistant", value: ai }, { label: "Channels", value: "Manual reservations (Airbnb / Booking.com sync planned)" }]} />
+            <DefinitionList items={[{ label: "Βοηθός AI", value: ai }, { label: "Κανάλια", value: "Χειροκίνητες κρατήσεις (συγχρονισμός Airbnb / Booking.com σε επόμενη φάση)" }]} />
           </CardContent>
         </Card>
         <Card>
-          <CardHeader title="Team" description={`${members.length} member${members.length === 1 ? "" : "s"}`} />
+          <CardHeader title="Ομάδα" description={`${members.length} ${members.length === 1 ? "μέλος" : "μέλη"}`} />
           <ul className="divide-y divide-border">
             {members.map((m) => (
               <li key={m.userId} className="flex items-center justify-between gap-3 px-5 py-3">
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-medium">{m.name}{m.userId === user.id && <span className="text-muted-foreground"> (you)</span>}</div>
+                  <div className="truncate text-sm font-medium">{m.name}{m.userId === user.id && <span className="text-muted-foreground"> (εσείς)</span>}</div>
                   <div className="truncate text-xs text-muted-foreground">{m.email}</div>
                 </div>
                 <Badge tone={m.role === "OWNER" ? "dark" : m.role === "ADMIN" ? "accent" : "neutral"}>{humanize(m.role)}</Badge>
@@ -60,9 +60,9 @@ export default async function SettingsPage() {
           </ul>
         </Card>
         <Card>
-          <CardHeader title="Delete account" description="Permanently delete your account and, where you are the only member, your organization's data." />
+          <CardHeader title="Διαγραφή λογαριασμού" description="Οριστική διαγραφή του λογαριασμού σας και, όπου είστε το μόνο μέλος, των δεδομένων του οργανισμού." />
           <CardContent className="flex flex-wrap items-center justify-between gap-3">
-            <a href="/privacy" className="text-[13px] text-muted-foreground underline-offset-4 hover:underline">Privacy policy</a>
+            <a href="/privacy" className="text-[13px] text-muted-foreground underline-offset-4 hover:underline">Πολιτική απορρήτου</a>
             <DeleteAccount />
           </CardContent>
         </Card>

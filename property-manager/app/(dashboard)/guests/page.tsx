@@ -10,7 +10,7 @@ import { getPageContext } from "@/lib/auth/page";
 import { formatDay, formatMoney } from "@/lib/format";
 import { listGuests } from "@/lib/services/guests";
 
-export const metadata: Metadata = { title: "Guests" };
+export const metadata: Metadata = { title: "Επισκέπτες" };
 
 function initials(name: string) {
   return name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
@@ -23,13 +23,13 @@ export default async function GuestsPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <PageHeader title="Guests" description="Everyone who has stayed or will stay with you" actions={<GuestFormDialog trigger={<Button><Plus /> New guest</Button>} />} />
+      <PageHeader title="Επισκέπτες" description="Όλοι όσοι έμειναν ή θα μείνουν στα καταλύματά σας" actions={<GuestFormDialog trigger={<Button><Plus /> Νέος επισκέπτης</Button>} />} />
       <div className="mb-5">
-        <SearchInput placeholder="Search name, email, phone or country" />
+        <SearchInput placeholder="Αναζήτηση ονόματος, email, τηλεφώνου ή χώρας" />
       </div>
       <Card className="overflow-hidden">
         {guests.length === 0 ? (
-          <EmptyState icon={<Users />} title={q ? `No guests match “${q}”` : "No guests yet"} description={q ? undefined : "Guests are added when you create reservations, or manually here."} />
+          <EmptyState icon={<Users />} title={q ? `Κανένας επισκέπτης για «${q}»` : "Δεν υπάρχουν επισκέπτες ακόμη"} description={q ? undefined : "Οι επισκέπτες προστίθενται όταν δημιουργείτε κρατήσεις ή χειροκίνητα εδώ."} />
         ) : (
           <ul className="divide-y divide-border">
             {guests.map((g) => (
@@ -38,11 +38,11 @@ export default async function GuestsPage({ searchParams }: { searchParams: Promi
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent">{initials(g.fullName)}</span>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{g.fullName}</div>
-                    <div className="truncate text-xs text-muted-foreground">{[g.email, g.phone, g.country].filter(Boolean).join(" · ") || "No contact details"}</div>
+                    <div className="truncate text-xs text-muted-foreground">{[g.email, g.phone, g.country].filter(Boolean).join(" · ") || "Χωρίς στοιχεία επικοινωνίας"}</div>
                   </div>
                   <div className="hidden text-right text-xs text-muted-foreground sm:block">
                     <div className="text-sm font-medium text-foreground tabular-nums">{formatMoney(g.totalRevenue)}</div>
-                    {g.stays} stay{g.stays === 1 ? "" : "s"}{g.lastStay ? ` · last ${formatDay(g.lastStay, { month: "short", year: "numeric" })}` : ""}
+                    {g.stays} {g.stays === 1 ? "διαμονή" : "διαμονές"}{g.lastStay ? ` · τελευταία ${formatDay(g.lastStay, { month: "short", year: "numeric" })}` : ""}
                   </div>
                 </Link>
               </li>

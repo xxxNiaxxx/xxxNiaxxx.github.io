@@ -44,12 +44,12 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
       body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     });
   } catch {
-    throw new ApiError(`Can't reach the server at ${config.baseUrl}. Is it running and on the same Wi-Fi?`, 0);
+    throw new ApiError(`Δεν υπάρχει σύνδεση με τον server (${config.baseUrl}). Ελέγξτε τη σύνδεσή σας στο internet.`, 0);
   }
   const json = (await res.json().catch(() => null)) as { data?: T; error?: { message?: string } } | null;
   if (!res.ok) {
     if (res.status === 401 && config.token) config.onUnauthorized?.();
-    throw new ApiError(json?.error?.message ?? `Request failed (${res.status})`, res.status);
+    throw new ApiError(json?.error?.message ?? `Το αίτημα απέτυχε (${res.status})`, res.status);
   }
   return json?.data as T;
 }

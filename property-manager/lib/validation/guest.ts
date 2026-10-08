@@ -2,10 +2,10 @@ import { z } from "zod";
 import { optionalEmail, optionalQuery, optionalText, requiredText } from "./common";
 
 export const guestCreateSchema = z.object({
-  firstName: requiredText("First name", 80),
-  lastName: requiredText("Last name", 80),
+  firstName: requiredText("Όνομα", 80),
+  lastName: requiredText("Επώνυμο", 80),
   email: optionalEmail,
-  phone: optionalText(40).refine((v) => !v || /^[+()\d\s.-]{5,40}$/.test(v), "Enter a valid phone number"),
+  phone: optionalText(40).refine((v) => !v || /^[+()\d\s.-]{5,40}$/.test(v), "Δώστε έγκυρο τηλέφωνο"),
   country: optionalText(80),
   notes: optionalText(4000),
 });

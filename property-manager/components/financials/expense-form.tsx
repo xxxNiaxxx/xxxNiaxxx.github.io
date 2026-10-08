@@ -17,47 +17,47 @@ export function TransactionFormDialog({ properties, today }: { properties: { id:
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button><Plus /> Add transaction</Button>
+        <Button><Plus /> Νέα κίνηση</Button>
       </DialogTrigger>
-      <DialogContent title="Add transaction" description="Record an expense or other income. Booking income is added automatically from reservations.">
+      <DialogContent title="Νέα κίνηση" description="Καταχωρίστε έξοδο ή άλλο έσοδο. Τα έσοδα κρατήσεων προστίθενται αυτόματα.">
         <form
           noValidate
           className="grid gap-4 sm:grid-cols-2"
           onSubmit={async (e) => {
             e.preventDefault();
             const body = formValues(e.currentTarget);
-            await run(() => api("/api/transactions", { body }), { success: "Transaction added", onSuccess: () => setOpen(false) });
+            await run(() => api("/api/transactions", { body }), { success: "Η κίνηση καταχωρήθηκε", onSuccess: () => setOpen(false) });
           }}
         >
-          <Field label="Type" htmlFor="type">
+          <Field label="Τύπος" htmlFor="type">
             <Select id="type" name="type" defaultValue="EXPENSE">
-              <option value="EXPENSE">Expense</option>
-              <option value="INCOME">Income</option>
+              <option value="EXPENSE">Έξοδο</option>
+              <option value="INCOME">Έσοδο</option>
             </Select>
           </Field>
-          <Field label="Category" htmlFor="category">
+          <Field label="Κατηγορία" htmlFor="category">
             <Select id="category" name="category" defaultValue="CLEANING">
               {CATEGORIES.map((c) => <option key={c} value={c}>{humanize(c)}</option>)}
             </Select>
           </Field>
-          <Field label="Property" htmlFor="propertyId" error={err.propertyId}>
+          <Field label="Ακίνητο" htmlFor="propertyId" error={err.propertyId}>
             <Select id="propertyId" name="propertyId">
               {properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </Select>
           </Field>
-          <Field label="Date" htmlFor="transactionDate" error={err.transactionDate}>
+          <Field label="Ημερομηνία" htmlFor="transactionDate" error={err.transactionDate}>
             <Input id="transactionDate" name="transactionDate" type="date" defaultValue={today} />
           </Field>
-          <Field label="Amount (EUR)" htmlFor="amount" error={err.amount}>
+          <Field label="Ποσό (€)" htmlFor="amount" error={err.amount}>
             <Input id="amount" name="amount" type="number" min={0} step="0.01" required aria-invalid={!!err.amount} />
           </Field>
-          <Field label="Description" htmlFor="description">
-            <Input id="description" name="description" placeholder="e.g. Plumber call-out" />
+          <Field label="Περιγραφή" htmlFor="description">
+            <Input id="description" name="description" placeholder="π.χ. Επίσκεψη υδραυλικού" />
           </Field>
           <input type="hidden" name="currency" value="EUR" />
           <DialogFooter className="sm:col-span-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={pending}>Add</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Ακύρωση</Button>
+            <Button type="submit" loading={pending}>Καταχώριση</Button>
           </DialogFooter>
         </form>
       </DialogContent>

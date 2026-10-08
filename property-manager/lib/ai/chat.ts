@@ -19,6 +19,8 @@ function systemPrompt(orgName: string, userName: string, now: Date) {
     "- Every fact about properties, reservations, guests, tasks, messages or money MUST come from a tool call in this conversation. Never guess or invent data. If a tool returns nothing, say so.",
     "- You cannot change data directly. create_task and create_message_draft only PROPOSE an action; tell the user it is waiting for their approval below the chat.",
     "- Before drafting a message, look up the guest (list_guests) and, when relevant, their reservation to get ids.",
+    "- Always reply in Greek (Ελληνικά), unless the user writes in another language. Use Greek date formats (e.g. 8 Οκτωβρίου) and euro amounts like 1.234 €.",
+    "- Guest messages you draft: write them in the guest's language (Greek for guests from GR/CY, otherwise English) unless the user asks otherwise.",
     "- Be concise and actionable. Prefer short numbered lists. Mention property names and dates.",
   ].join("\n");
 }
@@ -116,7 +118,7 @@ export async function sendChatMessage(
       ({ reply, trace } = await runModel(provider, ctx, history.reverse(), input.message, tc));
     } catch (error) {
       console.error("AI provider error", error);
-      reply = "I couldn't reach the AI provider just now. Please try again in a moment.";
+      reply = "Δεν ήταν δυνατή η σύνδεση με τον πάροχο AI. Δοκιμάστε ξανά σε λίγο.";
     }
   } else {
     ({ reply, trace } = await runOfflineAssistant(input.message, tc));
@@ -169,7 +171,7 @@ async function runModel(
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     const out = await provider.complete({ messages, tools: specs });
     messages.push(out);
-    if (!out.tool_calls?.length) return { reply: out.content?.trim() || "I don't have an answer for that.", trace };
+    if (!out.tool_calls?.length) return { reply: out.content?.trim() || "Δεν έχω απάντηση για αυτό.", trace };
     for (const call of out.tool_calls) {
       let args: unknown = {};
       try {
@@ -182,5 +184,5 @@ async function runModel(
       messages.push({ role: "tool", tool_call_id: call.id, content: truncate(result) });
     }
   }
-  return { reply: "That took too many steps. Could you narrow the question down?", trace };
+  return { reply: "Χρειάστηκαν πολλά βήματα. Μπορείτε να κάνετε πιο συγκεκριμένη ερώτηση;", trace };
 }

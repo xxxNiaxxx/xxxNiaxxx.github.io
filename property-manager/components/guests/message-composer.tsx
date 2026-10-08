@@ -13,17 +13,17 @@ export function MessageComposer({ guestId, reservationId }: { guestId?: string; 
   const { run, pending } = useMutation();
   const submit = (send: boolean) =>
     run(() => api("/api/messages", { body: { guestId, reservationId, content, send } }), {
-      success: send ? "Message recorded as sent" : "Draft saved",
+      success: send ? "Το μήνυμα καταγράφηκε ως σταλμένο" : "Το πρόχειρο αποθηκεύτηκε",
       onSuccess: () => setContent(""),
     });
   return (
     <div className="grid gap-2">
-      <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write a message to the guest…" aria-label="Message" />
+      <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Γράψτε μήνυμα στον επισκέπτη…" aria-label="Μήνυμα" />
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] text-muted-foreground">Internal channel — delivery integrations arrive in a later phase.</p>
+        <p className="text-[11px] text-muted-foreground">Εσωτερικό κανάλι — η αποστολή μέσω email/SMS/πλατφορμών έρχεται σε επόμενη φάση.</p>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" disabled={!content.trim()} onClick={() => submit(false)}>Save draft</Button>
-          <Button size="sm" disabled={!content.trim()} loading={pending} onClick={() => submit(true)}><Send /> Send</Button>
+          <Button size="sm" variant="outline" disabled={!content.trim()} onClick={() => submit(false)}>Αποθήκευση προχείρου</Button>
+          <Button size="sm" disabled={!content.trim()} loading={pending} onClick={() => submit(true)}><Send /> Αποστολή</Button>
         </div>
       </div>
     </div>

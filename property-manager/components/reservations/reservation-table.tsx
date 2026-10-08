@@ -11,12 +11,12 @@ export function ReservationTable({ reservations, hideProperty, hideGuest }: { re
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              {!hideGuest && <th className="px-5 py-2.5 font-medium">Guest</th>}
-              {!hideProperty && <th className="px-5 py-2.5 font-medium">Property</th>}
-              <th className="px-5 py-2.5 font-medium">Dates</th>
-              <th className="px-5 py-2.5 font-medium">Source</th>
-              <th className="px-5 py-2.5 font-medium">Status</th>
-              <th className="px-5 py-2.5 text-right font-medium">Total</th>
+              {!hideGuest && <th className="px-5 py-2.5 font-medium">Επισκέπτης</th>}
+              {!hideProperty && <th className="px-5 py-2.5 font-medium">Ακίνητο</th>}
+              <th className="px-5 py-2.5 font-medium">Ημερομηνίες</th>
+              <th className="px-5 py-2.5 font-medium">Πηγή</th>
+              <th className="px-5 py-2.5 font-medium">Κατάσταση</th>
+              <th className="px-5 py-2.5 text-right font-medium">Σύνολο</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -27,7 +27,7 @@ export function ReservationTable({ reservations, hideProperty, hideGuest }: { re
                     <Link href={`/reservations/${r.id}`} className="font-medium after:absolute after:inset-0">
                       {r.guestName}
                     </Link>
-                    <div className="text-xs text-muted-foreground">{r.confirmationCode ?? <span className="text-warning">No confirmation code</span>}</div>
+                    <div className="text-xs text-muted-foreground">{r.confirmationCode ?? <span className="text-warning">Χωρίς κωδικό κράτησης</span>}</div>
                   </td>
                 )}
                 {!hideProperty && (
@@ -45,7 +45,7 @@ export function ReservationTable({ reservations, hideProperty, hideGuest }: { re
                   ) : (
                     <>{formatDay(r.checkIn)} → {formatDay(r.checkOut)}</>
                   )}
-                  <div className="text-xs text-muted-foreground">{r.nights} nights · {r.guestsCount} guests</div>
+                  <div className="text-xs text-muted-foreground">{r.nights} νύχτες · {r.guestsCount} άτομα</div>
                 </td>
                 <td className="px-5 py-3 text-muted-foreground">{SOURCE_LABELS[r.source]}</td>
                 <td className="px-5 py-3"><StatusBadge value={r.status} /></td>

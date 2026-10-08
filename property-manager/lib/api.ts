@@ -24,7 +24,7 @@ export function errorResponse(error: unknown): NextResponse {
       {
         error: {
           code: "VALIDATION",
-          message: error.issues[0]?.message ?? "Invalid input",
+          message: error.issues[0]?.message ?? "Μη έγκυρα στοιχεία",
           details: error.issues.map((i) => ({ path: i.path.join("."), message: i.message })),
         },
       },
@@ -32,11 +32,11 @@ export function errorResponse(error: unknown): NextResponse {
     );
   }
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-    return NextResponse.json({ error: { code: "NOT_FOUND", message: "Not found" } }, { status: 404 });
+    return NextResponse.json({ error: { code: "NOT_FOUND", message: "Δεν βρέθηκε" } }, { status: 404 });
   }
   console.error(error);
   return NextResponse.json(
-    { error: { code: "INTERNAL", message: "Something went wrong. Please try again." } },
+    { error: { code: "INTERNAL", message: "Κάτι πήγε στραβά. Δοκιμάστε ξανά." } },
     { status: 500 },
   );
 }
@@ -64,7 +64,7 @@ export async function readJson(req: NextRequest): Promise<unknown> {
   try {
     return await req.json();
   } catch {
-    throw new AppError("BAD_REQUEST", "Request body must be valid JSON");
+    throw new AppError("BAD_REQUEST", "Μη έγκυρο αίτημα");
   }
 }
 

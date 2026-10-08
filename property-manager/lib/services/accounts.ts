@@ -7,7 +7,7 @@ import { registerSchema } from "@/lib/validation/auth";
 export async function registerAccount(input: unknown) {
   const data = registerSchema.parse(input);
   const existing = await db.user.findUnique({ where: { email: data.email } });
-  if (existing) throw conflict("An account with this email already exists. Sign in instead.");
+  if (existing) throw conflict("Υπάρχει ήδη λογαριασμός με αυτό το email. Συνδεθείτε.");
   const passwordHash = await bcrypt.hash(data.password, 12);
   return db.$transaction(async (tx) => {
     const user = await tx.user.create({ data: { email: data.email, name: data.name, passwordHash } });

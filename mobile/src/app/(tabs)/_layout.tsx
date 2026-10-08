@@ -23,11 +23,11 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.background },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Home", headerTitle: session.organization.name, tabBarIcon: icon("home-outline") }} />
-      <Tabs.Screen name="calendar" options={{ title: "Calendar", tabBarIcon: icon("calendar-outline") }} />
-      <Tabs.Screen name="tasks" options={{ title: "Tasks", tabBarIcon: icon("checkbox-outline") }} />
-      <Tabs.Screen name="ai" options={{ title: "AI", headerTitle: "AI manager", tabBarIcon: icon("sparkles-outline") }} />
-      <Tabs.Screen name="more" options={{ title: "More", tabBarIcon: icon("menu-outline") }} />
+      <Tabs.Screen name="index" options={{ title: "Αρχική", headerTitle: session.organization.name, tabBarIcon: icon("home-outline") }} />
+      <Tabs.Screen name="calendar" options={{ title: "Ημερολόγιο", tabBarIcon: icon("calendar-outline") }} />
+      <Tabs.Screen name="tasks" options={{ title: "Εργασίες", tabBarIcon: icon("checkbox-outline") }} />
+      <Tabs.Screen name="ai" options={{ title: "AI", headerTitle: "Βοηθός AI", tabBarIcon: icon("sparkles-outline") }} />
+      <Tabs.Screen name="more" options={{ title: "Περισσότερα", tabBarIcon: icon("menu-outline") }} />
     </Tabs>
   );
 }

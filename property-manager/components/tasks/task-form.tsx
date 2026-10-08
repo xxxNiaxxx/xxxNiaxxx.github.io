@@ -43,7 +43,7 @@ export function TaskFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent title="New task" description="Cleaning tasks get a standard turnover checklist automatically.">
+      <DialogContent title="Νέα εργασία" description="Οι καθαρισμοί παίρνουν αυτόματα τη βασική λίστα ελέγχου.">
         <form
           noValidate
           className="grid gap-4 sm:grid-cols-2"
@@ -55,47 +55,47 @@ export function TaskFormDialog({
             void _d;
             void _t;
             await run(() => api("/api/tasks", { body: { ...rest, dueAt, reservationId: defaults?.reservationId ?? null } }), {
-              success: "Task created",
+              success: "Η εργασία δημιουργήθηκε",
               onSuccess: () => onOpenChange(false),
             });
           }}
         >
-          <Field label="Title" htmlFor="title" error={err.title} className="sm:col-span-2">
-            <Input id="title" name="title" required placeholder="Turnover cleaning" aria-invalid={!!err.title} />
+          <Field label="Τίτλος" htmlFor="title" error={err.title} className="sm:col-span-2">
+            <Input id="title" name="title" required placeholder="Καθαρισμός αλλαγής" aria-invalid={!!err.title} />
           </Field>
-          <Field label="Property" htmlFor="propertyId" error={err.propertyId}>
+          <Field label="Ακίνητο" htmlFor="propertyId" error={err.propertyId}>
             <Select id="propertyId" name="propertyId" defaultValue={defaults?.propertyId ?? properties[0]?.id}>
               {properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </Select>
           </Field>
-          <Field label="Type" htmlFor="type">
+          <Field label="Τύπος" htmlFor="type">
             <Select id="type" name="type" defaultValue="CLEANING">
               {TASK_TYPES.map((t) => <option key={t} value={t}>{humanize(t)}</option>)}
             </Select>
           </Field>
-          <Field label="Due date" htmlFor="dueDate">
+          <Field label="Προθεσμία" htmlFor="dueDate">
             <Input id="dueDate" name="dueDate" type="date" />
           </Field>
-          <Field label="Time" htmlFor="dueTime">
+          <Field label="Ώρα" htmlFor="dueTime">
             <Input id="dueTime" name="dueTime" type="time" defaultValue="11:00" />
           </Field>
-          <Field label="Priority" htmlFor="priority">
+          <Field label="Προτεραιότητα" htmlFor="priority">
             <Select id="priority" name="priority" defaultValue="MEDIUM">
               {PRIORITIES.map((p) => <option key={p} value={p}>{humanize(p)}</option>)}
             </Select>
           </Field>
-          <Field label="Assign to" htmlFor="assignedToUserId">
+          <Field label="Ανάθεση σε" htmlFor="assignedToUserId">
             <Select id="assignedToUserId" name="assignedToUserId" defaultValue="">
-              <option value="">Unassigned</option>
+              <option value="">Χωρίς ανάθεση</option>
               {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
             </Select>
           </Field>
-          <Field label="Description" htmlFor="description" className="sm:col-span-2">
+          <Field label="Περιγραφή" htmlFor="description" className="sm:col-span-2">
             <Textarea id="description" name="description" />
           </Field>
           <DialogFooter className="sm:col-span-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" loading={pending}>Create task</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Ακύρωση</Button>
+            <Button type="submit" loading={pending}>Δημιουργία εργασίας</Button>
           </DialogFooter>
         </form>
       </DialogContent>

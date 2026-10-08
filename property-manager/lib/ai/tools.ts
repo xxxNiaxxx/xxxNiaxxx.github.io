@@ -174,7 +174,7 @@ export const tools = [
         today: o.today,
         regime: o.regime,
         pendingStayDeclarations: o.pendingDeclarations.slice(0, 20).map((s) => ({ guest: s.guestName, property: s.propertyName, checkOut: s.checkOut, deadline: s.declaration.deadline, overdue: s.declaration.overdue })),
-        climateFeeByMonth: o.monthly.filter((m) => m.climateFee > 0).slice(0, 6).map((m) => ({ period: m.period, amount: m.climateFee, deadline: m.climateFeeDeadline, filed: Boolean(m.climateFeeFiled) })),
+        climateFeeByMonth: o.monthly.filter((m) => m.climateFee > 0).slice(0, 6).map((m) => ({ period: m.period, amount: m.climateFee, deadline: m.climateFeeDeadline, filed: Boolean(m.climateFeeFiled), overdue: m.climateFeeOverdue })),
         warnings: o.warnings,
         compliance: o.compliance.filter((c) => c.missing.length || !c.ama || c.insuranceStatus !== "OK"),
       };

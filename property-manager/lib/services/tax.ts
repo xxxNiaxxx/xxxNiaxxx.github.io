@@ -20,6 +20,7 @@ import {
   type PropertyKind,
   type TaxRegime,
 } from "@/lib/tax/gr";
+import { label } from "@/lib/labels";
 import { toNumber } from "./serializers";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -40,7 +41,7 @@ export async function getTaxContext(ctx: OrgContext) {
 }
 
 export async function updateTaxSettings(ctx: OrgContext, input: unknown) {
-  if (!hasRole(ctx, "ADMIN")) throw new AppError("FORBIDDEN", "Only owners and admins can change tax settings");
+  if (!hasRole(ctx, "ADMIN")) throw new AppError("FORBIDDEN", "Μόνο ο ιδιοκτήτης και οι διαχειριστές αλλάζουν τις φορολογικές ρυθμίσεις");
   const { taxRegime } = z.object({ taxRegime: z.enum(["AUTO", "INDIVIDUAL", "BUSINESS"]) }).parse(input);
   await db.organization.update({ where: { id: ctx.organizationId }, data: { taxRegime } });
   return getTaxContext(ctx);
@@ -131,7 +132,7 @@ export async function setStayDeclaration(ctx: OrgContext, reservationId: string,
 
 const filingSchema = z.object({
   kind: z.enum(["CLIMATE_FEE", "PRESENCE_FEE", "VAT"]),
-  period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use YYYY-MM"),
+  period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Μορφή ΕΕΕΕ-ΜΜ"),
   amount: z.coerce.number().min(0).max(10_000_000),
   reference: z.string().trim().max(100).optional(),
 });
@@ -241,13 +242,13 @@ export async function getTaxOverview(ctx: OrgContext, now = new Date()) {
 
   const warnings: { level: "high" | "medium" | "low"; title: string; detail: string }[] = [];
   for (const p of compliance.filter((c) => !c.ama)) {
-    warnings.push({ level: "high", title: `${p.name} has no AMA`, detail: "Register the property in the AADE short-term rental registry and display the AMA in every listing." });
+    warnings.push({ level: "high", title: `${p.name}: δεν έχει ΑΜΑ`, detail: "Καταχωρίστε το ακίνητο στο Μητρώο Βραχυχρόνιας Διαμονής της ΑΑΔΕ και αναρτήστε τον ΑΜΑ σε κάθε αγγελία." });
   }
   if (tax.setting === "AUTO" && tax.propertiesWithAma === 2) {
-    warnings.push({ level: "medium", title: "One more AMA makes this a business", detail: "From the 3rd property with an AMA you must register a business (έναρξη εργασιών) within 30 days: VAT 13%, presence fee 0.5%, myDATA." });
+    warnings.push({ level: "medium", title: "Με έναν ακόμη ΑΜΑ γίνεστε επιχείρηση", detail: "Από το 3ο ακίνητο με ΑΜΑ απαιτείται έναρξη εργασιών εντός 30 ημερών: ΦΠΑ 13%, τέλος παρεπιδημούντων 0,5%, myDATA." });
   }
   for (const s of stays.filter((x) => x.longStay && (x.status === "CONFIRMED" || x.status === "COMPLETED") && x.checkOut >= from)) {
-    warnings.push({ level: "low", title: `${s.guestName}: ${s.nights}-night stay`, detail: "Stays of 60+ nights are not short-term rentals — they need a regular lease declaration (Δήλωση Πληροφοριακών Στοιχείων Μίσθωσης)." });
+    warnings.push({ level: "low", title: `${s.guestName}: διαμονή ${s.nights} νυχτών`, detail: "Διαμονές 60+ ημερών δεν είναι βραχυχρόνια μίσθωση — υποβάλλεται Δήλωση Πληροφοριακών Στοιχείων Μίσθωσης." });
   }
 
   return {
@@ -348,10 +349,10 @@ function csv(rows: (string | number | null)[][]) {
 export async function exportStaysCsv(ctx: OrgContext, year: number) {
   const stays = await listStays(ctx, { from: `${year}-01-01`, to: `${year + 1}-01-01` });
   return csv([
-    ["AMA", "Property", "Guest", "Confirmation", "Source", "Status", "Check-in", "Check-out", "Nights", "Total (EUR)", "Rent ex VAT", "VAT 13%", "Presence fee 0.5%", "Climate fee (TAKK)", "TAKK by month", "Declaration", "Declaration deadline"],
+    ["ΑΜΑ", "Ακίνητο", "Επισκέπτης", "Κωδικός κράτησης", "Πηγή", "Κατάσταση", "Άφιξη", "Αναχώρηση", "Νύχτες", "Σύνολο (€)", "Μίσθωμα χωρίς ΦΠΑ", "ΦΠΑ 13%", "Τέλος παρεπιδημούντων 0,5%", "ΤΑΚΚ", "ΤΑΚΚ ανά μήνα", "Δήλωση διαμονής", "Προθεσμία δήλωσης"],
     ...stays.map((s) => [
-      s.ama, s.propertyName, s.guestName, s.confirmationCode, s.source, s.status, s.checkIn, s.checkOut, s.nights, s.totalAmount, s.rent, s.vat, s.presenceFee, s.climateFee, s.climateFeeMonths.map((m) => `${m.period}: ${m.nights}n €${m.amount}`).join(" | "),
-      s.declaration.required ? s.declaration.status : "NOT_REQUIRED", s.declaration.required ? s.declaration.deadline : null,
+      s.ama, s.propertyName, s.guestName, s.confirmationCode, label(s.source), label(s.status), s.checkIn, s.checkOut, s.nights, s.totalAmount, s.rent, s.vat, s.presenceFee, s.climateFee, s.climateFeeMonths.map((m) => `${m.period}: ${m.nights} νύχτες ${m.amount} €`).join(" | "),
+      label(s.declaration.required ? s.declaration.status : "NOT_REQUIRED"), s.declaration.required ? s.declaration.deadline : null,
     ]),
   ]);
 }
@@ -359,8 +360,8 @@ export async function exportStaysCsv(ctx: OrgContext, year: number) {
 export async function exportAnnualCsv(ctx: OrgContext, year: number) {
   const r = await getAnnualReport(ctx, year);
   return csv([
-    ["Year", "Regime", "AMA", "Property", "Stays", "Nights", "Gross (EUR)", "Rent ex VAT", "VAT", "Presence fee", "Climate fee collected", "Platform fees", "All expenses"],
-    ...r.byProperty.map((p) => [year, r.regime, p.ama, p.name, p.stays, p.nights, p.gross, p.rent, p.vat, p.presenceFee, p.climateFee, p.platformFees, p.expenses]),
+    ["Έτος", "Καθεστώς", "ΑΜΑ", "Ακίνητο", "Διαμονές", "Νύχτες", "Ακαθάριστα (€)", "Μίσθωμα χωρίς ΦΠΑ", "ΦΠΑ", "Τέλος παρεπιδημούντων", "ΤΑΚΚ που εισπράχθηκε", "Προμήθειες πλατφορμών", "Σύνολο εξόδων"],
+    ...r.byProperty.map((p) => [year, label(r.regime), p.ama, p.name, p.stays, p.nights, p.gross, p.rent, p.vat, p.presenceFee, p.climateFee, p.platformFees, p.expenses]),
   ]);
 }
 

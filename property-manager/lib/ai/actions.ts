@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { dateToISO } from "@/lib/dates";
 import { AppError, badRequest, notFound } from "@/lib/errors";
+import { formatDay } from "@/lib/format";
 import type { OrgContext } from "@/lib/permissions";
 import { createMessage } from "@/lib/services/messages";
 import { assertGuest, assertProperty, assertReservation } from "@/lib/services/scope";
@@ -16,7 +17,7 @@ import { taskCreateSchema } from "@/lib/validation/task";
 export const sendGuestMessagePayload = z.object({
   guestId: z.string().min(1),
   reservationId: z.string().min(1).nullish(),
-  message: z.string().trim().min(1, "Message cannot be empty").max(5000),
+  message: z.string().trim().min(1, "Το μήνυμα δεν μπορεί να είναι κενό").max(5000),
   guestName: z.string().optional(),
   context: z.string().optional(),
 });
@@ -53,9 +54,9 @@ async function normalizeMessagePayload(ctx: OrgContext, raw: unknown) {
   let context = p.context;
   if (p.reservationId) {
     const r = await assertReservation(ctx, p.reservationId);
-    if (r.guestId !== guest.id) throw badRequest("The reservation belongs to a different guest");
+    if (r.guestId !== guest.id) throw badRequest("Η κράτηση αφορά άλλον επισκέπτη");
     const property = await assertProperty(ctx, r.propertyId);
-    context = `${property.name} · ${dateToISO(r.checkIn)} → ${dateToISO(r.checkOut)}`;
+    context = `${property.name} · ${formatDay(dateToISO(r.checkIn))} → ${formatDay(dateToISO(r.checkOut))}`;
   }
   return { ...p, guestName: `${guest.firstName} ${guest.lastName}`, context };
 }
@@ -70,7 +71,7 @@ async function normalizeTaskPayload(ctx: OrgContext, raw: unknown) {
 function normalizePayload(ctx: OrgContext, type: ActionType, raw: unknown) {
   if (type === "SEND_GUEST_MESSAGE") return normalizeMessagePayload(ctx, raw);
   if (type === "CREATE_TASK") return normalizeTaskPayload(ctx, raw);
-  throw badRequest(`Unknown action type ${type as string}`);
+  throw badRequest(`Άγνωστος τύπος ενέργειας ${type as string}`);
 }
 
 export async function proposeAction(
@@ -115,7 +116,7 @@ export async function listActions(ctx: OrgContext, filter: { status?: AIAction["
 /** "Edit" in the UI: change the payload of a still-proposed action. */
 export async function updateActionPayload(ctx: OrgContext, id: string, patch: unknown) {
   const action = await findAction(ctx, id);
-  if (action.status !== "PROPOSED") throw new AppError("CONFLICT", "Only proposed actions can be edited");
+  if (action.status !== "PROPOSED") throw new AppError("CONFLICT", "Μόνο ενέργειες προς έγκριση μπορούν να επεξεργαστούν");
   const merged = { ...(action.payload as object), ...(z.record(z.string(), z.unknown()).parse(patch)) };
   const payload = await normalizePayload(ctx, action.type as ActionType, merged);
   const row = await db.aIAction.update({ where: { id }, data: { payload: payload as Prisma.InputJsonValue } });
@@ -128,7 +129,7 @@ export async function rejectAction(ctx: OrgContext, id: string) {
     where: { id, organizationId: ctx.organizationId, status: "PROPOSED" },
     data: { status: "REJECTED", reviewedByUserId: ctx.userId, reviewedAt: new Date() },
   });
-  if (count === 0) throw new AppError("CONFLICT", "This action has already been reviewed");
+  if (count === 0) throw new AppError("CONFLICT", "Η ενέργεια έχει ήδη εξεταστεί");
   return serializeAction(await findAction(ctx, id));
 }
 
@@ -142,7 +143,7 @@ export async function approveAction(ctx: OrgContext, id: string) {
     where: { id, organizationId: ctx.organizationId, status: "PROPOSED" },
     data: { status: "APPROVED", reviewedByUserId: ctx.userId, reviewedAt: new Date() },
   });
-  if (count === 0) throw new AppError("CONFLICT", "This action has already been reviewed");
+  if (count === 0) throw new AppError("CONFLICT", "Η ενέργεια έχει ήδη εξεταστεί");
 
   try {
     const result = await execute(ctx, action.type as ActionType, action.payload);
@@ -152,7 +153,7 @@ export async function approveAction(ctx: OrgContext, id: string) {
     });
     return serializeAction(row);
   } catch (error) {
-    const message = error instanceof AppError ? error.message : "The action could not be completed";
+    const message = error instanceof AppError ? error.message : "Η ενέργεια δεν ολοκληρώθηκε";
     if (!(error instanceof AppError)) console.error(error);
     const row = await db.aIAction.update({
       where: { id },
@@ -181,6 +182,6 @@ async function execute(ctx: OrgContext, type: ActionType, rawPayload: unknown): 
       return { taskId: created.id, title: created.title, propertyName };
     }
     default:
-      throw new AppError("BAD_REQUEST", `Unknown action type ${type as string}`);
+      throw new AppError("BAD_REQUEST", `Άγνωστος τύπος ενέργειας ${type as string}`);
   }
 }

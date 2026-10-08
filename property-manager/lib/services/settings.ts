@@ -4,7 +4,7 @@ import { AppError } from "@/lib/errors";
 import { hasRole, type OrgContext } from "@/lib/permissions";
 import { requiredText } from "@/lib/validation/common";
 
-const nameSchema = z.object({ name: requiredText("Name", 120) });
+const nameSchema = z.object({ name: requiredText("Όνομα", 120) });
 
 export async function updateProfile(userId: string, input: unknown) {
   const { name } = nameSchema.parse(input);
@@ -13,7 +13,7 @@ export async function updateProfile(userId: string, input: unknown) {
 }
 
 export async function updateOrganization(ctx: OrgContext, input: unknown) {
-  if (!hasRole(ctx, "ADMIN")) throw new AppError("FORBIDDEN", "Only owners and admins can rename the organization");
+  if (!hasRole(ctx, "ADMIN")) throw new AppError("FORBIDDEN", "Μόνο ο ιδιοκτήτης και οι διαχειριστές μπορούν να μετονομάσουν τον οργανισμό");
   const { name } = nameSchema.parse(input);
   const org = await db.organization.update({ where: { id: ctx.organizationId }, data: { name }, select: { id: true, name: true } });
   return org;

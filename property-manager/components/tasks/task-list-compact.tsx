@@ -15,7 +15,7 @@ export function TaskListCompact({ tasks, showProperty = true }: { tasks: TaskDTO
               <div className={cn("truncate text-xs", t.overdue ? "text-danger" : "text-muted-foreground")}>
                 {humanize(t.type)}
                 {showProperty && t.propertyName ? ` · ${t.propertyName}` : ""}
-                {t.dueAt ? ` · ${t.overdue ? "overdue since " : "due "}${formatDateTime(t.dueAt)}` : ""}
+                {t.dueAt ? ` · ${t.overdue ? "καθυστερεί από " : "έως "}${formatDateTime(t.dueAt)}` : ""}
               </div>
             </div>
             <PriorityBadge value={t.priority} />

@@ -64,7 +64,7 @@ describe("tax service", () => {
   it("warns about properties without an AMA", async () => {
     const o = await getTaxOverview(ctx, NOW);
     expect(o.regime).toBe("INDIVIDUAL");
-    expect(o.warnings.some((w) => w.title === "Villa has no AMA")).toBe(true);
+    expect(o.warnings.some((w) => w.title === "Villa: δεν έχει ΑΜΑ")).toBe(true);
   });
 
   it("estimates the annual Ε2 tax with the 5% flat deduction", async () => {

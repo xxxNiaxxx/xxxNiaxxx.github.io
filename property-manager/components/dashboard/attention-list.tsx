@@ -23,7 +23,7 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
   if (!items.length) {
     return (
       <div className="flex items-center gap-3 rounded-xl bg-success-soft px-4 py-5 text-sm text-success">
-        <CheckCircle2 className="size-5" /> All clear — nothing needs your attention right now.
+        <CheckCircle2 className="size-5" /> Όλα εντάξει — τίποτα δεν χρειάζεται την προσοχή σας αυτή τη στιγμή.
       </div>
     );
   }
@@ -41,7 +41,7 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
                 <span className="block text-sm font-medium">{item.title}</span>
                 <span className="block truncate text-xs text-muted-foreground">{item.detail}</span>
               </span>
-              {item.severity === "high" && <span className="mt-1 text-[11px] font-semibold text-danger uppercase">Urgent</span>}
+              {item.severity === "high" && <span className="mt-1 text-[11px] font-semibold text-danger uppercase">Επείγον</span>}
             </Link>
           </li>
         );

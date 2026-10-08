@@ -11,50 +11,49 @@ import { getPageContext } from "@/lib/auth/page";
 import { formatDay, formatMoney, formatPercent } from "@/lib/format";
 import { getDashboard } from "@/lib/services/dashboard";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export const metadata: Metadata = { title: "Πίνακας ελέγχου" };
 
 function greeting(now: Date) {
-  const h = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hour12: false, timeZone: process.env.NEXT_PUBLIC_APP_TIMEZONE || "Europe/Athens" }).format(now));
-  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  const h = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: process.env.NEXT_PUBLIC_APP_TIMEZONE || "Europe/Athens" }).format(now));
+  return h < 12 ? "Καλημέρα" : h < 18 ? "Καλησπέρα" : "Καλό βράδυ";
 }
 
 export default async function DashboardPage() {
-  const { ctx, user } = await getPageContext();
+  const { ctx } = await getPageContext();
   const d = await getDashboard(ctx);
   const s = d.summary;
-  const firstName = (user.name ?? "").split(" ")[0];
   return (
     <>
       <PageHeader
-        title={`${greeting(new Date())}${firstName ? `, ${firstName}` : ""}`}
-        description={`${formatDay(d.today, { weekday: "long", day: "numeric", month: "long" })} · ${d.attention.length ? `${d.attention.length} thing${d.attention.length > 1 ? "s" : ""} need${d.attention.length > 1 ? "" : "s"} your attention` : "you're all caught up"}`}
+        title={greeting(new Date())}
+        description={`${formatDay(d.today, { weekday: "long", day: "numeric", month: "long" })} · ${d.attention.length ? `${d.attention.length} ${d.attention.length > 1 ? "θέματα χρειάζονται" : "θέμα χρειάζεται"} την προσοχή σας` : "όλα είναι εντάξει"}`}
         actions={
           <>
             <Button asChild variant="outline">
-              <Link href="/tasks?new=1">New task</Link>
+              <Link href="/tasks?new=1">Νέα εργασία</Link>
             </Button>
             <Button asChild>
-              <Link href="/reservations?new=1">New reservation</Link>
+              <Link href="/reservations?new=1">Νέα κράτηση</Link>
             </Button>
           </>
         }
       />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
-        <Stat label="Properties" value={s.activeProperties} hint={`${s.properties} total`} icon={<Building2 />} />
-        <Stat label="In-house" value={s.activeReservations} hint="active stays tonight" icon={<BedDouble />} />
-        <Stat label="Check-ins" value={s.checkInsToday} hint="today" icon={<LogIn />} />
-        <Stat label="Check-outs" value={s.checkOutsToday} hint="today" icon={<LogOut />} />
-        <Stat label="Revenue" value={formatMoney(s.monthlyRevenue, s.currency, { compact: true })} hint="this month" icon={<Euro />} />
-        <Stat label="Occupancy" value={formatPercent(s.occupancy)} hint="this month" icon={<Percent />} />
+        <Stat label="Ακίνητα" value={s.activeProperties} hint={`${s.properties} συνολικά`} icon={<Building2 />} />
+        <Stat label="Φιλοξενούνται" value={s.activeReservations} hint="διαμονές απόψε" icon={<BedDouble />} />
+        <Stat label="Αφίξεις" value={s.checkInsToday} hint="σήμερα" icon={<LogIn />} />
+        <Stat label="Αναχωρήσεις" value={s.checkOutsToday} hint="σήμερα" icon={<LogOut />} />
+        <Stat label="Έσοδα" value={formatMoney(s.monthlyRevenue, s.currency, { compact: true })} hint="αυτόν τον μήνα" icon={<Euro />} />
+        <Stat label="Πληρότητα" value={formatPercent(s.occupancy)} hint="αυτόν τον μήνα" icon={<Percent />} />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.35fr_1fr]">
         <div className="grid min-w-0 content-start gap-6">
           <Card>
             <CardHeader
-              title="Needs attention"
-              description="Resolve these to keep stays running smoothly"
+              title="Χρειάζονται προσοχή"
+              description="Τακτοποιήστε τα για να κυλούν ομαλά οι διαμονές"
               action={d.attention.length > 0 && <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">{d.attention.length}</span>}
             />
             <CardContent>
@@ -64,7 +63,7 @@ export default async function DashboardPage() {
           <AIPreview />
         </div>
         <Card>
-          <CardHeader title="Today" description={formatDay(d.today, { weekday: "long", day: "numeric", month: "short" })} action={<Button asChild variant="ghost" size="sm"><Link href="/calendar">Calendar →</Link></Button>} />
+          <CardHeader title="Σήμερα" description={formatDay(d.today, { weekday: "long", day: "numeric", month: "short" })} action={<Button asChild variant="ghost" size="sm"><Link href="/calendar">Ημερολόγιο →</Link></Button>} />
           <CardContent>
             <TodayAgenda agenda={d.todayAgenda} />
           </CardContent>

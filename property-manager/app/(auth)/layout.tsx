@@ -14,12 +14,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="relative hidden overflow-hidden bg-primary lg:block">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(45,212,191,0.25),transparent_45%),radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.08),transparent_40%)]" />
         <div className="relative flex h-full flex-col justify-end p-12 text-primary-foreground">
-          <p className="text-sm text-white/60">Observe → Decide → Act</p>
+          <p className="text-sm text-white/60">Παρατήρησε → Αποφάσισε → Δράσε</p>
           <p className="mt-3 max-w-md text-3xl leading-tight font-semibold tracking-tight">{APP_TAGLINE}</p>
           <ul className="mt-8 space-y-3 text-sm text-white/75">
-            <li>• See what needs your attention today, at a glance</li>
-            <li>• Reservations, calendar, cleaning and maintenance in one place</li>
-            <li>• An AI manager that answers from your real data — and asks before acting</li>
+            <li>• Δείτε με μια ματιά τι χρειάζεται την προσοχή σας σήμερα</li>
+            <li>• Κρατήσεις, ημερολόγιο, καθαρισμοί και συντήρηση σε ένα σημείο</li>
+            <li>• Βοηθός AI που απαντά από τα πραγματικά σας δεδομένα — και ρωτά πριν κάνει οτιδήποτε</li>
           </ul>
         </div>
       </div>

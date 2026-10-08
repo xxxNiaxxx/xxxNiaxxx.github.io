@@ -12,11 +12,11 @@ export function CancelReservationButton({ id }: { id: string }) {
       variant="danger-outline"
       loading={pending}
       onClick={() => {
-        if (!confirm("Cancel this reservation? The dates become available again and open tasks for it are cancelled.")) return;
-        run(() => api(`/api/reservations/${id}/cancel`, { method: "POST" }), { success: "Reservation cancelled" });
+        if (!confirm("Ακύρωση κράτησης; Οι ημερομηνίες ελευθερώνονται και οι ανοιχτές εργασίες της ακυρώνονται.")) return;
+        run(() => api(`/api/reservations/${id}/cancel`, { method: "POST" }), { success: "Η κράτηση ακυρώθηκε" });
       }}
     >
-      <Ban /> Cancel reservation
+      <Ban /> Ακύρωση κράτησης
     </Button>
   );
 }

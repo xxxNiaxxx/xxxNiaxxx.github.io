@@ -21,7 +21,7 @@ export function ComplianceChecklist({ propertyId, compliance }: { propertyId: st
   const done = COMPLIANCE_ITEMS.filter((i) => state[i.key]).length;
   return (
     <div className="grid gap-3">
-      <div className="text-xs text-muted-foreground">{done}/{COMPLIANCE_ITEMS.length} items in place</div>
+      <div className="text-xs text-muted-foreground">{done}/{COMPLIANCE_ITEMS.length} στοιχεία σε ισχύ</div>
       <ul className="grid gap-1">
         {COMPLIANCE_ITEMS.map((item) => (
           <li key={item.key}>
@@ -33,7 +33,7 @@ export function ComplianceChecklist({ propertyId, compliance }: { propertyId: st
         ))}
       </ul>
       <label className="grid gap-1.5 text-sm">
-        <span className="text-[13px] font-medium">Liability insurance expires on</span>
+        <span className="text-[13px] font-medium">Λήξη ασφάλισης αστικής ευθύνης</span>
         <Input type="date" defaultValue={typeof state.insuranceExpiresOn === "string" ? state.insuranceExpiresOn : ""} onChange={(e) => save({ insuranceExpiresOn: e.target.value || null })} className="w-48" />
       </label>
     </div>

@@ -12,7 +12,7 @@ import { formatMoney } from "@/lib/format";
 import { listProperties } from "@/lib/services/properties";
 import { propertyListQuery } from "@/lib/validation/property";
 
-export const metadata: Metadata = { title: "Properties" };
+export const metadata: Metadata = { title: "Ακίνητα" };
 
 export default async function PropertiesPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const { ctx } = await getPageContext();
@@ -24,22 +24,22 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
   return (
     <>
       <PageHeader
-        title="Properties"
-        description="Your portfolio at a glance"
-        actions={<PropertyFormDialog trigger={<Button><Plus /> New property</Button>} />}
+        title="Ακίνητα"
+        description="Όλα σας τα καταλύματα με μια ματιά"
+        actions={<PropertyFormDialog trigger={<Button><Plus /> Νέο ακίνητο</Button>} />}
       />
       <div className="mb-5 flex flex-col gap-2 sm:flex-row">
-        <SearchInput placeholder="Search name, city or address" />
-        <FilterSelect param="status" label="All statuses" options={[{ value: "ACTIVE", label: "Active" }, { value: "INACTIVE", label: "Inactive" }]} />
+        <SearchInput placeholder="Αναζήτηση ονόματος, πόλης ή διεύθυνσης" />
+        <FilterSelect param="status" label="Όλες οι καταστάσεις" options={[{ value: "ACTIVE", label: "Ενεργά" }, { value: "INACTIVE", label: "Ανενεργά" }]} />
       </div>
 
       {properties.length === 0 ? (
         <Card>
           <EmptyState
             icon={<Building2 />}
-            title={filtered ? "No properties match these filters" : "No properties yet"}
-            description={filtered ? "Try a different search or status." : "Add your first property to start taking reservations."}
-            action={!filtered && <PropertyFormDialog trigger={<Button><Plus /> Add property</Button>} />}
+            title={filtered ? "Κανένα ακίνητο δεν ταιριάζει στα φίλτρα" : "Δεν υπάρχουν ακίνητα ακόμη"}
+            description={filtered ? "Δοκιμάστε άλλη αναζήτηση ή κατάσταση." : "Προσθέστε το πρώτο σας ακίνητο για να δέχεστε κρατήσεις."}
+            action={!filtered && <PropertyFormDialog trigger={<Button><Plus /> Προσθήκη ακινήτου</Button>} />}
           />
         </Card>
       ) : (
@@ -58,12 +58,12 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                 </div>
                 <div className="mt-5 flex items-end justify-between">
                   <div className="flex gap-4 text-[13px] text-muted-foreground">
-                    <span className="flex items-center gap-1"><BedDouble className="size-4" /> {p.bedrooms} bd</span>
+                    <span className="flex items-center gap-1"><BedDouble className="size-4" /> {p.bedrooms} υπν.</span>
                     <span className="flex items-center gap-1"><Users className="size-4" /> {p.maxGuests}</span>
                   </div>
                   <div className="text-right">
                     <div className="font-semibold tabular-nums">{formatMoney(p.basePrice, p.currency)}</div>
-                    <div className="text-[11px] text-muted-foreground">per night</div>
+                    <div className="text-[11px] text-muted-foreground">ανά νύχτα</div>
                   </div>
                 </div>
               </Card>

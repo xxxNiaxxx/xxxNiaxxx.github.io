@@ -20,7 +20,7 @@ export async function api<T = unknown>(url: string, init: { method?: string; bod
       body: init.body ? JSON.stringify(init.body) : undefined,
     });
   } catch {
-    throw new ApiError("Network error — check your connection and try again.", 0);
+    throw new ApiError("Σφάλμα δικτύου — ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά.", 0);
   }
   const json = await res.json().catch(() => null);
   if (!res.ok) {
@@ -29,7 +29,7 @@ export async function api<T = unknown>(url: string, init: { method?: string; bod
     if (Array.isArray(err?.details)) {
       for (const d of err.details) if (d?.path && !fieldErrors[d.path]) fieldErrors[d.path] = d.message;
     }
-    throw new ApiError(err?.message ?? `Request failed (${res.status})`, res.status, fieldErrors);
+    throw new ApiError(err?.message ?? `Το αίτημα απέτυχε (${res.status})`, res.status, fieldErrors);
   }
   return json?.data as T;
 }

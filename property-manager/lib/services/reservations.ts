@@ -43,7 +43,7 @@ export async function assertNoOverlap(
   });
   if (clash) {
     throw conflict(
-      `These dates overlap a confirmed stay (${clash.guest.firstName} ${clash.guest.lastName}, ` +
+      `Οι ημερομηνίες συμπίπτουν με επιβεβαιωμένη διαμονή (${clash.guest.firstName} ${clash.guest.lastName}, ` +
         `${dateToISO(clash.checkIn)} → ${dateToISO(clash.checkOut)}).`,
       { reservationId: clash.id },
     );
@@ -58,7 +58,7 @@ async function serializable<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>)
     } catch (e) {
       const retryable = e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2034";
       if (!retryable) throw e;
-      if (attempt >= 2) throw conflict("Another change to this property's calendar happened at the same time. Try again.");
+      if (attempt >= 2) throw conflict("Έγινε ταυτόχρονα άλλη αλλαγή στο ημερολόγιο του ακινήτου. Δοκιμάστε ξανά.");
     }
   }
 }
@@ -119,9 +119,9 @@ export async function createReservation(ctx: OrgContext, input: unknown) {
   const data = reservationCreateSchema.parse(input);
   const row = await serializable(async (tx) => {
     const property = await assertProperty(ctx, data.propertyId, tx);
-    if (property.status !== "ACTIVE") throw badRequest("This property is inactive. Activate it before taking bookings.");
+    if (property.status !== "ACTIVE") throw badRequest("Το ακίνητο είναι ανενεργό. Ενεργοποιήστε το για να δέχεται κρατήσεις.");
     if (data.guestsCount > property.maxGuests) {
-      throw badRequest(`${property.name} sleeps at most ${property.maxGuests} guests.`);
+      throw badRequest(`Το ${property.name} φιλοξενεί έως ${property.maxGuests} άτομα.`);
     }
     let guestId = data.guestId;
     if (guestId) await assertGuest(ctx, guestId, tx);
@@ -129,7 +129,7 @@ export async function createReservation(ctx: OrgContext, input: unknown) {
       const guest = await tx.guest.create({ data: { ...data.newGuest, organizationId: ctx.organizationId } });
       guestId = guest.id;
     }
-    if (!guestId) throw badRequest("A guest is required");
+    if (!guestId) throw badRequest("Απαιτείται επισκέπτης");
     if (BLOCKING.includes(data.status)) await assertNoOverlap(tx, ctx, data);
 
     const created = await tx.reservation.create({
@@ -167,13 +167,13 @@ export async function updateReservation(ctx: OrgContext, id: string, input: unkn
       guestsCount: data.guestsCount ?? current.guestsCount,
     };
     if (next.checkOut <= next.checkIn) {
-      throw new AppError("VALIDATION", "Check-out must be after check-in", [
-        { path: "checkOut", message: "Check-out must be after check-in" },
+      throw new AppError("VALIDATION", "Η αναχώρηση πρέπει να είναι μετά την άφιξη", [
+        { path: "checkOut", message: "Η αναχώρηση πρέπει να είναι μετά την άφιξη" },
       ]);
     }
     const property = await assertProperty(ctx, next.propertyId, tx);
     if (data.guestsCount !== undefined || data.propertyId) {
-      if (next.guestsCount > property.maxGuests) throw badRequest(`${property.name} sleeps at most ${property.maxGuests} guests.`);
+      if (next.guestsCount > property.maxGuests) throw badRequest(`Το ${property.name} φιλοξενεί έως ${property.maxGuests} άτομα.`);
     }
     if (data.guestId) await assertGuest(ctx, data.guestId, tx);
     if (BLOCKING.includes(next.status)) await assertNoOverlap(tx, ctx, { ...next, excludeId: id });

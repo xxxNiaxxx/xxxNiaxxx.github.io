@@ -19,24 +19,24 @@ export interface NavItem {
 }
 
 export const mainNav: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/properties", label: "Properties", icon: Building2 },
-  { href: "/reservations", label: "Reservations", icon: NotebookTabs },
-  { href: "/guests", label: "Guests", icon: Users },
-  { href: "/tasks", label: "Tasks", icon: ClipboardList },
-  { href: "/financials", label: "Financials", icon: Wallet },
-  { href: "/tax", label: "Tax & AADE", icon: Landmark },
-  { href: "/ai", label: "AI Assistant", icon: Sparkles },
+  { href: "/dashboard", label: "Πίνακας ελέγχου", icon: LayoutDashboard },
+  { href: "/calendar", label: "Ημερολόγιο", icon: CalendarDays },
+  { href: "/properties", label: "Ακίνητα", icon: Building2 },
+  { href: "/reservations", label: "Κρατήσεις", icon: NotebookTabs },
+  { href: "/guests", label: "Επισκέπτες", icon: Users },
+  { href: "/tasks", label: "Εργασίες", icon: ClipboardList },
+  { href: "/financials", label: "Οικονομικά", icon: Wallet },
+  { href: "/tax", label: "Φορολογικά & ΑΑΔΕ", icon: Landmark },
+  { href: "/ai", label: "Βοηθός AI", icon: Sparkles },
 ];
 
-export const settingsNav: NavItem = { href: "/settings", label: "Settings", icon: Settings };
+export const settingsNav: NavItem = { href: "/settings", label: "Ρυθμίσεις", icon: Settings };
 
 /** Mobile bottom bar: Home, Calendar, Tasks, AI (+ "More" menu). */
 export const mobileNav: NavItem[] = [
-  { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/tasks", label: "Tasks", icon: ClipboardList },
+  { href: "/dashboard", label: "Αρχική", icon: LayoutDashboard },
+  { href: "/calendar", label: "Ημερολόγιο", icon: CalendarDays },
+  { href: "/tasks", label: "Εργασίες", icon: ClipboardList },
   { href: "/ai", label: "AI", icon: Sparkles },
 ];
 

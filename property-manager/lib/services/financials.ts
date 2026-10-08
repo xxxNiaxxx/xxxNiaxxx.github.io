@@ -28,7 +28,7 @@ export async function syncBookingIncome(client: Tx, r: Reservation) {
     amount: r.totalAmount,
     currency: r.currency,
     transactionDate: r.checkIn,
-    description: `Booking ${r.confirmationCode ?? ""}`.trim(),
+    description: `Κράτηση ${r.confirmationCode ?? ""}`.trim(),
   };
   if (existing) await client.transaction.update({ where: { id: existing.id }, data });
   else
@@ -189,7 +189,7 @@ export async function deleteTransaction(ctx: OrgContext, id: string) {
   if (row.reservationId && row.category === "BOOKING" && row.type === "INCOME") {
     throw new AppError(
       "CONFLICT",
-      "Booking income follows its reservation. Edit or cancel the reservation instead.",
+      "Τα έσοδα κράτησης ακολουθούν την κράτηση. Επεξεργαστείτε ή ακυρώστε την κράτηση.",
     );
   }
   await db.transaction.delete({ where: { id } });

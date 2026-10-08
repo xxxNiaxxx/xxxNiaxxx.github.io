@@ -108,11 +108,11 @@ export async function updateProperty(ctx: OrgContext, id: string, input: unknown
 
 /** Hard delete is only allowed for admins and for properties with no stays. */
 export async function deleteProperty(ctx: OrgContext, id: string) {
-  if (!hasRole(ctx, "ADMIN")) throw new AppError("FORBIDDEN", "Only admins can delete properties");
+  if (!hasRole(ctx, "ADMIN")) throw new AppError("FORBIDDEN", "Μόνο οι διαχειριστές μπορούν να διαγράψουν ακίνητα");
   await assertProperty(ctx, id);
   const reservations = await db.reservation.count({ where: { propertyId: id, organizationId: ctx.organizationId } });
   if (reservations > 0) {
-    throw conflict("This property has reservations. Deactivate it instead of deleting it.");
+    throw conflict("Το ακίνητο έχει κρατήσεις. Απενεργοποιήστε το αντί να το διαγράψετε.");
   }
   await db.property.delete({ where: { id } });
 }

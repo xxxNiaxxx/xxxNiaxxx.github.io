@@ -33,7 +33,7 @@ export function MobileBottomNav({ pendingActions }: { pendingActions: number }) 
   const more = [...mainNav.filter((n) => !mobileNav.some((m) => m.href === n.href)), settingsNav];
   return (
     <nav
-      aria-label="Mobile"
+      aria-label="Μενού κινητού"
       className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
       {mobileNav.map((item) => {
@@ -55,10 +55,10 @@ export function MobileBottomNav({ pendingActions }: { pendingActions: number }) 
       <DropdownMenu>
         <DropdownMenuTrigger className="flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-muted-foreground outline-none">
           <Menu className="size-5" />
-          More
+          Περισσότερα
         </DropdownMenuTrigger>
         <DropdownMenuContent side="top" className="mb-2 w-56">
-          <DropdownMenuLabel>Navigate</DropdownMenuLabel>
+          <DropdownMenuLabel>Μετάβαση</DropdownMenuLabel>
           {more.map((item) => (
             <DropdownMenuItem key={item.href} asChild>
               <Link href={item.href}>
@@ -68,7 +68,7 @@ export function MobileBottomNav({ pendingActions }: { pendingActions: number }) 
           ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => logoutAction()}>
-            <LogOut /> Sign out
+            <LogOut /> Αποσύνδεση
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

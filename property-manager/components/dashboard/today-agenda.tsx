@@ -12,7 +12,7 @@ function Section({ title, icon, count, children }: { title: string; icon: React.
         {title}
         <span className="rounded-full bg-muted px-1.5 text-[11px] tabular-nums">{count}</span>
       </div>
-      {count === 0 ? <p className="pb-2 text-[13px] text-subtle-foreground">None today</p> : <ul className="space-y-1.5">{children}</ul>}
+      {count === 0 ? <p className="pb-2 text-[13px] text-subtle-foreground">Καμία σήμερα</p> : <ul className="space-y-1.5">{children}</ul>}
     </div>
   );
 }
@@ -43,23 +43,23 @@ export function TodayAgenda({ agenda }: { agenda: DashboardData["todayAgenda"] }
   );
   return (
     <div className="grid gap-5">
-      <Section title="Check-ins" icon={<LogIn />} count={agenda.checkIns.length}>
+      <Section title="Αφίξεις" icon={<LogIn />} count={agenda.checkIns.length}>
         {agenda.checkIns.map((r) => (
-          <Row key={r.id} href={`/reservations/${r.id}`} primary={r.guestName ?? "Guest"} secondary={`${r.propertyName} · ${r.guestsCount} guests · ${r.nights} nights`} />
+          <Row key={r.id} href={`/reservations/${r.id}`} primary={r.guestName ?? "Επισκέπτης"} secondary={`${r.propertyName} · ${r.guestsCount} άτομα · ${r.nights} νύχτες`} />
         ))}
       </Section>
-      <Section title="Check-outs" icon={<LogOut />} count={agenda.checkOuts.length}>
+      <Section title="Αναχωρήσεις" icon={<LogOut />} count={agenda.checkOuts.length}>
         {agenda.checkOuts.map((r) => (
-          <Row key={r.id} href={`/reservations/${r.id}`} primary={r.guestName ?? "Guest"} secondary={`${r.propertyName}`} />
+          <Row key={r.id} href={`/reservations/${r.id}`} primary={r.guestName ?? "Επισκέπτης"} secondary={`${r.propertyName}`} />
         ))}
       </Section>
-      <Section title="Cleaning" icon={<Sparkle />} count={agenda.cleaning.length}>
+      <Section title="Καθαρισμοί" icon={<Sparkle />} count={agenda.cleaning.length}>
         {agenda.cleaning.map(taskRow)}
       </Section>
-      <Section title="Maintenance" icon={<Wrench />} count={agenda.maintenance.length}>
+      <Section title="Συντήρηση" icon={<Wrench />} count={agenda.maintenance.length}>
         {agenda.maintenance.map(taskRow)}
       </Section>
-      <Section title="Other tasks" icon={<ListTodo />} count={agenda.other.length}>
+      <Section title="Άλλες εργασίες" icon={<ListTodo />} count={agenda.other.length}>
         {agenda.other.map(taskRow)}
       </Section>
     </div>

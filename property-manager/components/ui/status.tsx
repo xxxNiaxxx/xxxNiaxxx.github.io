@@ -42,9 +42,9 @@ export function PriorityBadge({ value }: { value: string }) {
 }
 
 export const SOURCE_LABELS: Record<string, string> = {
-  MANUAL: "Manual",
+  MANUAL: "Χειροκίνητη",
   AIRBNB: "Airbnb",
   BOOKING_COM: "Booking.com",
-  DIRECT: "Direct",
-  OTHER: "Other",
+  DIRECT: "Απευθείας",
+  OTHER: "Άλλη",
 };

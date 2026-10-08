@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { Alert, Linking, Text, View } from "react-native";
 import { Button, Card, Screen, styles } from "@/components/ui";
+import { humanize } from "@/lib/format";
 import { useSession } from "@/lib/session";
 import { colors } from "@/theme";
 
@@ -14,10 +15,10 @@ export default function More() {
         <Text style={styles.rowSub}>{session.user.email}</Text>
         <View style={[styles.row, { marginTop: 12 }]}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.rowSub}>Organization</Text>
+            <Text style={styles.rowSub}>Οργανισμός</Text>
             <Text style={styles.rowTitle}>{session.organization.name}</Text>
           </View>
-          <Text style={[styles.rowSub, { color: colors.accent }]}>{session.role.toLowerCase()}</Text>
+          <Text style={[styles.rowSub, { color: colors.accent }]}>{humanize(session.role)}</Text>
         </View>
         <View style={styles.row}>
           <View style={{ flex: 1 }}>
@@ -27,21 +28,21 @@ export default function More() {
         </View>
       </Card>
       <Card>
-        <Text style={styles.sectionTitle}>Full workspace</Text>
+        <Text style={styles.sectionTitle}>Πλήρης εφαρμογή</Text>
         <Text style={[styles.rowSub, { marginTop: 4 }]}>
-          Properties, guests, reservations, financials and settings are available in the web app.
+          Ακίνητα, επισκέπτες, κρατήσεις, οικονομικά, φορολογικά και ρυθμίσεις υπάρχουν στην εφαρμογή web.
         </Text>
-        <Button title="Open web app" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(serverUrl)} />
+        <Button title="Άνοιγμα εφαρμογής web" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(serverUrl)} />
       </Card>
       <Card>
-        <Text style={styles.sectionTitle}>Privacy</Text>
-        <Button title="Privacy policy" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(`${serverUrl}/privacy`)} />
-        <Button title="Delete account" variant="danger" style={{ marginTop: 8 }} onPress={() => router.push("/delete-account")} />
+        <Text style={styles.sectionTitle}>Απόρρητο</Text>
+        <Button title="Πολιτική απορρήτου" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(`${serverUrl}/privacy`)} />
+        <Button title="Διαγραφή λογαριασμού" variant="danger" style={{ marginTop: 8 }} onPress={() => router.push("/delete-account")} />
       </Card>
       <Button
-        title="Sign out"
+        title="Αποσύνδεση"
         variant="danger"
-        onPress={() => Alert.alert("Sign out?", undefined, [{ text: "Cancel", style: "cancel" }, { text: "Sign out", style: "destructive", onPress: () => void signOut() }])}
+        onPress={() => Alert.alert("Αποσύνδεση;", undefined, [{ text: "Ακύρωση", style: "cancel" }, { text: "Αποσύνδεση", style: "destructive", onPress: () => void signOut() }])}
       />
     </Screen>
   );

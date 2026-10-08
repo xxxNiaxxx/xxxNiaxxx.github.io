@@ -17,7 +17,7 @@ export const transactionCreateSchema = z.object({
   reservationId: id.nullish(),
   type: transactionType,
   category: transactionCategory,
-  amount: money.pipe(z.number().positive("Amount must be greater than zero")),
+  amount: money.pipe(z.number().positive("Το ποσό πρέπει να είναι μεγαλύτερο από μηδέν")),
   currency,
   description: optionalText(500),
   transactionDate: isoDate,
@@ -29,7 +29,7 @@ export const revenueQuery = z
     to: optionalQuery(isoDate),
     propertyId: optionalQuery(id),
   })
-  .refine((v) => !v.from || !v.to || v.to > v.from, { message: "End date must be after start date", path: ["to"] });
+  .refine((v) => !v.from || !v.to || v.to > v.from, { message: "Η ημερομηνία λήξης πρέπει να είναι μετά την έναρξη", path: ["to"] });
 
 export type TransactionCreateInput = z.infer<typeof transactionCreateSchema>;
 export type RevenueQuery = z.infer<typeof revenueQuery>;

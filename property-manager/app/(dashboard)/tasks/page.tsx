@@ -13,13 +13,13 @@ import { getFormOptions } from "@/lib/services/options";
 import { listTasks } from "@/lib/services/tasks";
 import { taskListQuery, taskTab } from "@/lib/validation/task";
 
-export const metadata: Metadata = { title: "Tasks" };
+export const metadata: Metadata = { title: "Εργασίες" };
 
 const TABS = [
-  { key: "today", label: "Today" },
-  { key: "upcoming", label: "Upcoming" },
-  { key: "overdue", label: "Overdue" },
-  { key: "completed", label: "Completed" },
+  { key: "today", label: "Σήμερα" },
+  { key: "upcoming", label: "Επόμενες" },
+  { key: "overdue", label: "Καθυστερούν" },
+  { key: "completed", label: "Ολοκληρωμένες" },
 ] as const;
 
 export default async function TasksPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
@@ -42,15 +42,15 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader
-        title="Tasks"
-        description="Cleaning, maintenance and everything in between"
+        title="Εργασίες"
+        description="Καθαρισμοί, συντήρηση και ό,τι άλλο χρειάζεται"
         actions={
           <TaskFormDialog
             properties={options.properties.filter((p) => p.status === "ACTIVE")}
             members={options.members}
             defaults={{ propertyId: sp.propertyId, reservationId: sp.reservationId }}
             defaultOpen={sp.new === "1"}
-            trigger={<Button><Plus /> New task</Button>}
+            trigger={<Button><Plus /> Νέα εργασία</Button>}
           />
         }
       />
@@ -58,19 +58,19 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         <LinkTabs active={tab} tabs={TABS.map((t, i) => ({ key: t.key, label: t.label, href: qs(t.key), count: counts[i] }))} />
       </div>
       <div className="mb-5 grid grid-cols-2 gap-2 sm:flex">
-        <FilterSelect param="filterProperty" label="All properties" options={options.properties.map((p) => ({ value: p.id, label: p.name }))} />
-        <FilterSelect param="type" label="All types" options={TASK_TYPES.map((t) => ({ value: t, label: humanize(t) }))} />
+        <FilterSelect param="filterProperty" label="Όλα τα ακίνητα" options={options.properties.map((p) => ({ value: p.id, label: p.name }))} />
+        <FilterSelect param="type" label="Όλοι οι τύποι" options={TASK_TYPES.map((t) => ({ value: t, label: humanize(t) }))} />
         {tab !== "completed" && tab !== "overdue" && (
-          <FilterSelect param="status" label="Open statuses" options={["TODO", "IN_PROGRESS", "COMPLETED", "CANCELLED"].map((s) => ({ value: s, label: humanize(s) }))} />
+          <FilterSelect param="status" label="Ανοιχτές" options={["TODO", "IN_PROGRESS", "COMPLETED", "CANCELLED"].map((s) => ({ value: s, label: humanize(s) }))} />
         )}
-        <FilterSelect param="assignee" label="Anyone" options={[{ value: "me", label: "Assigned to me" }, { value: "unassigned", label: "Unassigned" }, ...options.members.map((m) => ({ value: m.id, label: m.name }))]} />
+        <FilterSelect param="assignee" label="Όλοι" options={[{ value: "me", label: "Σε εμένα" }, { value: "unassigned", label: "Χωρίς ανάθεση" }, ...options.members.map((m) => ({ value: m.id, label: m.name }))]} />
       </div>
       {tasks.length === 0 ? (
         <Card>
           <EmptyState
             icon={<ClipboardList />}
-            title={tab === "overdue" ? "Nothing overdue" : tab === "today" ? "Nothing due today" : "No tasks here"}
-            description={tab === "overdue" ? "Great work — every task is on schedule." : "Create a task or adjust the filters."}
+            title={tab === "overdue" ? "Τίποτα δεν καθυστερεί" : tab === "today" ? "Καμία εργασία για σήμερα" : "Δεν υπάρχουν εργασίες"}
+            description={tab === "overdue" ? "Μπράβο — όλες οι εργασίες είναι στην ώρα τους." : "Δημιουργήστε εργασία ή αλλάξτε τα φίλτρα."}
           />
         </Card>
       ) : (

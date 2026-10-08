@@ -9,10 +9,10 @@ import { useQuery } from "@/lib/use-query";
 import { colors } from "@/theme";
 
 const TABS = [
-  { key: "today", label: "Today" },
-  { key: "upcoming", label: "Upcoming" },
-  { key: "overdue", label: "Overdue" },
-  { key: "completed", label: "Done" },
+  { key: "today", label: "Σήμερα" },
+  { key: "upcoming", label: "Επόμενες" },
+  { key: "overdue", label: "Καθυστερούν" },
+  { key: "completed", label: "Έγιναν" },
 ] as const;
 
 export default function Tasks() {
@@ -28,22 +28,22 @@ export default function Tasks() {
       void reload();
     } catch (e) {
       setData(previous);
-      Alert.alert("Couldn't update task", e instanceof ApiError ? e.message : "Please try again.");
+      Alert.alert("Η εργασία δεν ενημερώθηκε", e instanceof ApiError ? e.message : "Δοκιμάστε ξανά.");
     }
   }
 
   function menu(task: Task) {
     const open = task.status === "TODO" || task.status === "IN_PROGRESS";
     const options: { label: string; body: Partial<Task> }[] = [
-      ...(task.status === "TODO" ? [{ label: "Start", body: { status: "IN_PROGRESS" as const } }] : []),
-      ...(open ? [{ label: "Complete", body: { status: "COMPLETED" as const } }, { label: "Cancel task", body: { status: "CANCELLED" as const } }] : [{ label: "Reopen", body: { status: "TODO" as const } }]),
+      ...(task.status === "TODO" ? [{ label: "Έναρξη", body: { status: "IN_PROGRESS" as const } }] : []),
+      ...(open ? [{ label: "Ολοκλήρωση", body: { status: "COMPLETED" as const } }, { label: "Ακύρωση εργασίας", body: { status: "CANCELLED" as const } }] : [{ label: "Επαναφορά", body: { status: "TODO" as const } }]),
     ];
     if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions({ options: [...options.map((o) => o.label), "Close"], cancelButtonIndex: options.length, title: task.title }, (i) => {
+      ActionSheetIOS.showActionSheetWithOptions({ options: [...options.map((o) => o.label), "Κλείσιμο"], cancelButtonIndex: options.length, title: task.title }, (i) => {
         if (i < options.length) void update(task, options[i].body);
       });
     } else {
-      Alert.alert(task.title, undefined, [...options.map((o) => ({ text: o.label, onPress: () => void update(task, o.body) })), { text: "Close", style: "cancel" }]);
+      Alert.alert(task.title, undefined, [...options.map((o) => ({ text: o.label, onPress: () => void update(task, o.body) })), { text: "Κλείσιμο", style: "cancel" }]);
     }
   }
 
@@ -60,7 +60,7 @@ export default function Tasks() {
       {loading && !data ? (
         <Loading />
       ) : data && data.length === 0 ? (
-        <Card><Empty title={tab === "overdue" ? "Nothing overdue" : "No tasks here"} detail={tab === "overdue" ? "Every task is on schedule." : undefined} /></Card>
+        <Card><Empty title={tab === "overdue" ? "Τίποτα δεν καθυστερεί" : "Δεν υπάρχουν εργασίες"} detail={tab === "overdue" ? "Όλες οι εργασίες είναι στην ώρα τους." : undefined} /></Card>
       ) : (
         (data ?? []).map((t) => <TaskRow key={t.id} task={t} onToggle={() => update(t, { status: t.status === "COMPLETED" ? "TODO" : "COMPLETED" })} onMenu={() => menu(t)} onChecklist={(checklist) => update(t, { checklist })} />)
       )}
@@ -75,20 +75,20 @@ function TaskRow({ task, onToggle, onMenu, onChecklist }: { task: Task; onToggle
   return (
     <Card style={{ padding: 14 }}>
       <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
-        <Pressable onPress={onToggle} hitSlop={10} accessibilityLabel={completed ? "Reopen task" : "Complete task"}
+        <Pressable onPress={onToggle} hitSlop={10} accessibilityLabel={completed ? "Επαναφορά εργασίας" : "Ολοκλήρωση εργασίας"}
           style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: completed ? colors.success : colors.subtleText, backgroundColor: completed ? colors.success : "transparent", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
           {completed && <Ionicons name="checkmark" size={15} color="#fff" />}
         </Pressable>
         <Pressable style={{ flex: 1 }} onPress={() => task.checklist.length && setExpanded((x) => !x)} onLongPress={onMenu}>
           <Text style={[styles.rowTitle, completed && { textDecorationLine: "line-through", color: colors.mutedText }]}>{task.title}</Text>
           <Text style={[styles.rowSub, task.overdue && { color: colors.danger }]}>
-            {[humanize(task.type), task.propertyName, task.dueAt && `${task.overdue ? "overdue · " : ""}${formatDateTime(task.dueAt)}`].filter(Boolean).join(" · ")}
+            {[humanize(task.type), task.propertyName, task.dueAt && `${task.overdue ? "καθυστερεί · " : ""}${formatDateTime(task.dueAt)}`].filter(Boolean).join(" · ")}
           </Text>
           <View style={{ flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
             <Badge label={humanize(task.priority)} tone={statusTone[task.priority]} />
             {task.status !== "TODO" && <Badge label={humanize(task.status)} tone={statusTone[task.status]} />}
-            <Text style={styles.rowSub}>{task.assigneeName ?? "Unassigned"}</Text>
-            {task.checklist.length > 0 && <Text style={[styles.rowSub, { color: colors.accent }]}>Checklist {done}/{task.checklist.length}</Text>}
+            <Text style={styles.rowSub}>{task.assigneeName ?? "Χωρίς ανάθεση"}</Text>
+            {task.checklist.length > 0 && <Text style={[styles.rowSub, { color: colors.accent }]}>Λίστα ελέγχου {done}/{task.checklist.length}</Text>}
           </View>
           {expanded && task.checklist.map((c, i) => (
             <Pressable key={i} onPress={() => onChecklist(task.checklist.map((x, j) => (j === i ? { ...x, done: !x.done } : x)))} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6 }}>
@@ -97,7 +97,7 @@ function TaskRow({ task, onToggle, onMenu, onChecklist }: { task: Task; onToggle
             </Pressable>
           ))}
         </Pressable>
-        <Pressable onPress={onMenu} hitSlop={10} accessibilityLabel="Task actions">
+        <Pressable onPress={onMenu} hitSlop={10} accessibilityLabel="Ενέργειες εργασίας">
           <Ionicons name="ellipsis-horizontal" size={20} color={colors.mutedText} />
         </Pressable>
       </View>

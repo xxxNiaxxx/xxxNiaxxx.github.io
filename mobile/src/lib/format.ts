@@ -1,17 +1,19 @@
+import { label } from "./labels";
+
 export function formatMoney(amount: number, currency = "EUR") {
   try {
-    return new Intl.NumberFormat("en-IE", { style: "currency", currency, maximumFractionDigits: Number.isInteger(amount) ? 0 : 2 }).format(amount);
+    return new Intl.NumberFormat("el-GR", { style: "currency", currency, maximumFractionDigits: Number.isInteger(amount) ? 0 : 2 }).format(amount);
   } catch {
-    return `${currency} ${amount.toFixed(0)}`;
+    return `${amount.toFixed(0)} ${currency === "EUR" ? "€" : currency}`;
   }
 }
 
 export const formatPercent = (rate: number) => `${Math.round(rate * 100)}%`;
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const WEEKDAYS = ["Κυρ", "Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ"];
+const MONTHS = ["Ιαν", "Φεβ", "Μαρ", "Απρ", "Μαΐ", "Ιουν", "Ιουλ", "Αυγ", "Σεπ", "Οκτ", "Νοε", "Δεκ"];
 
-/** "Thu 8 Oct" for a YYYY-MM-DD calendar date (no time-zone shifts). */
+/** "Πέμ 8 Οκτ" for a YYYY-MM-DD calendar date (no time-zone shifts). */
 export function formatDay(iso: string, withWeekday = true) {
   const [y, m, d] = iso.split("-").map(Number);
   const wd = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
@@ -29,9 +31,9 @@ export function formatDateTime(iso: string) {
   return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${formatTime(iso)}`;
 }
 
+/** Greek label of an enum value. */
 export function humanize(value: string) {
-  const s = value.toLowerCase().replace(/_/g, " ");
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  return label(value);
 }
 
 export function addDays(iso: string, days: number) {

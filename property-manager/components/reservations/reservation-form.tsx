@@ -52,7 +52,7 @@ export function ReservationFormDialog({ properties, guests, reservation, default
   const property = properties.find((p) => p.id === propertyId);
   const nights = checkIn && checkOut && checkOut > checkIn ? diffDaysISO(checkIn, checkOut) : 0;
   const suggested = property && nights ? property.basePrice * nights : null;
-  const dateError = checkIn && checkOut && checkOut <= checkIn ? "Check-out must be after check-in" : undefined;
+  const dateError = checkIn && checkOut && checkOut <= checkIn ? "Η αναχώρηση πρέπει να είναι μετά την άφιξη" : undefined;
   const activeProperties = useMemo(() => properties.filter((p) => p.status === "ACTIVE" || p.id === reservation?.propertyId), [properties, reservation]);
 
   function onOpenChange(next: boolean) {
@@ -79,7 +79,7 @@ export function ReservationFormDialog({ properties, guests, reservation, default
     await run(
       () => api<ReservationDTO>(editing ? `/api/reservations/${reservation!.id}` : "/api/reservations", { method: editing ? "PATCH" : "POST", body }),
       {
-        success: editing ? "Reservation updated" : "Reservation created",
+        success: editing ? "Η κράτηση ενημερώθηκε" : "Η κράτηση δημιουργήθηκε",
         onSuccess: (r) => {
           setOpen(false);
           if (!editing && r) router.push(`/reservations/${r.id}`);
@@ -92,18 +92,18 @@ export function ReservationFormDialog({ properties, guests, reservation, default
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent title={editing ? "Edit reservation" : "New reservation"} description={editing ? undefined : "Manual booking — channel sync comes in a later phase."} wide>
+      <DialogContent title={editing ? "Επεξεργασία κράτησης" : "Νέα κράτηση"} description={editing ? undefined : "Χειροκίνητη καταχώριση — ο συγχρονισμός με Airbnb/Booking έρχεται σε επόμενη φάση."} wide>
         <form onSubmit={onSubmit} noValidate className="grid gap-5">
-          <Field label="1. Property" htmlFor="propertyId" error={err.propertyId}>
+          <Field label="1. Ακίνητο" htmlFor="propertyId" error={err.propertyId}>
             <Select id="propertyId" name="propertyId" value={propertyId} onChange={(e) => setPropertyId(e.target.value)} required>
               {activeProperties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name} · sleeps {p.maxGuests}</option>
+                <option key={p.id} value={p.id}>{p.name} · έως {p.maxGuests} άτομα</option>
               ))}
             </Select>
           </Field>
 
           {editing ? (
-            <Field label="2. Guest" htmlFor="guestId" error={err.guestId}>
+            <Field label="2. Επισκέπτης" htmlFor="guestId" error={err.guestId}>
               <Select id="guestId" name="guestId" defaultValue={reservation!.guestId}>
                 {guests.map((g) => (
                   <option key={g.id} value={g.id}>{g.fullName}{g.email ? ` · ${g.email}` : ""}</option>
@@ -113,20 +113,20 @@ export function ReservationFormDialog({ properties, guests, reservation, default
           ) : (
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <span className="text-[13px] font-medium">2. Guest</span>
+                <span className="text-[13px] font-medium">2. Επισκέπτης</span>
                 <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs">
                   {(["existing", "new"] as const).map((m) => (
                     <button key={m} type="button" onClick={() => setGuestMode(m)} disabled={m === "existing" && !guests.length}
                       className={cn("rounded-md px-2.5 py-1 font-medium", guestMode === m ? "bg-surface shadow-sm" : "text-muted-foreground")}>
-                      {m === "existing" ? "Existing guest" : "New guest"}
+                      {m === "existing" ? "Υπάρχων επισκέπτης" : "Νέος επισκέπτης"}
                     </button>
                   ))}
                 </div>
               </div>
               {guestMode === "existing" ? (
                 <>
-                  <Select id="guestId" name="guestId" aria-label="Guest" defaultValue="" aria-invalid={!!err.guestId}>
-                    <option value="" disabled>Select a guest…</option>
+                  <Select id="guestId" name="guestId" aria-label="Επισκέπτης" defaultValue="" aria-invalid={!!err.guestId}>
+                    <option value="" disabled>Επιλέξτε επισκέπτη…</option>
                     {guests.map((g) => (
                       <option key={g.id} value={g.id}>{g.fullName}{g.email ? ` · ${g.email}` : ""}</option>
                     ))}
@@ -142,51 +142,51 @@ export function ReservationFormDialog({ properties, guests, reservation, default
           )}
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="3. Check-in" htmlFor="checkIn" error={err.checkIn}>
+            <Field label="3. Άφιξη" htmlFor="checkIn" error={err.checkIn}>
               <Input id="checkIn" name="checkIn" type="date" required value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
             </Field>
-            <Field label="4. Check-out" htmlFor="checkOut" error={dateError ?? err.checkOut}>
+            <Field label="4. Αναχώρηση" htmlFor="checkOut" error={dateError ?? err.checkOut}>
               <Input id="checkOut" name="checkOut" type="date" required min={checkIn || undefined} value={checkOut} onChange={(e) => setCheckOut(e.target.value)} aria-invalid={!!(dateError ?? err.checkOut)} />
             </Field>
-            <Field label="5. Guests" htmlFor="guestsCount" error={err.guestsCount} hint={property ? `Max ${property.maxGuests}` : undefined}>
+            <Field label="5. Άτομα" htmlFor="guestsCount" error={err.guestsCount} hint={property ? `Έως ${property.maxGuests}` : undefined}>
               <Input id="guestsCount" name="guestsCount" type="number" min={1} max={property?.maxGuests} defaultValue={reservation?.guestsCount ?? 2} required />
             </Field>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="6. Total amount" htmlFor="totalAmount" error={err.totalAmount} hint={suggested ? `Suggested ${formatMoney(suggested, property?.currency)} (${nights} × base price)` : undefined}>
+            <Field label="6. Συνολικό ποσό" htmlFor="totalAmount" error={err.totalAmount} hint={suggested ? `Πρόταση ${formatMoney(suggested, property?.currency)} (${nights} × βασική τιμή)` : undefined}>
               <Input id="totalAmount" name="totalAmount" type="number" min={0} step="0.01" required defaultValue={reservation?.totalAmount ?? ""} placeholder={suggested ? String(suggested) : ""} />
             </Field>
-            <Field label="7. Source" htmlFor="source">
+            <Field label="7. Πηγή" htmlFor="source">
               <Select id="source" name="source" defaultValue={reservation?.source ?? "MANUAL"}>
                 {Object.entries(SOURCE_LABELS).map(([k, label]) => (
                   <option key={k} value={k}>{label}</option>
                 ))}
               </Select>
             </Field>
-            <Field label="8. Confirmation code" htmlFor="confirmationCode" error={err.confirmationCode}>
-              <Input id="confirmationCode" name="confirmationCode" defaultValue={reservation?.confirmationCode ?? ""} placeholder="Optional" />
+            <Field label="8. Κωδικός κράτησης" htmlFor="confirmationCode" error={err.confirmationCode}>
+              <Input id="confirmationCode" name="confirmationCode" defaultValue={reservation?.confirmationCode ?? ""} placeholder="Προαιρετικό" />
             </Field>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Status" htmlFor="status">
+            <Field label="Κατάσταση" htmlFor="status">
               <Select id="status" name="status" defaultValue={reservation?.status ?? "CONFIRMED"}>
-                <option value="CONFIRMED">Confirmed</option>
-                <option value="PENDING">Pending</option>
-                {editing && <option value="COMPLETED">Completed</option>}
-                {editing && <option value="CANCELLED">Cancelled</option>}
+                <option value="CONFIRMED">Επιβεβαιωμένη</option>
+                <option value="PENDING">Εκκρεμεί</option>
+                {editing && <option value="COMPLETED">Ολοκληρώθηκε</option>}
+                {editing && <option value="CANCELLED">Ακυρώθηκε</option>}
               </Select>
             </Field>
-            <Field label="9. Notes" htmlFor="notes" className="sm:col-span-2">
+            <Field label="9. Σημειώσεις" htmlFor="notes" className="sm:col-span-2">
               <Textarea id="notes" name="notes" defaultValue={reservation?.notes ?? ""} className="min-h-9" rows={1} />
             </Field>
           </div>
           <input type="hidden" name="currency" value={property?.currency ?? "EUR"} />
 
           <DialogFooter className="mt-1">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" loading={pending}>{editing ? "Save changes" : "10. Save reservation"}</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Ακύρωση</Button>
+            <Button type="submit" loading={pending}>{editing ? "Αποθήκευση" : "10. Αποθήκευση κράτησης"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

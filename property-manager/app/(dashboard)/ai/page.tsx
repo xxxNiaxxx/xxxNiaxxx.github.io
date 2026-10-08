@@ -11,7 +11,7 @@ import { AppError } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "AI Assistant" };
+export const metadata: Metadata = { title: "Βοηθός AI" };
 
 export default async function AIPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   const { ctx } = await getPageContext();
@@ -26,13 +26,13 @@ export default async function AIPage({ searchParams }: { searchParams: Promise<{
 
   return (
     <>
-      <PageHeader title="AI Assistant" description="Ask about your operations. Actions always wait for your approval." />
+      <PageHeader title="Βοηθός AI" description="Ρωτήστε για τη λειτουργία των καταλυμάτων σας. Κάθε ενέργεια περιμένει την έγκρισή σας." />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <Chat key={current?.id ?? "new"} initial={current} mode={mode} />
         <aside className="grid min-w-0 content-start gap-6">
           {otherPending.length > 0 && (
             <Card>
-              <CardHeader title="Pending approvals" description="Proposed in other chats" />
+              <CardHeader title="Προς έγκριση" description="Προτάσεις από άλλες συνομιλίες" />
               <CardContent className="grid gap-3">
                 {otherPending.map((a) => (
                   <ActionCard key={a.id} action={a} />
@@ -41,9 +41,9 @@ export default async function AIPage({ searchParams }: { searchParams: Promise<{
             </Card>
           )}
           <Card>
-            <CardHeader title="Recent chats" />
+            <CardHeader title="Πρόσφατες συνομιλίες" />
             <CardContent className="-mx-2 grid gap-0.5">
-              {conversations.length === 0 && <p className="px-2 text-sm text-muted-foreground">No conversations yet.</p>}
+              {conversations.length === 0 && <p className="px-2 text-sm text-muted-foreground">Δεν υπάρχουν συνομιλίες ακόμη.</p>}
               {conversations.map((conv) => (
                 <Link
                   key={conv.id}

@@ -14,7 +14,7 @@ export async function createMessage(ctx: OrgContext, input: unknown, client: Tx 
   let guestId = data.guestId ?? null;
   if (data.reservationId) {
     const r = await assertReservation(ctx, data.reservationId, client);
-    if (guestId && guestId !== r.guestId) throw badRequest("The guest does not belong to this reservation");
+    if (guestId && guestId !== r.guestId) throw badRequest("Ο επισκέπτης δεν αντιστοιχεί σε αυτή την κράτηση");
     guestId = r.guestId;
   }
   if (guestId) await assertGuest(ctx, guestId, client);

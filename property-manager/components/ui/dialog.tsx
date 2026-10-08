@@ -44,7 +44,7 @@ export function DialogContent({
         {children}
         <DialogPrimitive.Close
           className="absolute top-4 right-4 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label="Close"
+          aria-label="Κλείσιμο"
         >
           <X className="size-4" />
         </DialogPrimitive.Close>

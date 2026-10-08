@@ -29,10 +29,10 @@ describe("AI tools and actions", () => {
   });
 
   it("AI tools cannot read another organization's data", async () => {
-    expect(await runTool("get_property", { propertyId: bPropertyId }, tc(a))).toMatchObject({ error: "Property not found" });
-    expect(await runTool("get_property", { name: "Bravo" }, tc(a))).toMatchObject({ error: "Property not found" });
-    expect(await runTool("get_guest", { guestId: bGuestId }, tc(a))).toMatchObject({ error: "Guest not found" });
-    expect(await runTool("get_reservation", { reservationId: bReservationId }, tc(a))).toMatchObject({ error: "Reservation not found" });
+    expect(await runTool("get_property", { propertyId: bPropertyId }, tc(a))).toMatchObject({ error: "Το ακίνητο δεν βρέθηκε" });
+    expect(await runTool("get_property", { name: "Bravo" }, tc(a))).toMatchObject({ error: "Το ακίνητο δεν βρέθηκε" });
+    expect(await runTool("get_guest", { guestId: bGuestId }, tc(a))).toMatchObject({ error: "Ο επισκέπτης δεν βρέθηκε" });
+    expect(await runTool("get_reservation", { reservationId: bReservationId }, tc(a))).toMatchObject({ error: "Η κράτηση δεν βρέθηκε" });
     const props = (await runTool("list_properties", {}, tc(a))) as { properties: { name: string }[] };
     expect(props.properties.map((p) => p.name)).toEqual(["Alpha House"]);
     const guests = (await runTool("list_guests", { q: "John" }, tc(a))) as { guests: { lastName: string }[] };
@@ -41,7 +41,7 @@ describe("AI tools and actions", () => {
 
   it("AI tools cannot propose actions on another organization's guest", async () => {
     const res = await runTool("create_message_draft", { guestId: bGuestId, message: "hi" }, tc(a));
-    expect(res).toMatchObject({ error: "Guest not found" });
+    expect(res).toMatchObject({ error: "Ο επισκέπτης δεν βρέθηκε" });
     expect(await db.aIAction.count({ where: { organizationId: a.organizationId } })).toBe(0);
   });
 
@@ -100,7 +100,7 @@ describe("AI tools and actions", () => {
     const res = await sendChatMessage(a, { message: "Send John a hello" }, { provider: fake });
     expect(res.mode).toBe("llm");
     expect(seen.join("\n")).not.toContain("Bravo Secret Villa");
-    expect(seen[0]).toContain("Property not found");
+    expect(seen[0]).toContain("Το ακίνητο δεν βρέθηκε");
     expect(res.actions).toHaveLength(1);
     expect(res.actions[0]).toMatchObject({ type: "SEND_GUEST_MESSAGE", status: "PROPOSED" });
     expect(await db.message.count({ where: { content: "Hello John" } })).toBe(0);

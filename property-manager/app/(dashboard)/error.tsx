@@ -9,13 +9,13 @@ export default function DashboardError({ error, reset }: { error: Error & { dige
       <div className="rounded-xl bg-danger-soft p-3 text-danger">
         <AlertTriangle className="size-5" />
       </div>
-      <h1 className="text-lg font-semibold">Something went wrong</h1>
+      <h1 className="text-lg font-semibold">Κάτι πήγε στραβά</h1>
       <p className="max-w-sm text-sm text-muted-foreground">
-        We couldn&apos;t load this page. Try again — if it keeps happening, check that the database is running.
+        Η σελίδα δεν φόρτωσε. Δοκιμάστε ξανά· αν επιμένει, ελέγξτε ότι η βάση δεδομένων λειτουργεί.
       </p>
-      {error.digest && <p className="font-mono text-xs text-subtle-foreground">Ref: {error.digest}</p>}
+      {error.digest && <p className="font-mono text-xs text-subtle-foreground">Κωδικός: {error.digest}</p>}
       <Button onClick={reset} variant="outline">
-        Try again
+        Δοκιμάστε ξανά
       </Button>
     </div>
   );

@@ -12,10 +12,10 @@ export function GuestNotes({ guestId, notes }: { guestId: string; notes: string 
   const dirty = value !== (notes ?? "");
   return (
     <div className="grid gap-2">
-      <Textarea value={value} onChange={(e) => setValue(e.target.value)} placeholder="Add a note about this guest…" className="min-h-28" aria-label="Guest notes" />
+      <Textarea value={value} onChange={(e) => setValue(e.target.value)} placeholder="Προσθέστε σημείωση για τον επισκέπτη…" className="min-h-28" aria-label="Σημειώσεις επισκέπτη" />
       <div className="flex justify-end">
-        <Button size="sm" disabled={!dirty} loading={pending} onClick={() => run(() => api(`/api/guests/${guestId}`, { method: "PATCH", body: { notes: value } }), { success: "Notes saved" })}>
-          Save notes
+        <Button size="sm" disabled={!dirty} loading={pending} onClick={() => run(() => api(`/api/guests/${guestId}`, { method: "PATCH", body: { notes: value } }), { success: "Οι σημειώσεις αποθηκεύτηκαν" })}>
+          Αποθήκευση σημειώσεων
         </Button>
       </div>
     </div>

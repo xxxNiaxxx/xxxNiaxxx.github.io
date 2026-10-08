@@ -8,11 +8,12 @@ import { FilterSelect, SearchInput } from "@/components/ui/filters";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { getPageContext } from "@/lib/auth/page";
 import { isISODate } from "@/lib/dates";
+import { humanize } from "@/lib/format";
 import { getFormOptions } from "@/lib/services/options";
 import { listReservations } from "@/lib/services/reservations";
 import { reservationListQuery } from "@/lib/validation/reservation";
 
-export const metadata: Metadata = { title: "Reservations" };
+export const metadata: Metadata = { title: "Κρατήσεις" };
 
 export default async function ReservationsPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const { ctx } = await getPageContext();
@@ -30,8 +31,8 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
   return (
     <>
       <PageHeader
-        title="Reservations"
-        description={`${reservations.length} reservation${reservations.length === 1 ? "" : "s"}${filtered ? " matching filters" : ""}`}
+        title="Κρατήσεις"
+        description={`${reservations.length} ${reservations.length === 1 ? "κράτηση" : "κρατήσεις"}${filtered ? " με τα φίλτρα" : ""}`}
         actions={
           <ReservationFormDialog
             key={sp.new ? `new-${sp.propertyId}-${sp.checkIn}` : "new"}
@@ -39,18 +40,18 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
             guests={options.guests}
             defaults={defaults}
             defaultOpen={sp.new === "1"}
-            trigger={<Button><Plus /> New reservation</Button>}
+            trigger={<Button><Plus /> Νέα κράτηση</Button>}
           />
         }
       />
       <div className="mb-5 flex flex-col gap-2 sm:flex-row">
-        <SearchInput placeholder="Guest, property or confirmation code" />
-        <FilterSelect param="status" label="All statuses" options={["CONFIRMED", "PENDING", "COMPLETED", "CANCELLED"].map((s) => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase() }))} />
-        <FilterSelect param="filterProperty" label="All properties" options={options.properties.map((p) => ({ value: p.id, label: p.name }))} />
+        <SearchInput placeholder="Επισκέπτης, ακίνητο ή κωδικός κράτησης" />
+        <FilterSelect param="status" label="Όλες οι καταστάσεις" options={["CONFIRMED", "PENDING", "COMPLETED", "CANCELLED"].map((s) => ({ value: s, label: humanize(s) }))} />
+        <FilterSelect param="filterProperty" label="Όλα τα ακίνητα" options={options.properties.map((p) => ({ value: p.id, label: p.name }))} />
       </div>
       <Card className="overflow-hidden">
         {reservations.length === 0 ? (
-          <EmptyState icon={<NotebookTabs />} title={filtered ? "No reservations match these filters" : "No reservations yet"} description={filtered ? "Try clearing a filter." : "Create your first booking to see it here and on the calendar."} />
+          <EmptyState icon={<NotebookTabs />} title={filtered ? "Καμία κράτηση με αυτά τα φίλτρα" : "Δεν υπάρχουν κρατήσεις ακόμη"} description={filtered ? "Δοκιμάστε να αφαιρέσετε ένα φίλτρο." : "Δημιουργήστε την πρώτη σας κράτηση για να εμφανιστεί εδώ και στο ημερολόγιο."} />
         ) : (
           <ReservationTable reservations={reservations} />
         )}

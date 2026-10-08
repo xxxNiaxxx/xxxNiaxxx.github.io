@@ -24,7 +24,7 @@ export function useMutation() {
       if (opts.refresh !== false) router.refresh();
       return data;
     } catch (e) {
-      const err = e instanceof ApiError ? e : new ApiError("Something went wrong. Please try again.", 0);
+      const err = e instanceof ApiError ? e : new ApiError("Κάτι πήγε στραβά. Δοκιμάστε ξανά.", 0);
       setFieldErrors(err.fieldErrors);
       toast.error(err.message);
       return undefined;

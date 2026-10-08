@@ -7,6 +7,7 @@
 import { PrismaClient, type PropertyKind, type ReservationStatus, type TaskType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDaysISO, isoToDate, todayISO, zonedDateTime } from "../lib/dates";
+import { climateFeeByMonth } from "../lib/tax/gr";
 
 const db = new PrismaClient();
 
@@ -20,17 +21,17 @@ const pick = <T,>(xs: readonly T[]) => xs[Math.floor(rand() * xs.length)];
 const between = (min: number, max: number) => Math.floor(rand() * (max - min + 1)) + min;
 
 const DEMO_USERS = [
-  { email: "demo@demo-hospitality.test", name: "Alex Demo", role: "OWNER" as const },
-  { email: "eleni@demo-hospitality.test", name: "Eleni Housekeeping", role: "MEMBER" as const },
-  { email: "nikos@demo-hospitality.test", name: "Nikos Maintenance", role: "MEMBER" as const },
+  { email: "demo@demo-hospitality.test", name: "Αλέξης Δημητρίου", role: "OWNER" as const },
+  { email: "eleni@demo-hospitality.test", name: "Ελένη Μαρκοπούλου", role: "MEMBER" as const },
+  { email: "nikos@demo-hospitality.test", name: "Νίκος Αλεξίου", role: "MEMBER" as const },
 ];
 
 const PROPERTIES = [
-  { name: "Villa Elia", ama: "00001842367", kind: "DETACHED_HOUSE", areaSqm: 180, city: "Kassandra, Halkidiki", address: "Olive Grove Rd 12, Pefkochori", bedrooms: 4, bathrooms: 3, maxGuests: 8, basePrice: 320, description: "Stone villa among olive trees with a private pool, 5 minutes from the beach." },
-  { name: "Sea View Apartment", ama: "00002934715", kind: "APARTMENT", areaSqm: 72, city: "Thessaloniki", address: "Nikis Ave 41", bedrooms: 2, bathrooms: 1, maxGuests: 4, basePrice: 140, description: "Bright waterfront apartment with balcony views of the Thermaic Gulf." },
-  { name: "Blue Horizon Villa", ama: "00003561208", kind: "DETACHED_HOUSE", areaSqm: 140, city: "Chania, Crete", address: "Kalamaki Beach Rd 7", bedrooms: 3, bathrooms: 2, maxGuests: 6, basePrice: 260, description: "Modern villa with infinity pool overlooking the Cretan Sea." },
-  { name: "Old Town Studio", ama: "00004108932", kind: "APARTMENT", areaSqm: 32, city: "Athens", address: "Adrianou 88, Plaka", bedrooms: 1, bathrooms: 1, maxGuests: 2, basePrice: 95, description: "Cosy studio in Plaka with an Acropolis-view rooftop." },
-  { name: "Sunset Residence", ama: "00005277481", kind: "DETACHED_HOUSE", areaSqm: 95, city: "Sithonia, Halkidiki", address: "Neos Marmaras Seafront 3", bedrooms: 3, bathrooms: 2, maxGuests: 6, basePrice: 210, description: "Seafront residence famous for its sunsets over Mount Athos." },
+  { name: "Villa Elia", ama: "00001842367", kind: "DETACHED_HOUSE", areaSqm: 180, city: "Κασσάνδρα, Χαλκιδική", address: "Οδός Ελαιώνων 12, Πευκοχώρι", bedrooms: 4, bathrooms: 3, maxGuests: 8, basePrice: 320, description: "Πέτρινη βίλα ανάμεσα σε ελαιόδεντρα με ιδιωτική πισίνα, 5 λεπτά από την παραλία." },
+  { name: "Sea View Apartment", ama: "00002934715", kind: "APARTMENT", areaSqm: 72, city: "Θεσσαλονίκη", address: "Λεωφόρος Νίκης 41", bedrooms: 2, bathrooms: 1, maxGuests: 4, basePrice: 140, description: "Φωτεινό διαμέρισμα στην παραλία με μπαλκόνι και θέα στον Θερμαϊκό." },
+  { name: "Blue Horizon Villa", ama: "00003561208", kind: "DETACHED_HOUSE", areaSqm: 140, city: "Χανιά, Κρήτη", address: "Παραλία Καλαμάκι 7", bedrooms: 3, bathrooms: 2, maxGuests: 6, basePrice: 260, description: "Μοντέρνα βίλα με πισίνα υπερχείλισης και θέα στο Κρητικό Πέλαγος." },
+  { name: "Old Town Studio", ama: "00004108932", kind: "APARTMENT", areaSqm: 32, city: "Αθήνα", address: "Αδριανού 88, Πλάκα", bedrooms: 1, bathrooms: 1, maxGuests: 2, basePrice: 95, description: "Ζεστό στούντιο στην Πλάκα με ταράτσα και θέα στην Ακρόπολη." },
+  { name: "Sunset Residence", ama: "00005277481", kind: "DETACHED_HOUSE", areaSqm: 95, city: "Σιθωνία, Χαλκιδική", address: "Παραλία Νέου Μαρμαρά 3", bedrooms: 3, bathrooms: 2, maxGuests: 6, basePrice: 210, description: "Κατοικία δίπλα στη θάλασσα, γνωστή για τα ηλιοβασιλέματα με θέα στο Άγιο Όρος." },
 ] as const satisfies readonly { name: string; kind: PropertyKind; [key: string]: unknown }[];
 
 const GUESTS = [
@@ -81,7 +82,7 @@ async function main() {
         : { ...fullCompliance, insuranceExpiresOn: addDaysISO(today, 120 + i * 30) };
     properties.push(
       await db.property.create({
-        data: { ...p, compliance, organizationId: org.id, country: "Greece", currency: "EUR", status: "ACTIVE" },
+        data: { ...p, compliance, organizationId: org.id, country: "Ελλάδα", currency: "EUR", status: "ACTIVE" },
       }),
     );
   }
@@ -99,7 +100,7 @@ async function main() {
           // Two guests intentionally lack contact details to show "missing information".
           email: i === 7 ? null : `${slug}@example.com`,
           phone: i === 7 || i === 15 ? null : `+30 69${String(10000000 + i * 7919).slice(0, 8)}`,
-          notes: i % 6 === 0 ? pick(["Returning guest — prefers late check-in.", "Travelling with a small dog.", "Allergic to feathers: use synthetic pillows.", "Celebrating an anniversary."]) : null,
+          notes: i % 6 === 0 ? pick(["Επαναλαμβανόμενος επισκέπτης — προτιμά αργή άφιξη.", "Ταξιδεύει με μικρό σκυλάκι.", "Αλλεργία στα πούπουλα: συνθετικά μαξιλάρια.", "Γιορτάζει επέτειο."]) : null,
         },
       }),
     );
@@ -157,7 +158,7 @@ async function main() {
         totalAmount: Math.round(Number(property.basePrice) * nights * (0.9 + rand() * 0.3)),
         currency: "EUR",
         status,
-        notes: i % 9 === 0 ? "Requested baby cot." : null,
+        notes: i % 9 === 0 ? "Ζήτησε βρεφικό κρεβάτι." : null,
       },
     });
     reservations.push(r);
@@ -174,20 +175,37 @@ async function main() {
     }
   }
 
+  // Monthly ΤΑΚΚ returns already filed for every month before last month.
+  const lastMonthStart = (() => { const d = new Date(isoToDate(monthStart)); d.setUTCMonth(d.getUTCMonth() - 1); return d.toISOString().slice(0, 10); })();
+  const feeByPeriod = new Map<string, number>();
+  for (const r of reservations) {
+    if (r.status !== "CONFIRMED" && r.status !== "COMPLETED") continue;
+    const property = properties.find((p) => p.id === r.propertyId)!;
+    for (const part of climateFeeByMonth(
+      { checkIn: r.checkIn.toISOString().slice(0, 10), checkOut: r.checkOut.toISOString().slice(0, 10), totalAmount: Number(r.totalAmount) },
+      { kind: property.kind, areaSqm: property.areaSqm },
+    )) {
+      if (`${part.period}-01` < lastMonthStart) feeByPeriod.set(part.period, (feeByPeriod.get(part.period) ?? 0) + part.amount);
+    }
+  }
+  for (const [period, amount] of feeByPeriod) {
+    await db.taxFiling.create({ data: { organizationId: org.id, kind: "CLIMATE_FEE", period, amount, reference: "myAADE" } });
+  }
+
   // Income for booked stays + expenses.
   for (const r of reservations) {
     if (r.status !== "CONFIRMED" && r.status !== "COMPLETED") continue;
     await db.transaction.create({
       data: {
         organizationId: org.id, propertyId: r.propertyId, reservationId: r.id, type: "INCOME", category: "BOOKING",
-        amount: r.totalAmount, currency: "EUR", transactionDate: r.checkIn, description: `Booking ${r.confirmationCode ?? ""}`.trim(),
+        amount: r.totalAmount, currency: "EUR", transactionDate: r.checkIn, description: `Κράτηση ${r.confirmationCode ?? ""}`.trim(),
       },
     });
     if (r.checkOut <= isoToDate(today)) {
       await db.transaction.create({
         data: {
           organizationId: org.id, propertyId: r.propertyId, reservationId: r.id, type: "EXPENSE", category: "CLEANING",
-          amount: between(45, 90), currency: "EUR", transactionDate: r.checkOut, description: "Turnover cleaning",
+          amount: between(45, 90), currency: "EUR", transactionDate: r.checkOut, description: "Καθαρισμός αλλαγής",
         },
       });
     }
@@ -199,20 +217,20 @@ async function main() {
       const date = d.toISOString().slice(0, 10);
       if (date > today) continue;
       await db.transaction.create({
-        data: { organizationId: org.id, propertyId: property.id, type: "EXPENSE", category: "UTILITIES", amount: between(80, 220), currency: "EUR", transactionDate: isoToDate(date), description: "Electricity & water" },
+        data: { organizationId: org.id, propertyId: property.id, type: "EXPENSE", category: "UTILITIES", amount: between(80, 220), currency: "EUR", transactionDate: isoToDate(date), description: "Ρεύμα & νερό" },
       });
       await db.transaction.create({
-        data: { organizationId: org.id, propertyId: property.id, type: "EXPENSE", category: "SUPPLIES", amount: between(25, 90), currency: "EUR", transactionDate: isoToDate(addDaysISO(date, 9) > today ? date : addDaysISO(date, 9)), description: "Toiletries, coffee & linen" },
+        data: { organizationId: org.id, propertyId: property.id, type: "EXPENSE", category: "SUPPLIES", amount: between(25, 90), currency: "EUR", transactionDate: isoToDate(addDaysISO(date, 9) > today ? date : addDaysISO(date, 9)), description: "Είδη μπάνιου, καφές & λευκά είδη" },
       });
     }
   }
   await db.transaction.create({
-    data: { organizationId: org.id, propertyId: properties[2].id, type: "EXPENSE", category: "MAINTENANCE", amount: 340, currency: "EUR", transactionDate: isoToDate(addDaysISO(today, -12)), description: "Pool pump repair" },
+    data: { organizationId: org.id, propertyId: properties[2].id, type: "EXPENSE", category: "MAINTENANCE", amount: 340, currency: "EUR", transactionDate: isoToDate(addDaysISO(today, -12)), description: "Επισκευή αντλίας πισίνας" },
   });
 
   // Tasks: turnover cleaning on check-out days, plus maintenance and inspections.
   const cleaningChecklist = (doneAll: boolean) =>
-    ["Strip beds and replace linen", "Clean bathrooms", "Clean kitchen and empty fridge", "Vacuum and mop floors", "Restock toiletries and coffee", "Take out rubbish"].map((label) => ({ label, done: doneAll }));
+    ["Αλλαγή κλινοσκεπασμάτων", "Καθαρισμός μπάνιων", "Καθαρισμός κουζίνας και ψυγείου", "Σκούπισμα και σφουγγάρισμα", "Αναπλήρωση ειδών μπάνιου και καφέ", "Απομάκρυνση σκουπιδιών"].map((label) => ({ label, done: doneAll }));
   let taskCount = 0;
   for (const r of reservations) {
     if (r.status === "CANCELLED") continue;
@@ -223,7 +241,7 @@ async function main() {
     const done = out < today;
     await db.task.create({
       data: {
-        organizationId: org.id, propertyId: r.propertyId, reservationId: r.id, title: "Turnover cleaning", type: "CLEANING",
+        organizationId: org.id, propertyId: r.propertyId, reservationId: r.id, title: "Καθαρισμός αλλαγής", type: "CLEANING",
         status: done ? "COMPLETED" : "TODO", priority: out === today ? "HIGH" : "MEDIUM", dueAt: zonedDateTime(out, "12:00"),
         completedAt: done ? zonedDateTime(out, "14:30") : null, assignedToUserId: cleaner.id, checklist: cleaningChecklist(done),
       },
@@ -231,17 +249,17 @@ async function main() {
     taskCount++;
   }
   const extra: { p: number; title: string; type: TaskType; day: number; time: string; priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT"; who?: string; status?: "TODO" | "IN_PROGRESS" | "COMPLETED"; description?: string }[] = [
-    { p: 2, title: "Fix leaking outdoor shower", type: "MAINTENANCE", day: -3, time: "10:00", priority: "HIGH", who: handyman.id, description: "Guest reported dripping tap at the pool shower." },
-    { p: 0, title: "Replace AC filter in master bedroom", type: "MAINTENANCE", day: -1, time: "09:00", priority: "MEDIUM", who: handyman.id },
-    { p: 3, title: "Restock welcome basket", type: "OTHER", day: 0, time: "13:00", priority: "LOW", who: cleaner.id },
-    { p: 1, title: "Meet guest for check-in", type: "CHECK_IN", day: 0, time: "15:00", priority: "HIGH", who: owner.id },
-    { p: 0, title: "Pool cleaning service", type: "MAINTENANCE", day: 0, time: "09:30", priority: "MEDIUM", who: handyman.id, status: "IN_PROGRESS" },
-    { p: 2, title: "Pre-arrival inspection", type: "INSPECTION", day: 1, time: "11:00", priority: "MEDIUM", who: owner.id },
-    { p: 4, title: "Service the boiler", type: "MAINTENANCE", day: 5, time: "10:00", priority: "LOW", who: handyman.id },
-    { p: 3, title: "Check-out walkthrough", type: "CHECK_OUT", day: 1, time: "11:00", priority: "MEDIUM", who: cleaner.id },
-    { p: 1, title: "Quarterly smoke alarm test", type: "INSPECTION", day: 9, time: "10:00", priority: "LOW" },
-    { p: 0, title: "Garden & olive tree pruning", type: "MAINTENANCE", day: -8, time: "08:00", priority: "LOW", who: handyman.id, status: "COMPLETED" },
-    { p: 4, title: "Replace broken sun lounger", type: "MAINTENANCE", day: -2, time: "12:00", priority: "URGENT" },
+    { p: 2, title: "Επισκευή διαρροής στο εξωτερικό ντους", type: "MAINTENANCE", day: -3, time: "10:00", priority: "HIGH", who: handyman.id, description: "Ο επισκέπτης ανέφερε ότι στάζει η βρύση στο ντους της πισίνας." },
+    { p: 0, title: "Αλλαγή φίλτρου κλιματιστικού στο κυρίως υπνοδωμάτιο", type: "MAINTENANCE", day: -1, time: "09:00", priority: "MEDIUM", who: handyman.id },
+    { p: 3, title: "Αναπλήρωση καλαθιού καλωσορίσματος", type: "OTHER", day: 0, time: "13:00", priority: "LOW", who: cleaner.id },
+    { p: 1, title: "Υποδοχή επισκέπτη", type: "CHECK_IN", day: 0, time: "15:00", priority: "HIGH", who: owner.id },
+    { p: 0, title: "Καθαρισμός πισίνας", type: "MAINTENANCE", day: 0, time: "09:30", priority: "MEDIUM", who: handyman.id, status: "IN_PROGRESS" },
+    { p: 2, title: "Έλεγχος πριν την άφιξη", type: "INSPECTION", day: 1, time: "11:00", priority: "MEDIUM", who: owner.id },
+    { p: 4, title: "Συντήρηση θερμοσίφωνα", type: "MAINTENANCE", day: 5, time: "10:00", priority: "LOW", who: handyman.id },
+    { p: 3, title: "Έλεγχος μετά την αναχώρηση", type: "CHECK_OUT", day: 1, time: "11:00", priority: "MEDIUM", who: cleaner.id },
+    { p: 1, title: "Τριμηνιαίος έλεγχος ανιχνευτών καπνού", type: "INSPECTION", day: 9, time: "10:00", priority: "LOW" },
+    { p: 0, title: "Κλάδεμα κήπου και ελιών", type: "MAINTENANCE", day: -8, time: "08:00", priority: "LOW", who: handyman.id, status: "COMPLETED" },
+    { p: 4, title: "Αντικατάσταση σπασμένης ξαπλώστρας", type: "MAINTENANCE", day: -2, time: "12:00", priority: "URGENT" },
   ];
   for (const t of extra) {
     const day = addDaysISO(today, t.day);
@@ -260,7 +278,7 @@ async function main() {
     await db.message.create({
       data: {
         organizationId: org.id, reservationId: r.id, guestId: r.guestId, direction: "OUTBOUND", channel: "INTERNAL", status: "SENT",
-        content: "Hi! Your check-in details: self check-in from 15:00, key box code will follow on arrival day. Have a great trip!",
+        content: "Γεια σας! Οδηγίες άφιξης: αυτόνομο check-in από τις 15:00· τον κωδικό της κλειδοθήκης θα τον λάβετε την ημέρα της άφιξης. Καλό ταξίδι!",
         sentAt: new Date(r.checkIn.getTime() - 86_400_000), createdAt: new Date(r.checkIn.getTime() - 86_400_000),
       },
     });
@@ -269,7 +287,7 @@ async function main() {
   console.log(
     `Seeded Demo Hospitality: ${properties.length} properties, ${guests.length} guests, ${reservations.length} reservations, ${taskCount} tasks.`,
   );
-  console.log("Sign in with demo@demo-hospitality.test / demo1234");
+  console.log("Σύνδεση: demo@demo-hospitality.test / demo1234");
 }
 
 main()

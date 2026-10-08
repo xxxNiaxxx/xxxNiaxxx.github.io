@@ -13,7 +13,7 @@ export function LoginForm({ next }: { next?: string }) {
       <Field label="Email" htmlFor="email">
         <Input id="email" name="email" type="email" autoComplete="email" required defaultValue={state.values?.email} />
       </Field>
-      <Field label="Password" htmlFor="password">
+      <Field label="Κωδικός" htmlFor="password">
         <Input id="password" name="password" type="password" autoComplete="current-password" required />
       </Field>
       {state.error && (
@@ -22,7 +22,7 @@ export function LoginForm({ next }: { next?: string }) {
         </p>
       )}
       <Button type="submit" size="lg" loading={pending} className="mt-1">
-        Sign in
+        Σύνδεση
       </Button>
     </form>
   );

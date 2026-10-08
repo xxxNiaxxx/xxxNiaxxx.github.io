@@ -11,7 +11,7 @@ import { addDaysISO, isISODate, monthRange, todayISO } from "@/lib/dates";
 import { formatDay } from "@/lib/format";
 import { getCalendar } from "@/lib/services/calendar";
 
-export const metadata: Metadata = { title: "Calendar" };
+export const metadata: Metadata = { title: "Ημερολόγιο" };
 
 function startOfWeek(iso: string) {
   const dow = (new Date(`${iso}T00:00:00Z`).getUTCDay() + 6) % 7; // Monday = 0
@@ -41,22 +41,22 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHeader title="Calendar" description="Click an empty day to create a reservation" />
+      <PageHeader title="Ημερολόγιο" description="Πατήστε σε κενή ημέρα για νέα κράτηση" />
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline" size="icon" aria-label="Previous"><Link href={href({ date: prev })} scroll={false}><ChevronLeft /></Link></Button>
-          <Button asChild variant="outline" size="icon" aria-label="Next"><Link href={href({ date: next })} scroll={false}><ChevronRight /></Link></Button>
-          <Button asChild variant="outline"><Link href={href({ date: undefined })} scroll={false}>Today</Link></Button>
+          <Button asChild variant="outline" size="icon" aria-label="Προηγούμενο"><Link href={href({ date: prev })} scroll={false}><ChevronLeft /></Link></Button>
+          <Button asChild variant="outline" size="icon" aria-label="Επόμενο"><Link href={href({ date: next })} scroll={false}><ChevronRight /></Link></Button>
+          <Button asChild variant="outline"><Link href={href({ date: undefined })} scroll={false}>Σήμερα</Link></Button>
           <h2 className="ml-2 text-lg font-semibold tracking-tight">{title}</h2>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <FilterSelect param="propertyId" label="All properties" options={all.properties.map((p) => ({ value: p.id, label: p.name }))} />
-          <LinkTabs active={view} tabs={[{ key: "month", label: "Month", href: href({ view: "month" }) }, { key: "week", label: "Week", href: href({ view: "week" }) }]} />
+          <FilterSelect param="propertyId" label="Όλα τα ακίνητα" options={all.properties.map((p) => ({ value: p.id, label: p.name }))} />
+          <LinkTabs active={view} tabs={[{ key: "month", label: "Μήνας", href: href({ view: "month" }) }, { key: "week", label: "Εβδομάδα", href: href({ view: "week" }) }]} />
         </div>
       </div>
       <Card className="overflow-hidden">
         {data.properties.length === 0 ? (
-          <EmptyState title="No properties yet" description="Add a property to start filling your calendar." action={<Button asChild><Link href="/properties">Go to properties</Link></Button>} />
+          <EmptyState title="Δεν υπάρχουν ακίνητα ακόμη" description="Προσθέστε ακίνητο για να γεμίσει το ημερολόγιο." action={<Button asChild><Link href="/properties">Μετάβαση στα ακίνητα</Link></Button>} />
         ) : (
           <Timeline data={data} today={today} compact={view === "month"} />
         )}

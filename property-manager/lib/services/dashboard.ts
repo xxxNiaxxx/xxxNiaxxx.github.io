@@ -112,8 +112,8 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
     attention.push({
       kind: "OVERDUE_TASK",
       severity: t.priority === "URGENT" || t.priority === "HIGH" ? "high" : "medium",
-      title: `Overdue: ${t.title}`,
-      detail: `${t.property.name} · due ${t.dueAt ? formatDateTime(t.dueAt.toISOString()) : "—"}`,
+      title: `Καθυστερεί: ${t.title}`,
+      detail: `${t.property.name} · προθεσμία ${t.dueAt ? formatDateTime(t.dueAt.toISOString()) : "—"}`,
       href: `/tasks?tab=overdue`,
     });
   }
@@ -131,8 +131,8 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
         attention.push({
           kind: "MISSING_CLEANING",
           severity: s.checkIn === today ? "high" : "medium",
-          title: `No cleaning scheduled before ${guest}'s check-in`,
-          detail: `${s.propertyName} · check-in ${formatDay(s.checkIn)}`,
+          title: `Δεν έχει προγραμματιστεί καθαρισμός πριν την άφιξη: ${guest}`,
+          detail: `${s.propertyName} · άφιξη ${formatDay(s.checkIn)}`,
           href: `/reservations/${r.id}`,
         });
       }
@@ -140,21 +140,21 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
         attention.push({
           kind: "NO_CHECKIN_MESSAGE",
           severity: "medium",
-          title: `${guest} hasn't received check-in instructions`,
-          detail: `${s.propertyName} · check-in ${formatDay(s.checkIn)}`,
+          title: `${guest}: δεν έχουν σταλεί οδηγίες άφιξης`,
+          detail: `${s.propertyName} · άφιξη ${formatDay(s.checkIn)}`,
           href: `/reservations/${r.id}`,
         });
       }
     }
     const missing: string[] = [];
-    if (!r.confirmationCode) missing.push("confirmation code");
-    if (!r.guest.email && !r.guest.phone) missing.push("guest contact details");
-    if (r.status === "PENDING") missing.push("confirmation (still pending)");
+    if (!r.confirmationCode) missing.push("κωδικός επιβεβαίωσης");
+    if (!r.guest.email && !r.guest.phone) missing.push("στοιχεία επικοινωνίας επισκέπτη");
+    if (r.status === "PENDING") missing.push("επιβεβαίωση (εκκρεμεί)");
     if (missing.length) {
       attention.push({
         kind: "MISSING_INFO",
         severity: "low",
-        title: `${guest}'s reservation is missing ${missing.join(", ")}`,
+        title: `Κράτηση ${guest}: λείπει ${missing.join(", ")}`,
         detail: `${s.propertyName} · ${formatDay(s.checkIn)} → ${formatDay(s.checkOut)}`,
         href: `/reservations/${r.id}`,
       });
@@ -164,8 +164,8 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
     attention.push({
       kind: "AI_ACTION",
       severity: "medium",
-      title: `AI action awaiting approval: ${humanizeActionType(a.type)}`,
-      detail: `Proposed ${formatDateTime(a.createdAt.toISOString())}`,
+      title: `Ενέργεια AI προς έγκριση: ${humanizeActionType(a.type)}`,
+      detail: `Προτάθηκε ${formatDateTime(a.createdAt.toISOString())}`,
       href: a.conversationId ? `/ai?c=${a.conversationId}` : "/ai",
     });
   }
@@ -204,9 +204,9 @@ export type DashboardData = Awaited<ReturnType<typeof getDashboard>>;
 export function humanizeActionType(type: string) {
   switch (type) {
     case "SEND_GUEST_MESSAGE":
-      return "send guest message";
+      return "αποστολή μηνύματος σε επισκέπτη";
     case "CREATE_TASK":
-      return "create task";
+      return "δημιουργία εργασίας";
     default:
       return type.toLowerCase().replace(/_/g, " ");
   }
@@ -222,8 +222,8 @@ async function taxAttention(ctx: OrgContext, now: Date): Promise<AttentionItem[]
     items.push({
       kind: "TAX_DEADLINE",
       severity: "high",
-      title: `${overdue.length} stay declaration${overdue.length > 1 ? "s" : ""} to AADE overdue`,
-      detail: `Late filing carries a €100 fine each · e.g. ${overdue[0].guestName}, ${overdue[0].propertyName}`,
+      title: `${overdue.length} ${overdue.length > 1 ? "δηλώσεις" : "δήλωση"} διαμονής στην ΑΑΔΕ ${overdue.length > 1 ? "έχουν" : "έχει"} καθυστερήσει`,
+      detail: `Πρόστιμο 100 € ανά εκπρόθεσμη δήλωση · π.χ. ${overdue[0].guestName}, ${overdue[0].propertyName}`,
       href: "/tax",
     });
   }
@@ -231,8 +231,8 @@ async function taxAttention(ctx: OrgContext, now: Date): Promise<AttentionItem[]
     items.push({
       kind: "TAX_DEADLINE",
       severity: "medium",
-      title: `${dueSoon.length} stay declaration${dueSoon.length > 1 ? "s" : ""} due by ${formatDay(dueSoon[0].declaration.deadline)}`,
-      detail: "Δήλωση Βραχυχρόνιας Διαμονής in myAADE",
+      title: `${dueSoon.length} ${dueSoon.length > 1 ? "δηλώσεις" : "δήλωση"} διαμονής έως ${formatDay(dueSoon[0].declaration.deadline)}`,
+      detail: "Δήλωση Βραχυχρόνιας Διαμονής στο myAADE",
       href: "/tax",
     });
   }
@@ -242,15 +242,15 @@ async function taxAttention(ctx: OrgContext, now: Date): Promise<AttentionItem[]
     items.push({
       kind: "TAX_DEADLINE",
       severity: m.climateFeeOverdue ? "high" : "medium",
-      title: `Climate fee for ${m.period}: €${m.climateFee} ${m.climateFeeOverdue ? "overdue" : `due ${formatDay(m.climateFeeDeadline)}`}`,
-      detail: "Monthly ΤΑΚΚ return in myAADE",
+      title: `ΤΑΚΚ ${m.period}: ${m.climateFee} € ${m.climateFeeOverdue ? "εκπρόθεσμο" : `έως ${formatDay(m.climateFeeDeadline)}`}`,
+      detail: "Μηνιαία δήλωση ΤΑΚΚ στο myAADE",
       href: "/tax",
     });
   }
   for (const p of tax.compliance) {
-    if (!p.ama) items.push({ kind: "COMPLIANCE", severity: "high", title: `${p.name} has no AMA registration number`, detail: "Required to host short-term guests", href: `/properties/${p.propertyId}` });
+    if (!p.ama) items.push({ kind: "COMPLIANCE", severity: "high", title: `${p.name}: δεν έχει ΑΜΑ`, detail: "Απαιτείται για βραχυχρόνια μίσθωση", href: `/properties/${p.propertyId}` });
     if (p.insuranceStatus === "EXPIRED" || p.insuranceStatus === "EXPIRING") {
-      items.push({ kind: "COMPLIANCE", severity: p.insuranceStatus === "EXPIRED" ? "high" : "medium", title: `${p.name}: liability insurance ${p.insuranceStatus === "EXPIRED" ? "expired" : "expires soon"}`, detail: `Expiry ${p.insuranceExpiresOn}`, href: `/properties/${p.propertyId}` });
+      items.push({ kind: "COMPLIANCE", severity: p.insuranceStatus === "EXPIRED" ? "high" : "medium", title: `${p.name}: η ασφάλιση αστικής ευθύνης ${p.insuranceStatus === "EXPIRED" ? "έληξε" : "λήγει σύντομα"}`, detail: `Λήξη ${p.insuranceExpiresOn ? formatDay(p.insuranceExpiresOn, { day: "numeric", month: "long", year: "numeric" }) : "—"}`, href: `/properties/${p.propertyId}` });
     }
   }
   return items;

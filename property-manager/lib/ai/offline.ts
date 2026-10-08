@@ -1,5 +1,5 @@
 import { addDaysISO, todayISO, zonedDateTime } from "@/lib/dates";
-import { formatMoney, formatPercent, formatTime } from "@/lib/format";
+import { formatDateTime, formatDay, formatMoney, formatPercent, formatTime, humanize } from "@/lib/format";
 import type { AttentionItem } from "@/lib/services/dashboard";
 import type { RevenueSummary } from "@/lib/services/financials";
 import type { GuestListItem } from "@/lib/services/guests";
@@ -25,144 +25,152 @@ export async function runOfflineAssistant(text: string, tc: ToolContext) {
     trace.push({ name, args, result });
     return result as T;
   };
-  const reply = await answer(text.toLowerCase(), text, call, tc);
+  const reply = await answer(normalize(text), text, call, tc);
   return { reply, trace };
 }
 
 type Call = <T>(name: string, args?: Record<string, unknown>) => Promise<T>;
 
+/** Lower-case and strip Greek accents so "Αύριο" matches "αυριο". */
+export const normalize = (text: string) => text.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
 const has = (t: string, ...words: string[]) => words.some((w) => t.includes(w));
 const list = (items: string[]) => items.map((s, i) => `${i + 1}. ${s}`).join("\n");
-const stay = (r: ReservationDTO) => `${r.guestName} at ${r.propertyName} (${r.checkIn} → ${r.checkOut}, ${r.guestsCount} guests)`;
+const day = (iso: string) => formatDay(iso);
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const stay = (r: ReservationDTO) => `${r.guestName} — ${r.propertyName} (${day(r.checkIn)} → ${day(r.checkOut)}, ${plural(r.guestsCount, "άτομο", "άτομα")})`;
+
+const TOMORROW = ["tomorrow", "αυριο"];
+const TODAY = ["today", "σημερα"];
 
 async function answer(t: string, original: string, call: Call, tc: ToolContext): Promise<string> {
   const today = todayISO(tc.now);
+  const when = has(t, ...TOMORROW) ? addDaysISO(today, 1) : has(t, ...TODAY) ? today : null;
+  const whenLabel = when === today ? "σήμερα" : when ? "αύριο" : "τις επόμενες 7 ημέρες";
 
-  if (has(t, "send", "message", "write to")) return draftMessage(original, call, tc);
-  if (has(t, "create task", "add task", "new task", "schedule clean", "schedule a clean", "book a clean", "remind"))
+  if (has(t, "send", "message", "write to", "στειλ", "μηνυμα", "γραψε", "ενημερωσε τον", "ενημερωσε την"))
+    return draftMessage(original, t, call, tc);
+  if (has(t, "create task", "add task", "new task", "schedule clean", "schedule a clean", "book a clean", "remind",
+    "νεα εργασια", "προσθεσε εργασια", "δημιουργησε εργασια", "προγραμματισ", "κλεισε καθαρισμ", "υπενθυμ"))
     return proposeTask(t, call, tc);
 
-  if (has(t, "aade", "ααδε", "tax", "φόρ", "φορ", "τακκ", "takk", "climate fee", "τέλος", "declar", "δήλωσ", "δηλωσ", "vat", "φπα", "e2", "ε2")) {
+  if (has(t, "aade", "ααδε", "tax", "φορο", "φορολογ", "τακκ", "takk", "climate fee", "τελος ανθεκτ", "declar", "δηλω", "vat", "φπα", "e2", "ε2")) {
     return taxSummary(call);
   }
 
-  if (has(t, "check in", "check-in", "checkin", "checks in", "arriv")) {
-    const day = has(t, "tomorrow") ? addDaysISO(today, 1) : has(t, "today") ? today : null;
-    const window = day ? (day === today ? 0 : 1) : 7;
-    const { reservations } = await call<{ reservations: ReservationDTO[] }>("get_upcoming_checkins", { days: window });
-    const rows = day ? reservations.filter((r) => r.checkIn === day) : reservations;
-    const label = day === today ? "today" : day ? "tomorrow" : "in the next 7 days";
-    if (!rows.length) return `No check-ins ${label}.`;
-    return `${rows.length} check-in${rows.length > 1 ? "s" : ""} ${label}:\n\n${list(rows.map(stay))}`;
+  if (has(t, "check in", "check-in", "checkin", "checks in", "arriv", "αφιξ", "ερχετ", "ερχοντ", "φτανει", "φτανουν")) {
+    const { reservations } = await call<{ reservations: ReservationDTO[] }>("get_upcoming_checkins", { days: when ? (when === today ? 0 : 1) : 7 });
+    const rows = when ? reservations.filter((r) => r.checkIn === when) : reservations;
+    if (!rows.length) return `Δεν υπάρχουν αφίξεις ${whenLabel}.`;
+    return `${plural(rows.length, "άφιξη", "αφίξεις")} ${whenLabel}:\n\n${list(rows.map(stay))}`;
   }
 
-  if (has(t, "check out", "check-out", "checkout", "checks out", "depart", "leav")) {
-    const day = has(t, "tomorrow") ? addDaysISO(today, 1) : has(t, "today") ? today : null;
-    const { reservations } = await call<{ reservations: ReservationDTO[] }>("get_upcoming_checkouts", {
-      days: day ? (day === today ? 0 : 1) : 7,
-    });
-    const rows = day ? reservations.filter((r) => r.checkOut === day) : reservations;
-    const label = day === today ? "today" : day ? "tomorrow" : "in the next 7 days";
-    if (!rows.length) return `No check-outs ${label}.`;
-    return `${rows.length} check-out${rows.length > 1 ? "s" : ""} ${label}:\n\n${list(rows.map(stay))}`;
+  if (has(t, "check out", "check-out", "checkout", "checks out", "depart", "leav", "αναχωρ", "φευγ")) {
+    const { reservations } = await call<{ reservations: ReservationDTO[] }>("get_upcoming_checkouts", { days: when ? (when === today ? 0 : 1) : 7 });
+    const rows = when ? reservations.filter((r) => r.checkOut === when) : reservations;
+    if (!rows.length) return `Δεν υπάρχουν αναχωρήσεις ${whenLabel}.`;
+    return `${plural(rows.length, "αναχώρηση", "αναχωρήσεις")} ${whenLabel}:\n\n${list(rows.map(stay))}`;
   }
 
-  if (has(t, "overdue", "late task")) {
+  if (has(t, "overdue", "late task", "καθυστερ", "εκπροθεσμ", "εληξε")) {
     const { tasks } = await call<{ tasks: TaskDTO[] }>("get_overdue_tasks");
-    if (!tasks.length) return "Nothing is overdue. 🎉";
-    return `${tasks.length} overdue task${tasks.length > 1 ? "s" : ""}:\n\n${list(
-      tasks.map((x) => `${x.title} — ${x.propertyName} (${x.priority.toLowerCase()}, due ${x.dueAt?.slice(0, 10)})`),
+    if (!tasks.length) return "Καμία εργασία δεν καθυστερεί. 🎉";
+    return `${plural(tasks.length, "εργασία καθυστερεί", "εργασίες καθυστερούν")}:\n\n${list(
+      tasks.map((x) => `${x.title} — ${x.propertyName} (${humanize(x.priority).toLowerCase()}, προθεσμία ${x.dueAt ? formatDateTime(x.dueAt) : "—"})`),
     )}`;
   }
 
-  if (has(t, "best", "perform", "top property", "most profitable", "worst")) {
+  if (has(t, "best", "perform", "top property", "most profitable", "worst", "καλυτερ", "αποδιδ", "αποδοση", "χειροτερ", "κερδοφορ")) {
     const s = await call<RevenueSummary>("get_revenue_summary", periodArgs(t, today));
     const ranked = s.byProperty.filter((p) => p.status === "ACTIVE");
-    if (!ranked.length) return "You don't have any active properties yet.";
-    return `Property performance ${periodLabel(t)} (by net income):\n\n${list(
-      ranked.map(
-        (p) =>
-          `${p.name} — net ${formatMoney(p.net, s.currency)} (income ${formatMoney(p.income, s.currency)}, occupancy ${formatPercent(p.occupancy)})`,
-      ),
-    )}\n\nTop performer: **${ranked[0].name}**.`;
+    if (!ranked.length) return "Δεν έχετε ενεργά ακίνητα ακόμη.";
+    return `Απόδοση ακινήτων ${periodLabel(t)} (κατά καθαρά έσοδα):\n\n${list(
+      ranked.map((p) => `${p.name} — καθαρά ${formatMoney(p.net, s.currency)} (έσοδα ${formatMoney(p.income, s.currency)}, πληρότητα ${formatPercent(p.occupancy)})`),
+    )}\n\nΚαλύτερη απόδοση: **${ranked[0].name}**.`;
   }
 
-  if (has(t, "revenue", "make", "made", "earn", "income", "money", "profit", "expense", "occupancy")) {
+  if (has(t, "revenue", "make", "made", "earn", "income", "money", "profit", "expense", "occupancy",
+    "εσοδ", "εβγαλα", "βγαλα", "κερδ", "εξοδ", "πληροτητ", "χρηματ", "τζιρο", "εισπραξ")) {
     const s = await call<RevenueSummary>("get_revenue_summary", periodArgs(t, today));
     return [
-      `Financials ${periodLabel(t)} (${s.from} → ${addDaysISO(s.to, -1)}):`,
+      `Οικονομικά ${periodLabel(t)} (${day(s.from)} → ${day(addDaysISO(s.to, -1))}):`,
       "",
-      `• Income: ${formatMoney(s.income, s.currency)}`,
-      `• Expenses: ${formatMoney(s.expenses, s.currency)}`,
-      `• Net: ${formatMoney(s.net, s.currency)}`,
-      `• Occupancy: ${formatPercent(s.occupancy)} (${s.bookedNights}/${s.availableNights} nights)`,
+      `• Έσοδα: ${formatMoney(s.income, s.currency)}`,
+      `• Έξοδα: ${formatMoney(s.expenses, s.currency)}`,
+      `• Καθαρά: ${formatMoney(s.net, s.currency)}`,
+      `• Πληρότητα: ${formatPercent(s.occupancy)} (${s.bookedNights}/${s.availableNights} νύχτες)`,
     ].join("\n");
   }
 
-  if (has(t, "propert", "villa", "apartment", "listing")) {
+  if (has(t, "propert", "villa", "apartment", "listing", "ακινητ", "καταλυμ", "βιλα", "διαμερισμ")) {
     const { properties } = await call<{ properties: PropertyDTO[] }>("list_properties");
-    if (!properties.length) return "You have no properties yet.";
-    return `You have ${properties.length} properties:\n\n${list(
-      properties.map((p) => `${p.name} — ${p.city} · sleeps ${p.maxGuests} · ${p.status.toLowerCase()}`),
+    if (!properties.length) return "Δεν έχετε ακίνητα ακόμη.";
+    return `Έχετε ${plural(properties.length, "ακίνητο", "ακίνητα")}:\n\n${list(
+      properties.map((p) => `${p.name} — ${p.city} · έως ${p.maxGuests} άτομα · ${humanize(p.status).toLowerCase()}`),
     )}`;
   }
 
-  if (has(t, "guest", "who is")) {
-    const q = original.replace(/.*(guest|who is)\s*/i, "").replace(/[?.!]/g, "").trim();
+  if (has(t, "guest", "who is", "επισκεπτ", "πελατ", "ποιος ειναι", "ποια ειναι")) {
+    const q = properNames(original).join(" ");
     const { guests } = await call<{ guests: GuestListItem[] }>("list_guests", q ? { q } : {});
-    if (!guests.length) return q ? `I couldn't find a guest matching "${q}".` : "You have no guests yet.";
-    return `${guests.length} guest${guests.length > 1 ? "s" : ""}${q ? ` matching "${q}"` : ""}:\n\n${list(
-      guests
-        .slice(0, 10)
-        .map((g) => `${g.fullName}${g.country ? ` (${g.country})` : ""} — ${g.stays} stays, ${formatMoney(g.totalRevenue)}`),
+    if (!guests.length) return q ? `Δεν βρήκα επισκέπτη «${q}».` : "Δεν έχετε επισκέπτες ακόμη.";
+    return `${plural(guests.length, "επισκέπτης", "επισκέπτες")}${q ? ` για «${q}»` : ""}:\n\n${list(
+      guests.slice(0, 10).map((g) => `${g.fullName}${g.country ? ` (${g.country})` : ""} — ${plural(g.stays, "διαμονή", "διαμονές")}, ${formatMoney(g.totalRevenue)}`),
     )}`;
   }
 
-  if (has(t, "today", "attention", "to do", "todo", "need", "agenda", "summary", "priorit", "happening")) {
+  if (has(t, "today", "attention", "to do", "todo", "need", "agenda", "summary", "priorit", "happening",
+    "σημερα", "προσοχ", "τι πρεπει", "εκκρεμ", "προγραμμα", "συνοψ", "τι εχω")) {
     return todaySummary(call);
   }
 
   return [
-    "I can answer from your live data. Try:",
+    "Απαντώ από τα πραγματικά σας δεδομένα. Δοκιμάστε:",
     "",
-    "• What needs my attention today?",
-    "• Who checks in tomorrow?",
-    "• How much did I make this month?",
-    "• Which property performs best?",
-    "• Send check-in instructions to <guest name>",
-    "• Schedule a cleaning at <property> tomorrow",
+    "• Τι χρειάζεται την προσοχή μου σήμερα;",
+    "• Ποιος έρχεται αύριο;",
+    "• Πόσα έβγαλα αυτόν τον μήνα;",
+    "• Ποιο ακίνητο αποδίδει καλύτερα;",
+    "• Τι πρέπει να δηλώσω στην ΑΑΔΕ;",
+    "• Στείλε οδηγίες άφιξης στη Maria Papadopoulou",
+    "• Προγραμμάτισε καθαρισμό στη Villa Elia αύριο",
     "",
-    "_Running in offline mode — set AI_API_KEY for free-form questions._",
+    "_Λειτουργία εκτός σύνδεσης — ορίστε AI_API_KEY για ελεύθερες ερωτήσεις._",
   ].join("\n");
+}
+
+/** Capitalised words that are not the first word of the sentence — likely names. */
+function properNames(original: string) {
+  const words = original.replace(/[^\p{L}\s'-]/gu, " ").split(/\s+/).filter(Boolean);
+  return words.filter((w, i) => i > 0 && /^\p{Lu}/u.test(w) && w.length > 1);
 }
 
 function periodArgs(t: string, today: string) {
   const [y, m] = today.split("-").map(Number);
-  if (has(t, "last month")) {
+  if (has(t, "last month", "προηγουμεν", "περασμεν", "περσινο μηνα")) {
     const prev = m === 1 ? `${y - 1}-12-01` : `${y}-${String(m - 1).padStart(2, "0")}-01`;
     return { from: prev, to: `${y}-${String(m).padStart(2, "0")}-01` };
   }
-  if (has(t, "this year", "year to date", "ytd")) return { from: `${y}-01-01`, to: addDaysISO(today, 1) };
+  if (has(t, "this year", "year to date", "ytd", "φετος", "αρχη του ετους", "αρχη της χρονιας", "αυτη τη χρονια")) return { from: `${y}-01-01`, to: addDaysISO(today, 1) };
   return {};
 }
 const periodLabel = (t: string) =>
-  has(t, "last month") ? "last month" : has(t, "this year", "year to date", "ytd") ? "this year" : "this month";
+  has(t, "last month", "προηγουμεν", "περασμεν") ? "τον προηγούμενο μήνα" : has(t, "this year", "year to date", "ytd", "φετος", "αρχη του ετους", "αρχη της χρονιας", "αυτη τη χρονια") ? "φέτος" : "αυτόν τον μήνα";
 
 async function taxSummary(call: Call) {
   const o = await call<{
     regime: string;
     pendingStayDeclarations: { guest: string; property: string; deadline: string; overdue: boolean }[];
-    climateFeeByMonth: { period: string; amount: number; deadline: string; filed: boolean }[];
+    climateFeeByMonth: { period: string; amount: number; deadline: string; filed: boolean; overdue: boolean }[];
     warnings: { title: string }[];
   }>("get_tax_obligations");
   const lines = [
-    ...o.pendingStayDeclarations.map((d) => `Stay declaration: ${d.guest} at ${d.property} — ${d.overdue ? "**overdue**" : `due ${d.deadline}`}`),
-    ...o.climateFeeByMonth.filter((m) => !m.filed).map((m) => `Climate fee (ΤΑΚΚ) ${m.period}: €${m.amount}, due ${m.deadline}`),
+    ...o.pendingStayDeclarations.map((d) => `Δήλωση διαμονής: ${d.guest}, ${d.property} — ${d.overdue ? "**εκπρόθεσμη**" : `έως ${day(d.deadline)}`}`),
+    ...o.climateFeeByMonth.filter((m) => !m.filed).map((m) => `ΤΑΚΚ ${m.period}: ${formatMoney(m.amount)} — ${m.overdue ? "**εκπρόθεσμο**" : `έως ${day(m.deadline)}`}`),
     ...o.warnings.map((w) => w.title),
   ];
-  const regime = o.regime === "BUSINESS" ? "business (VAT 13% + 0.5% presence fee)" : "individual (property income, Ε2)";
-  if (!lines.length) return `Nothing is pending with AADE. Tax regime: ${regime}.`;
-  return `AADE obligations — regime: ${regime}\n\n${list(lines.slice(0, 15))}\n\n_Confirm amounts with your accountant._`;
+  const regime = o.regime === "BUSINESS" ? "επιχείρηση (ΦΠΑ 13% + τέλος παρεπιδημούντων 0,5%)" : "ιδιώτης (εισόδημα από ακίνητα, Ε2)";
+  if (!lines.length) return `Δεν εκκρεμεί τίποτα με την ΑΑΔΕ. Καθεστώς: ${regime}.`;
+  return `Υποχρεώσεις προς ΑΑΔΕ — καθεστώς: ${regime}\n\n${list(lines.slice(0, 15))}\n\n_Επιβεβαιώστε τα ποσά με τον λογιστή σας._`;
 }
 
 async function todaySummary(call: Call) {
@@ -174,20 +182,17 @@ async function todaySummary(call: Call) {
     tasksDueToday: TaskDTO[];
   }>("get_today_summary");
   const items = [
-    ...d.tasksDueToday.map((x) => `${x.propertyName} — ${x.title}${x.dueAt ? ` at ${formatTime(x.dueAt)}` : ""}`),
-    ...d.checkIns.map((r) => `${r.propertyName} — check-in: ${r.guestName}`),
-    ...d.checkOuts.map((r) => `${r.propertyName} — check-out: ${r.guestName}`),
+    ...d.tasksDueToday.map((x) => `${x.propertyName} — ${x.title}${x.dueAt ? ` στις ${formatTime(x.dueAt)}` : ""}`),
+    ...d.checkIns.map((r) => `${r.propertyName} — άφιξη: ${r.guestName}`),
+    ...d.checkOuts.map((r) => `${r.propertyName} — αναχώρηση: ${r.guestName}`),
     ...d.needsAttention.map((a) => a.title),
   ];
-  if (!items.length) return "Nothing needs your attention today. Enjoy the quiet day!";
-  return `You have ${items.length} item${items.length > 1 ? "s" : ""} requiring attention today:\n\n${list(items)}`;
+  if (!items.length) return "Τίποτα δεν χρειάζεται την προσοχή σας σήμερα. Καλή σας μέρα!";
+  return `Έχετε ${plural(items.length, "θέμα", "θέματα")} για σήμερα:\n\n${list(items)}`;
 }
 
 async function findGuest(original: string, call: Call) {
-  const words = original
-    .replace(/[^\p{L}\s'-]/gu, " ")
-    .split(/\s+/)
-    .filter((w) => /^\p{Lu}/u.test(w) && w.length > 1);
+  const words = properNames(original);
   for (const candidate of [words.join(" "), ...words]) {
     if (!candidate) continue;
     const { guests } = await call<{ guests: GuestListItem[] }>("list_guests", { q: candidate });
@@ -197,58 +202,77 @@ async function findGuest(original: string, call: Call) {
   return { guest: null, ambiguous: [] as GuestListItem[] };
 }
 
-async function draftMessage(original: string, call: Call, tc: ToolContext) {
+/** Message templates: Greek for guests from Greece/Cyprus, English otherwise. */
+function guestMessage(kind: "checkin" | "thanks" | "general", guest: GuestListItem, r: ReservationDTO | undefined) {
+  const greek = guest.country === "GR" || guest.country === "CY";
+  if (!r) {
+    return greek
+      ? `Γεια σας ${guest.firstName},\n\nΣας ευχαριστούμε που μείνατε μαζί μας. Είμαστε στη διάθεσή σας για οτιδήποτε χρειαστείτε.\n\nΜε εκτίμηση`
+      : `Hi ${guest.firstName},\n\nThank you for being our guest. Let us know if there's anything we can help with.\n\nBest regards`;
+  }
+  if (kind === "checkin") {
+    return greek
+      ? `Γεια σας ${guest.firstName},\n\nΣας περιμένουμε στο ${r.propertyName} στις ${formatDay(r.checkIn, { day: "numeric", month: "long" })}. Το check-in είναι από τις 15:00. Το πρωί της άφιξής σας θα σας στείλουμε τον κωδικό της πόρτας και οδηγίες — απαντήστε μας με την ώρα που υπολογίζετε να φτάσετε.\n\nΚαλό ταξίδι!`
+      : `Hi ${guest.firstName},\n\nWe're looking forward to welcoming you at ${r.propertyName} on ${r.checkIn}. Check-in is from 15:00. We'll share the door code and directions on the morning of your arrival — just reply here with your expected arrival time.\n\nSee you soon!`;
+  }
+  if (kind === "thanks") {
+    return greek
+      ? `Γεια σας ${guest.firstName},\n\nΣας ευχαριστούμε που μείνατε στο ${r.propertyName}! Ελπίζουμε να περάσατε υπέροχα. Αν σας άρεσε η διαμονή, μια κριτική θα μας βοηθούσε πολύ.\n\nΜε εκτίμηση`
+      : `Hi ${guest.firstName},\n\nThank you for staying at ${r.propertyName}! We hope you had a wonderful time. If you enjoyed your stay, we'd really appreciate a review.\n\nWarm regards`;
+  }
+  return greek
+    ? `Γεια σας ${guest.firstName},\n\nΕπικοινωνούμε για τη διαμονή σας στο ${r.propertyName} (${formatDay(r.checkIn)} → ${formatDay(r.checkOut)}). Πείτε μας αν χρειάζεστε οτιδήποτε.\n\nΜε εκτίμηση`
+    : `Hi ${guest.firstName},\n\nJust checking in about your stay at ${r.propertyName} (${r.checkIn} → ${r.checkOut}). Let us know if there's anything you need.\n\nBest regards`;
+}
+
+async function draftMessage(original: string, t: string, call: Call, tc: ToolContext) {
   const { guest, ambiguous } = await findGuest(original, call);
   if (!guest) {
-    if (ambiguous.length)
-      return `Several guests match — which one?\n\n${list(ambiguous.slice(0, 5).map((g) => g.fullName))}`;
-    return "Which guest should I write to? Mention their name, e.g. “Send check-in instructions to Maria Papadopoulou”.";
+    if (ambiguous.length) return `Ταιριάζουν αρκετοί επισκέπτες — ποιος από αυτούς;\n\n${list(ambiguous.slice(0, 5).map((g) => g.fullName))}`;
+    return "Σε ποιον επισκέπτη να γράψω; Αναφέρετε το όνομά του, π.χ. «Στείλε οδηγίες άφιξης στη Maria Papadopoulou».";
   }
   const today = todayISO(tc.now);
-  const { reservations } = await call<{ reservations: ReservationDTO[] }>("list_reservations", {
-    q: guest.lastName,
-    from: today,
-  });
+  const { reservations } = await call<{ reservations: ReservationDTO[] }>("list_reservations", { q: guest.lastName, from: today });
   const reservation = reservations
     .filter((r) => r.guestId === guest.id && r.status !== "CANCELLED")
     .sort((a, b) => a.checkIn.localeCompare(b.checkIn))[0];
-  const lower = original.toLowerCase();
-  const message = reservation
-    ? has(lower, "check-in", "check in", "instruction", "arriv")
-      ? `Hi ${guest.firstName},\n\nWe're looking forward to welcoming you at ${reservation.propertyName} on ${reservation.checkIn}. Check-in is from 15:00. We'll share the door code and directions on the morning of your arrival — just reply here with your expected arrival time.\n\nSee you soon!`
-      : has(lower, "thank", "review", "check-out", "checkout")
-        ? `Hi ${guest.firstName},\n\nThank you for staying at ${reservation.propertyName}! We hope you had a wonderful time. If you enjoyed your stay, we'd really appreciate a review.\n\nWarm regards`
-        : `Hi ${guest.firstName},\n\nJust checking in about your stay at ${reservation.propertyName} (${reservation.checkIn} → ${reservation.checkOut}). Let us know if there's anything you need.\n\nBest regards`
-    : `Hi ${guest.firstName},\n\nThank you for being our guest. Let us know if there's anything we can help with.\n\nBest regards`;
+  const kind = has(t, "check-in", "check in", "instruction", "arriv", "οδηγι", "αφιξ")
+    ? "checkin"
+    : has(t, "thank", "review", "check-out", "checkout", "ευχαριστ", "κριτικ", "αναχωρ")
+      ? "thanks"
+      : "general";
   const result = await call<{ proposedAction?: AIActionDTO; error?: string }>("create_message_draft", {
     guestId: guest.id,
     ...(reservation ? { reservationId: reservation.id } : {}),
-    message,
+    message: guestMessage(kind, guest, reservation),
   });
-  if (!result.proposedAction) return `I couldn't prepare the message: ${result.error ?? "unknown error"}.`;
-  return `I've drafted a message to **${guest.fullName}**${
-    reservation ? ` about their stay at ${reservation.propertyName}` : ""
-  }. Review it below — nothing is sent until you approve it.`;
+  if (!result.proposedAction) return `Δεν μπόρεσα να ετοιμάσω το μήνυμα: ${result.error ?? "άγνωστο σφάλμα"}.`;
+  return `Ετοίμασα μήνυμα προς **${guest.fullName}**${reservation ? ` για τη διαμονή στο ${reservation.propertyName}` : ""}. Δείτε το παρακάτω — δεν στέλνεται τίποτα χωρίς την έγκρισή σας.`;
 }
 
 async function proposeTask(t: string, call: Call, tc: ToolContext) {
   const { properties } = await call<{ properties: PropertyDTO[] }>("list_properties", { status: "ACTIVE" });
-  const property = properties.find((p) => t.includes(p.name.toLowerCase())) ??
-    properties.find((p) => p.name.toLowerCase().split(" ").some((w) => w.length > 3 && t.includes(w)));
-  if (!property) {
-    return `Which property is this for?\n\n${list(properties.map((p) => p.name))}`;
-  }
-  const type = has(t, "clean") ? "CLEANING" : has(t, "repair", "fix", "broken", "maint") ? "MAINTENANCE" : has(t, "inspect") ? "INSPECTION" : "OTHER";
-  const day = has(t, "tomorrow") ? addDaysISO(todayISO(tc.now), 1) : todayISO(tc.now);
-  const dueAt = zonedDateTime(day, type === "CLEANING" ? "11:00" : "10:00").toISOString();
-  const title = type === "CLEANING" ? "Turnover cleaning" : type === "MAINTENANCE" ? "Maintenance visit" : type === "INSPECTION" ? "Property inspection" : "Follow-up";
+  const property =
+    properties.find((p) => t.includes(normalize(p.name))) ??
+    properties.find((p) => normalize(p.name).split(" ").some((w) => w.length > 3 && t.includes(w)));
+  if (!property) return `Για ποιο ακίνητο;\n\n${list(properties.map((p) => p.name))}`;
+  const type = has(t, "clean", "καθαρισ")
+    ? "CLEANING"
+    : has(t, "repair", "fix", "broken", "maint", "επισκευ", "βλαβ", "χαλασ", "συντηρ")
+      ? "MAINTENANCE"
+      : has(t, "inspect", "επιθεωρ", "ελεγχ")
+        ? "INSPECTION"
+        : "OTHER";
+  const when = has(t, ...TOMORROW) ? addDaysISO(todayISO(tc.now), 1) : todayISO(tc.now);
+  const dueAt = zonedDateTime(when, type === "CLEANING" ? "11:00" : "10:00").toISOString();
+  const title = { CLEANING: "Καθαρισμός αλλαγής", MAINTENANCE: "Επίσκεψη συντήρησης", INSPECTION: "Επιθεώρηση ακινήτου", OTHER: "Εργασία" }[type];
   const result = await call<{ proposedAction?: AIActionDTO; error?: string }>("create_task", {
     propertyId: property.id,
     title,
     type,
-    priority: has(t, "urgent", "asap") ? "URGENT" : "MEDIUM",
+    priority: has(t, "urgent", "asap", "επειγ", "αμεσα") ? "URGENT" : "MEDIUM",
     dueAt,
   });
-  if (!result.proposedAction) return `I couldn't prepare the task: ${result.error ?? "unknown error"}.`;
-  return `I've prepared a **${title.toLowerCase()}** task at ${property.name} for ${day}. Approve it below to add it to your task list.`;
+  if (!result.proposedAction) return `Δεν μπόρεσα να ετοιμάσω την εργασία: ${result.error ?? "άγνωστο σφάλμα"}.`;
+  return `Ετοίμασα εργασία **${title.toLowerCase()}** στο ${property.name} για ${formatDay(when, { weekday: "long", day: "numeric", month: "long" })}. Εγκρίνετέ τη παρακάτω για να μπει στις εργασίες.`;
 }

@@ -47,7 +47,7 @@ export function Sidebar({
         <Logo />
         <span className="truncate">{appName}</span>
       </Link>
-      <nav className="flex flex-1 flex-col gap-0.5" aria-label="Main">
+      <nav className="flex flex-1 flex-col gap-0.5" aria-label="Κύριο μενού">
         {mainNav.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} badge={item.href === "/ai" ? pendingActions : undefined} />
         ))}
@@ -67,7 +67,7 @@ export function Sidebar({
         </Link>
         <form action={logoutAction}>
           <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-surface/70 hover:text-foreground">
-            <LogOut className="size-[18px] text-subtle-foreground" /> Sign out
+            <LogOut className="size-[18px] text-subtle-foreground" /> Αποσύνδεση
           </button>
         </form>
       </div>

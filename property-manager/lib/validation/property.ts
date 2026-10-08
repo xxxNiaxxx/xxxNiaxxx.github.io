@@ -4,18 +4,18 @@ import { currency, isoDate, money, optionalQuery, optionalText, positiveInt, req
 export const propertyStatus = z.enum(["ACTIVE", "INACTIVE"]);
 
 export const propertyCreateSchema = z.object({
-  name: requiredText("Name", 120),
+  name: requiredText("Όνομα", 120),
   description: optionalText(4000),
   address: optionalText(300),
-  city: requiredText("City", 120),
-  country: requiredText("Country", 120),
-  bedrooms: positiveInt("Bedrooms", 50).default(1),
-  bathrooms: positiveInt("Bathrooms", 50).default(1),
-  maxGuests: positiveInt("Max guests", 100).pipe(z.number().min(1, "At least 1 guest")).default(2),
+  city: requiredText("Πόλη / περιοχή", 120),
+  country: requiredText("Χώρα", 120),
+  bedrooms: positiveInt("Υπνοδωμάτια", 50).default(1),
+  bathrooms: positiveInt("Μπάνια", 50).default(1),
+  maxGuests: positiveInt("Μέγιστοι επισκέπτες", 100).pipe(z.number().min(1, "Τουλάχιστον 1 επισκέπτης")).default(2),
   status: propertyStatus.default("ACTIVE"),
   basePrice: money,
   currency,
-  ama: optionalText(20).refine((v) => !v || /^\d{6,15}$/.test(v), "AMA is the numeric registry number from AADE"),
+  ama: optionalText(20).refine((v) => !v || /^\d{6,15}$/.test(v), "Ο ΑΜΑ είναι ο αριθμητικός κωδικός από το Μητρώο της ΑΑΔΕ"),
   kind: z.enum(["APARTMENT", "DETACHED_HOUSE"]).default("APARTMENT"),
   areaSqm: z.preprocess((v) => (v === "" || v == null ? null : v), z.coerce.number().int().min(5).max(5000).nullable()).optional(),
   compliance: z

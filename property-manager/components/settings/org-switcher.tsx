@@ -8,10 +8,10 @@ export function OrgSwitcher({ current, organizations }: { current: string; organ
   const { run, pending } = useMutation();
   return (
     <Select
-      aria-label="Active organization"
+      aria-label="Ενεργός οργανισμός"
       value={current}
       disabled={pending}
-      onChange={(e) => run(() => api("/api/organizations/active", { body: { organizationId: e.target.value } }), { success: "Switched organization" })}
+      onChange={(e) => run(() => api("/api/organizations/active", { body: { organizationId: e.target.value } }), { success: "Αλλάξατε οργανισμό" })}
     >
       {organizations.map((o) => (
         <option key={o.id} value={o.id}>{o.name}</option>

@@ -2,13 +2,12 @@ import { router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { Badge, Card, Empty, ErrorBox, Loading, Screen, SectionTitle, Stat, statusTone, styles } from "@/components/ui";
 import { formatDay, formatMoney, formatPercent, formatTime, humanize } from "@/lib/format";
-import { useSession } from "@/lib/session";
 import type { Dashboard, Reservation, Task } from "@/lib/types";
 import { useQuery } from "@/lib/use-query";
 import { colors } from "@/theme";
 
 const severityColor = { high: colors.danger, medium: colors.warning, low: colors.subtleText };
-const SUGGESTIONS = ["What needs my attention today?", "Who checks in tomorrow?", "How much did I make this month?"];
+const SUGGESTIONS = ["Τι χρειάζεται την προσοχή μου σήμερα;", "Ποιος έρχεται αύριο;", "Πόσα έβγαλα αυτόν τον μήνα;"];
 
 function hrefToRoute(href: string) {
   const m = href.match(/^\/reservations\/([^/?]+)/);
@@ -19,18 +18,16 @@ function hrefToRoute(href: string) {
 }
 
 export default function Today() {
-  const { session } = useSession();
   const { data, error, loading, refreshing, reload } = useQuery<Dashboard>("/api/dashboard");
   if (loading && !data) return <Loading />;
-  const first = session?.user.name?.split(" ")[0];
 
   return (
     <Screen refreshing={refreshing} onRefresh={reload}>
       <View>
-        <Text style={{ fontSize: 26, fontWeight: "700", color: colors.text, letterSpacing: -0.5 }}>Hello{first ? `, ${first}` : ""}</Text>
+        <Text style={{ fontSize: 26, fontWeight: "700", color: colors.text, letterSpacing: -0.5 }}>Γεια σας!</Text>
         {data && (
           <Text style={{ color: colors.mutedText, marginTop: 2 }}>
-            {formatDay(data.today)} · {data.attention.length ? `${data.attention.length} things need your attention` : "you're all caught up"}
+            {formatDay(data.today)} · {data.attention.length ? `${data.attention.length} θέματα χρειάζονται προσοχή` : "όλα είναι εντάξει"}
           </Text>
         )}
       </View>
@@ -38,18 +35,18 @@ export default function Today() {
       {data && (
         <>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-            <Stat label="Check-ins" value={data.summary.checkInsToday} hint="today" />
-            <Stat label="Check-outs" value={data.summary.checkOutsToday} hint="today" />
-            <Stat label="In-house" value={data.summary.activeReservations} hint="stays tonight" />
-            <Stat label="Occupancy" value={formatPercent(data.summary.occupancy)} hint="this month" />
-            <Stat label="Revenue" value={formatMoney(data.summary.monthlyRevenue, data.summary.currency)} hint="this month" />
-            <Stat label="Properties" value={data.summary.activeProperties} hint={`${data.summary.properties} total`} />
+            <Stat label="Αφίξεις" value={data.summary.checkInsToday} hint="σήμερα" />
+            <Stat label="Αναχωρήσεις" value={data.summary.checkOutsToday} hint="σήμερα" />
+            <Stat label="Φιλοξενούνται" value={data.summary.activeReservations} hint="απόψε" />
+            <Stat label="Πληρότητα" value={formatPercent(data.summary.occupancy)} hint="αυτόν τον μήνα" />
+            <Stat label="Έσοδα" value={formatMoney(data.summary.monthlyRevenue, data.summary.currency)} hint="αυτόν τον μήνα" />
+            <Stat label="Ακίνητα" value={data.summary.activeProperties} hint={`${data.summary.properties} συνολικά`} />
           </View>
 
           <Card>
-            <SectionTitle title="Needs attention" count={data.attention.length} />
+            <SectionTitle title="Χρειάζονται προσοχή" count={data.attention.length} />
             {data.attention.length === 0 ? (
-              <Empty title="All clear" detail="Nothing needs your attention right now." />
+              <Empty title="Όλα εντάξει" detail="Τίποτα δεν χρειάζεται την προσοχή σας αυτή τη στιγμή." />
             ) : (
               data.attention.map((a, i) => {
                 const route = hrefToRoute(a.href);
@@ -67,7 +64,7 @@ export default function Today() {
           </Card>
 
           <Card>
-            <SectionTitle title="Ask your AI manager" />
+            <SectionTitle title="Ρωτήστε τον βοηθό AI" />
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
               {SUGGESTIONS.map((s) => (
                 <Pressable key={s} onPress={() => router.push({ pathname: "/ai", params: { q: s } })} style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
@@ -78,12 +75,12 @@ export default function Today() {
           </Card>
 
           <Card>
-            <SectionTitle title="Today" />
-            <Agenda title="Check-ins" items={data.todayAgenda.checkIns} />
-            <Agenda title="Check-outs" items={data.todayAgenda.checkOuts} />
-            <TaskGroup title="Cleaning" tasks={data.todayAgenda.cleaning} />
-            <TaskGroup title="Maintenance" tasks={data.todayAgenda.maintenance} />
-            <TaskGroup title="Other tasks" tasks={data.todayAgenda.other} />
+            <SectionTitle title="Σήμερα" />
+            <Agenda title="Αφίξεις" items={data.todayAgenda.checkIns} />
+            <Agenda title="Αναχωρήσεις" items={data.todayAgenda.checkOuts} />
+            <TaskGroup title="Καθαρισμοί" tasks={data.todayAgenda.cleaning} />
+            <TaskGroup title="Συντήρηση" tasks={data.todayAgenda.maintenance} />
+            <TaskGroup title="Άλλες εργασίες" tasks={data.todayAgenda.other} />
           </Card>
         </>
       )}
@@ -99,12 +96,12 @@ function Agenda({ title, items }: { title: string; items: Reservation[] }) {
   return (
     <View>
       <GroupLabel title={title} count={items.length} />
-      {items.length === 0 && <Text style={styles.rowSub}>None today</Text>}
+      {items.length === 0 && <Text style={styles.rowSub}>Καμία σήμερα</Text>}
       {items.map((r) => (
         <Pressable key={r.id} onPress={() => router.push(`/reservation/${r.id}`)} style={styles.row}>
           <View style={{ flex: 1 }}>
             <Text style={styles.rowTitle}>{r.guestName}</Text>
-            <Text style={styles.rowSub}>{r.propertyName} · {r.guestsCount} guests · {r.nights} nights</Text>
+            <Text style={styles.rowSub}>{r.propertyName} · {r.guestsCount} άτομα · {r.nights} νύχτες</Text>
           </View>
         </Pressable>
       ))}
@@ -116,7 +113,7 @@ function TaskGroup({ title, tasks }: { title: string; tasks: Task[] }) {
   return (
     <View>
       <GroupLabel title={title} count={tasks.length} />
-      {tasks.length === 0 && <Text style={styles.rowSub}>None today</Text>}
+      {tasks.length === 0 && <Text style={styles.rowSub}>Καμία σήμερα</Text>}
       {tasks.map((t) => (
         <Pressable key={t.id} onPress={() => router.push("/tasks")} style={styles.row}>
           <View style={{ flex: 1 }}>

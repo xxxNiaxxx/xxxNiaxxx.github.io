@@ -6,7 +6,7 @@ export const reservationSource = z.enum(["MANUAL", "AIRBNB", "BOOKING_COM", "DIR
 export const reservationStatus = z.enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"]);
 
 const checkOutAfterCheckIn = {
-  message: "Check-out must be after check-in",
+  message: "Η αναχώρηση πρέπει να είναι μετά την άφιξη",
   path: ["checkOut"],
 };
 
@@ -14,7 +14,7 @@ const base = z.object({
   propertyId: id,
   checkIn: isoDate,
   checkOut: isoDate,
-  guestsCount: z.coerce.number().int().min(1, "At least 1 guest").max(100),
+  guestsCount: z.coerce.number().int().min(1, "Τουλάχιστον 1 επισκέπτης").max(100),
   totalAmount: money,
   currency,
   source: reservationSource.default("MANUAL"),
@@ -31,7 +31,7 @@ export const reservationCreateSchema = base
   })
   .refine((v) => v.checkOut > v.checkIn, checkOutAfterCheckIn)
   .refine((v) => Boolean(v.guestId) !== Boolean(v.newGuest), {
-    message: "Select an existing guest or enter a new one",
+    message: "Επιλέξτε υπάρχοντα επισκέπτη ή καταχωρίστε νέο",
     path: ["guestId"],
   });
 

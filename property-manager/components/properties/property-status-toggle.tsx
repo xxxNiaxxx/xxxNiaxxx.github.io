@@ -13,13 +13,13 @@ export function PropertyStatusToggle({ id, status }: { id: string; status: "ACTI
       variant={deactivate ? "danger-outline" : "outline"}
       loading={pending}
       onClick={() => {
-        if (deactivate && !confirm("Deactivate this property? It will stop accepting new reservations. Existing stays are kept.")) return;
+        if (deactivate && !confirm("Απενεργοποίηση ακινήτου; Δεν θα δέχεται νέες κρατήσεις. Οι υπάρχουσες διαμονές παραμένουν.")) return;
         run(() => api(`/api/properties/${id}`, { method: "PATCH", body: { status: deactivate ? "INACTIVE" : "ACTIVE" } }), {
-          success: deactivate ? "Property deactivated" : "Property activated",
+          success: deactivate ? "Το ακίνητο απενεργοποιήθηκε" : "Το ακίνητο ενεργοποιήθηκε",
         });
       }}
     >
-      <Power /> {deactivate ? "Deactivate" : "Activate"}
+      <Power /> {deactivate ? "Απενεργοποίηση" : "Ενεργοποίηση"}
     </Button>
   );
 }

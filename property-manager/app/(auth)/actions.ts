@@ -27,7 +27,7 @@ export async function loginAction(_prev: AuthFormState, form: FormData): Promise
     });
     return {};
   } catch (e) {
-    if (e instanceof AuthError) return { error: "Incorrect email or password.", values: { email } };
+    if (e instanceof AuthError) return { error: "Λάθος email ή κωδικός.", values: { email } };
     throw e; // NEXT_REDIRECT must propagate
   }
 }
@@ -44,7 +44,7 @@ export async function registerAction(_prev: AuthFormState, form: FormData): Prom
     if (e instanceof ZodError) {
       const fieldErrors: Record<string, string> = {};
       for (const i of e.issues) fieldErrors[String(i.path[0])] ??= i.message;
-      return { error: "Please fix the highlighted fields.", fieldErrors, values };
+      return { error: "Διορθώστε τα σημειωμένα πεδία.", fieldErrors, values };
     }
     if (e instanceof AppError) return { error: e.message, values };
     throw e;

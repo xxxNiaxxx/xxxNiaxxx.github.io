@@ -129,7 +129,7 @@ eas submit -p android --latest              # προαιρετικό: απαιτ
 
 - **Does your app collect or share user data?** Yes
 - **Is all data encrypted in transit?** Yes (HTTPS)
-- **Do you provide a way for users to request deletion?** Yes, μέσα στην εφαρμογή (More → Delete account)
+- **Do you provide a way for users to request deletion?** Yes, μέσα στην εφαρμογή (Περισσότερα → Διαγραφή λογαριασμού)
   και URL: `https://YOUR-APP.vercel.app/account-deletion`
 - **Data shared with third parties:** κανένα. Αν ενεργοποιήσετε `AI_API_KEY`, ο πάροχος AI επεξεργάζεται
   δεδομένα για λογαριασμό σας (service provider). Η Google δεν το θεωρεί «sharing».

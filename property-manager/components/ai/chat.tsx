@@ -15,11 +15,11 @@ import { RichText } from "./rich-text";
 type Msg = ConversationDTO["messages"][number];
 
 const SUGGESTIONS = [
-  "What needs my attention today?",
-  "Who checks in tomorrow?",
-  "How much did I make this month?",
-  "Which property performs best?",
-  "Send check-in instructions to my next arriving guest",
+  "Τι χρειάζεται την προσοχή μου σήμερα;",
+  "Ποιος έρχεται αύριο;",
+  "Πόσα έβγαλα αυτόν τον μήνα;",
+  "Ποιο ακίνητο αποδίδει καλύτερα;",
+  "Τι πρέπει να δηλώσω στην ΑΑΔΕ;",
 ];
 
 interface ChatResponse {
@@ -61,7 +61,7 @@ export function Chat({ initial, mode }: { initial: ConversationDTO | null; mode:
       }
       router.refresh();
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "The assistant is unavailable right now.");
+      toast.error(e instanceof ApiError ? e.message : "Ο βοηθός δεν είναι διαθέσιμος αυτή τη στιγμή.");
       setMessages((m) => m.slice(0, -1));
       setInput(content);
     } finally {
@@ -94,13 +94,13 @@ export function Chat({ initial, mode }: { initial: ConversationDTO | null; mode:
     <div className="flex h-[calc(100dvh-13rem)] min-h-[28rem] flex-col rounded-2xl border border-border bg-surface shadow-[var(--shadow-card)] lg:h-[calc(100dvh-11rem)]">
       <div className="flex items-center justify-between border-b border-border px-5 py-3">
         <div className="flex items-center gap-2 text-sm font-semibold">
-          <Sparkles className="size-4 text-accent" /> AI manager
+          <Sparkles className="size-4 text-accent" /> Βοηθός AI
           <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", mode === "llm" ? "bg-success-soft text-success" : "bg-muted text-muted-foreground")}>
-            {mode === "llm" ? "Connected" : "Offline mode"}
+            {mode === "llm" ? "Συνδεδεμένος" : "Εκτός σύνδεσης"}
           </span>
         </div>
         <Link href="/ai" className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground">
-          <MessageSquarePlus className="size-4" /> New chat
+          <MessageSquarePlus className="size-4" /> Νέα συνομιλία
         </Link>
       </div>
 
@@ -108,8 +108,8 @@ export function Chat({ initial, mode }: { initial: ConversationDTO | null; mode:
         {messages.length === 0 && !sending ? (
           <div className="mx-auto flex h-full max-w-lg flex-col items-center justify-center text-center">
             <div className="mb-4 rounded-2xl bg-accent-soft p-3 text-accent"><Sparkles className="size-6" /></div>
-            <h2 className="text-lg font-semibold tracking-tight">What can I help with?</h2>
-            <p className="mt-1 text-sm text-muted-foreground">I answer from your live reservations, tasks and financials — and I always ask before sending anything.</p>
+            <h2 className="text-lg font-semibold tracking-tight">Πώς μπορώ να βοηθήσω;</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Απαντώ από τις κρατήσεις, τις εργασίες και τα οικονομικά σας — και ρωτάω πάντα πριν στείλω οτιδήποτε.</p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
               {SUGGESTIONS.map((s) => (
                 <button key={s} onClick={() => send(s)} className="rounded-full border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground hover:border-border-strong hover:text-foreground">
@@ -132,7 +132,7 @@ export function Chat({ initial, mode }: { initial: ConversationDTO | null; mode:
                     <RichText text={m.content} />
                     {tools[m.id]?.length ? (
                       <div className="mt-2 border-t border-border/70 pt-1.5 text-[11px] text-muted-foreground">
-                        Used: {[...new Set(tools[m.id])].join(", ")}
+                        Εργαλεία: {[...new Set(tools[m.id])].join(", ")}
                       </div>
                     ) : null}
                   </div>
@@ -150,7 +150,7 @@ export function Chat({ initial, mode }: { initial: ConversationDTO | null; mode:
               </div>
             ))}
             {sending && (
-              <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-muted/70 px-4 py-3 text-muted-foreground" style={{ width: "fit-content" }} aria-label="Assistant is thinking">
+              <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-muted/70 px-4 py-3 text-muted-foreground" style={{ width: "fit-content" }} aria-label="Ο βοηθός σκέφτεται">
                 {[0, 1, 2].map((i) => (
                   <span key={i} className="size-1.5 animate-bounce rounded-full bg-current" style={{ animationDelay: `${i * 120}ms` }} />
                 ))}
@@ -179,11 +179,11 @@ export function Chat({ initial, mode }: { initial: ConversationDTO | null; mode:
               }
             }}
             rows={1}
-            placeholder="Ask your AI manager…"
-            aria-label="Message"
+            placeholder="Ρωτήστε τον βοηθό AI…"
+            aria-label="Μήνυμα"
             className="max-h-40 min-h-6 flex-1 resize-none bg-transparent py-1 text-sm outline-none placeholder:text-subtle-foreground"
           />
-          <button type="submit" disabled={!input.trim() || sending} className="rounded-lg bg-primary p-1.5 text-primary-foreground disabled:opacity-30" aria-label="Send">
+          <button type="submit" disabled={!input.trim() || sending} className="rounded-lg bg-primary p-1.5 text-primary-foreground disabled:opacity-30" aria-label="Αποστολή">
             <ArrowUp className="size-4" />
           </button>
         </div>

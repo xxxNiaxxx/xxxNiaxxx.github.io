@@ -9,17 +9,17 @@ import { getRevenueSummary, listTransactions } from "@/lib/services/financials";
 import { getFormOptions } from "@/lib/services/options";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Financials" };
+export const metadata: Metadata = { title: "Οικονομικά" };
 
 function periods(today: string) {
   const thisMonth = monthRange(today);
   const lastMonth = monthRange(addDaysISO(thisMonth.from, -1));
   const nextMonth = monthRange(thisMonth.to);
   return {
-    "this-month": { label: "This month", ...thisMonth },
-    "last-month": { label: "Last month", ...lastMonth },
-    "next-month": { label: "Next month", ...nextMonth },
-    ytd: { label: "Year to date", from: `${today.slice(0, 4)}-01-01`, to: addDaysISO(today, 1) },
+    "this-month": { label: "Αυτός ο μήνας", ...thisMonth },
+    "last-month": { label: "Προηγούμενος μήνας", ...lastMonth },
+    "next-month": { label: "Επόμενος μήνας", ...nextMonth },
+    ytd: { label: "Από αρχή έτους", from: `${today.slice(0, 4)}-01-01`, to: addDaysISO(today, 1) },
   } as const;
 }
 
@@ -40,7 +40,7 @@ export default async function FinancialsPage({ searchParams }: { searchParams: P
   return (
     <>
       <PageHeader
-        title="Financials"
+        title="Οικονομικά"
         description={`${formatDay(s.from, { day: "numeric", month: "short", year: "numeric" })} – ${formatDay(addDaysISO(s.to, -1), { day: "numeric", month: "short", year: "numeric" })}`}
         actions={<TransactionFormDialog properties={options.properties} today={today} />}
       />
@@ -48,14 +48,14 @@ export default async function FinancialsPage({ searchParams }: { searchParams: P
         <LinkTabs active={key} tabs={Object.entries(all).map(([k, v]) => ({ key: k, label: v.label, href: `/financials?period=${k}` }))} />
       </div>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Stat label="Income" value={formatMoney(s.income, s.currency)} />
-        <Stat label="Expenses" value={formatMoney(s.expenses, s.currency)} />
-        <Stat label="Net" value={<span className={cn(s.net < 0 && "text-danger")}>{formatMoney(s.net, s.currency)}</span>} />
-        <Stat label="Occupancy" value={formatPercent(s.occupancy)} hint={`${s.bookedNights} of ${s.availableNights} nights`} />
+        <Stat label="Έσοδα" value={formatMoney(s.income, s.currency)} />
+        <Stat label="Έξοδα" value={formatMoney(s.expenses, s.currency)} />
+        <Stat label="Καθαρά" value={<span className={cn(s.net < 0 && "text-danger")}>{formatMoney(s.net, s.currency)}</span>} />
+        <Stat label="Πληρότητα" value={formatPercent(s.occupancy)} hint={`${s.bookedNights} από ${s.availableNights} νύχτες`} />
       </div>
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
         <Card>
-          <CardHeader title="By property" description="Ranked by net income" />
+          <CardHeader title="Ανά ακίνητο" description="Κατάταξη κατά καθαρά έσοδα" />
           <CardContent className="grid gap-4">
             {s.byProperty.map((p, i) => (
               <div key={p.propertyId}>
@@ -67,17 +67,17 @@ export default async function FinancialsPage({ searchParams }: { searchParams: P
                   <div className={cn("h-full rounded-full", p.net >= 0 ? "bg-accent" : "bg-danger")} style={{ width: `${(Math.abs(p.net) / maxNet) * 100}%` }} />
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Income {formatMoney(p.income, s.currency)} · Expenses {formatMoney(p.expenses, s.currency)} · Occupancy {formatPercent(p.occupancy)}
+                  Έσοδα {formatMoney(p.income, s.currency)} · Έξοδα {formatMoney(p.expenses, s.currency)} · Πληρότητα {formatPercent(p.occupancy)}
                 </div>
               </div>
             ))}
           </CardContent>
         </Card>
         <Card>
-          <CardHeader title="By category" />
+          <CardHeader title="Ανά κατηγορία" />
           <CardContent>
             {s.byCategory.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No transactions in this period.</p>
+              <p className="text-sm text-muted-foreground">Δεν υπάρχουν κινήσεις σε αυτή την περίοδο.</p>
             ) : (
               <table className="w-full text-sm">
                 <tbody className="divide-y divide-border">
@@ -95,19 +95,19 @@ export default async function FinancialsPage({ searchParams }: { searchParams: P
         </Card>
       </div>
       <Card className="mt-6 overflow-hidden">
-        <CardHeader title="Transactions" description={`${transactions.length} in this period`} />
+        <CardHeader title="Κινήσεις" description={`${transactions.length} σε αυτή την περίοδο`} />
         {transactions.length === 0 ? (
-          <EmptyState title="No transactions in this period" />
+          <EmptyState title="Δεν υπάρχουν κινήσεις σε αυτή την περίοδο" />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-y border-border text-left text-xs text-muted-foreground">
-                  <th className="px-5 py-2 font-medium">Date</th>
-                  <th className="px-5 py-2 font-medium">Property</th>
-                  <th className="px-5 py-2 font-medium">Category</th>
-                  <th className="hidden px-5 py-2 font-medium sm:table-cell">Description</th>
-                  <th className="px-5 py-2 text-right font-medium">Amount</th>
+                  <th className="px-5 py-2 font-medium">Ημερομηνία</th>
+                  <th className="px-5 py-2 font-medium">Ακίνητο</th>
+                  <th className="px-5 py-2 font-medium">Κατηγορία</th>
+                  <th className="hidden px-5 py-2 font-medium sm:table-cell">Περιγραφή</th>
+                  <th className="px-5 py-2 text-right font-medium">Ποσό</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">

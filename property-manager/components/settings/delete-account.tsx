@@ -14,27 +14,27 @@ export function DeleteAccount() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="danger-outline">Delete account</Button>
+        <Button variant="danger-outline">Διαγραφή λογαριασμού</Button>
       </DialogTrigger>
       <DialogContent
-        title="Delete your account?"
-        description="This permanently deletes your account. Organizations where you are the only member are deleted with all their data. This cannot be undone."
+        title="Διαγραφή λογαριασμού;"
+        description="Ο λογαριασμός σας διαγράφεται οριστικά. Οι οργανισμοί όπου είστε το μόνο μέλος διαγράφονται με όλα τους τα δεδομένα. Η ενέργεια δεν αναιρείται."
       >
         <form
           onSubmit={(e) => {
             e.preventDefault();
             run(() => api("/api/me", { method: "DELETE", body: { password } }), {
-              success: "Your account has been deleted",
+              success: "Ο λογαριασμός σας διαγράφηκε",
               refresh: false,
               onSuccess: () => void logoutAction(),
             });
           }}
         >
-          <Field label="Confirm with your password" htmlFor="delete-password" error={fieldErrors.password}>
+          <Field label="Επιβεβαίωση με τον κωδικό σας" htmlFor="delete-password" error={fieldErrors.password}>
             <Input id="delete-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </Field>
           <DialogFooter>
-            <Button type="submit" variant="danger" loading={pending} disabled={!password}>Delete permanently</Button>
+            <Button type="submit" variant="danger" loading={pending} disabled={!password}>Οριστική διαγραφή</Button>
           </DialogFooter>
         </form>
       </DialogContent>

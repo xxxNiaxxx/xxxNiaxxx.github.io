@@ -131,9 +131,9 @@ export function Empty({ title, detail }: { title: string; detail?: string }) {
 export function ErrorBox({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <View style={styles.error}>
-      <Text style={{ color: colors.danger, fontWeight: "600" }}>Couldn&apos;t load</Text>
+      <Text style={{ color: colors.danger, fontWeight: "600" }}>Δεν φόρτωσε</Text>
       <Text style={{ color: colors.danger, marginTop: 4 }}>{message}</Text>
-      {onRetry && <Button title="Try again" variant="outline" small onPress={onRetry} style={{ marginTop: 10, alignSelf: "flex-start" }} />}
+      {onRetry && <Button title="Δοκιμάστε ξανά" variant="outline" small onPress={onRetry} style={{ marginTop: 10, alignSelf: "flex-start" }} />}
     </View>
   );
 }

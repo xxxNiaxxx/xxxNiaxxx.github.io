@@ -22,7 +22,7 @@ export function useQuery<T>(path: string | null) {
           setError(null);
         }
       } catch (e) {
-        setError(e instanceof ApiError ? e.message : "Something went wrong");
+        setError(e instanceof ApiError ? e.message : "Κάτι πήγε στραβά");
       } finally {
         setLoading(false);
         setRefreshing(false);

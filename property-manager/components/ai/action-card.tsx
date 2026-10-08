@@ -38,19 +38,19 @@ export function ActionCard({ action, onChange }: { action: AIActionDTO; onChange
           <span className={cn("rounded-lg p-1.5", proposed ? "bg-warning-soft text-warning" : "bg-muted text-muted-foreground")}>
             {isMessage ? <MessageSquare className="size-4" /> : <ClipboardList className="size-4" />}
           </span>
-          {proposed ? (isMessage ? "Ready to send" : "Ready to create") : isMessage ? "Guest message" : "Task"}
+          {proposed ? (isMessage ? "Έτοιμο για αποστολή" : "Έτοιμο για δημιουργία") : isMessage ? "Μήνυμα σε επισκέπτη" : "Εργασία"}
         </div>
-        <StatusBadge value={action.status} label={action.status === "EXECUTED" ? (isMessage ? "Sent" : "Created") : undefined} />
+        <StatusBadge value={action.status} label={action.status === "EXECUTED" ? (isMessage ? "Στάλθηκε" : "Δημιουργήθηκε") : undefined} />
       </div>
 
       {isMessage ? (
         <>
           <p className="text-[13px] text-muted-foreground">
-            To <span className="font-medium text-foreground">{str(p.guestName)}</span>
+            Προς <span className="font-medium text-foreground">{str(p.guestName)}</span>
             {str(p.context) && <> · {str(p.context)}</>}
           </p>
           {editing ? (
-            <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} className="mt-2 min-h-36" aria-label="Edit message" autoFocus />
+            <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} className="mt-2 min-h-36" aria-label="Επεξεργασία μηνύματος" autoFocus />
           ) : (
             <p className="mt-2 rounded-lg bg-muted/60 p-3 text-sm whitespace-pre-line">{str(p.message)}</p>
           )}
@@ -59,28 +59,28 @@ export function ActionCard({ action, onChange }: { action: AIActionDTO; onChange
         <div className="text-sm">
           <p className="font-medium">{str(p.title)}</p>
           <p className="mt-0.5 text-[13px] text-muted-foreground">
-            {[str(p.propertyName), humanize(str(p.type) || "OTHER"), humanize(str(p.priority) || "MEDIUM"), str(p.dueAt) && `due ${formatDateTime(str(p.dueAt))}`]
+            {[str(p.propertyName), humanize(str(p.type) || "OTHER"), humanize(str(p.priority) || "MEDIUM"), str(p.dueAt) && `έως ${formatDateTime(str(p.dueAt))}`]
               .filter(Boolean)
               .join(" · ")}
           </p>
         </div>
       )}
 
-      {action.status === "FAILED" && <p className="mt-2 text-xs text-danger">{str(action.result?.error) || "The action failed."}</p>}
-      {action.status === "EXECUTED" && isMessage && <p className="mt-2 text-xs text-muted-foreground">Recorded as sent on the internal channel (simulated in Phase 1).</p>}
+      {action.status === "FAILED" && <p className="mt-2 text-xs text-danger">{str(action.result?.error) || "Η ενέργεια απέτυχε."}</p>}
+      {action.status === "EXECUTED" && isMessage && <p className="mt-2 text-xs text-muted-foreground">Καταγράφηκε ως σταλμένο στο εσωτερικό κανάλι (προσομοίωση στη Φάση 1).</p>}
 
       {proposed && (
         <div className="mt-4 flex flex-wrap justify-end gap-2">
           {editing ? (
             <>
-              <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setDraft(str(p.message)); }}>Discard</Button>
-              <Button size="sm" variant="outline" loading={pending} disabled={!draft.trim()} onClick={() => call("", { message: draft }, "Message updated")}>Save</Button>
+              <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setDraft(str(p.message)); }}>Απόρριψη αλλαγών</Button>
+              <Button size="sm" variant="outline" loading={pending} disabled={!draft.trim()} onClick={() => call("", { message: draft }, "Το μήνυμα ενημερώθηκε")}>Αποθήκευση</Button>
             </>
           ) : (
             <>
-              <Button size="sm" variant="ghost" loading={pending} onClick={() => call("/reject", undefined, "Action cancelled")}><X /> Cancel</Button>
-              {isMessage && <Button size="sm" variant="outline" onClick={() => setEditing(true)}><Pencil /> Edit</Button>}
-              <Button size="sm" variant="accent" loading={pending} onClick={() => call("/approve", undefined, isMessage ? "Message sent" : "Task created")}><Check /> Approve</Button>
+              <Button size="sm" variant="ghost" loading={pending} onClick={() => call("/reject", undefined, "Η ενέργεια ακυρώθηκε")}><X /> Ακύρωση</Button>
+              {isMessage && <Button size="sm" variant="outline" onClick={() => setEditing(true)}><Pencil /> Επεξεργασία</Button>}
+              <Button size="sm" variant="accent" loading={pending} onClick={() => call("/approve", undefined, isMessage ? "Το μήνυμα στάλθηκε" : "Η εργασία δημιουργήθηκε")}><Check /> Έγκριση</Button>
             </>
           )}
         </div>

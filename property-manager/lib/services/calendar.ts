@@ -7,7 +7,7 @@ import { serializeReservation } from "./serializers";
 
 export const calendarQuery = z
   .object({ from: isoDate, to: isoDate, propertyId: optionalQuery(id) })
-  .refine((v) => v.to > v.from, { message: "End must be after start", path: ["to"] });
+  .refine((v) => v.to > v.from, { message: "Η λήξη πρέπει να είναι μετά την έναρξη", path: ["to"] });
 
 /** Reservations overlapping [from, to) and task counts per property/day. */
 export async function getCalendar(ctx: OrgContext, query: unknown) {

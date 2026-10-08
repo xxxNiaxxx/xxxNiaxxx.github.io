@@ -1,5 +1,8 @@
 # Βραχυχρόνια.ai — Phase 1
 
+> Το περιβάλλον της εφαρμογής (web και Android) είναι στα **ελληνικά**. Οι ετικέτες όλων των
+> καταστάσεων και κατηγοριών βρίσκονται στο `lib/labels.ts`.
+
 AI property manager for short-term rentals (βραχυχρόνια μίσθωση).
 
 Operations dashboard and AI assistant for short-term rental managers:
@@ -112,8 +115,8 @@ Root directory `property-manager`, build command `npm run vercel-build` (runs
 including the Google Play release of the Android app: [`../mobile/PLAY_STORE.md`](../mobile/PLAY_STORE.md).
 
 Public pages required by Google Play: `/privacy` and `/account-deletion`.
-Users can delete their account in **Settings → Delete account** (web) or
-**More → Delete account** (Android); see `lib/services/account-deletion.ts`.
+Users can delete their account in **Ρυθμίσεις → Διαγραφή λογαριασμού** (web) or
+**Περισσότερα → Διαγραφή λογαριασμού** (Android); see `lib/services/account-deletion.ts`.
 
 ## Security notes
 

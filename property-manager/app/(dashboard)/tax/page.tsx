@@ -15,9 +15,9 @@ import { db } from "@/lib/db";
 import { LAST_REVIEWED, SOURCES } from "@/lib/tax/gr";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Tax & AADE" };
+export const metadata: Metadata = { title: "Φορολογικά & ΑΑΔΕ" };
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = ["Ιαν", "Φεβ", "Μαρ", "Απρ", "Μάι", "Ιουν", "Ιουλ", "Αύγ", "Σεπ", "Οκτ", "Νοε", "Δεκ"];
 const periodLabel = (p: string) => `${MONTHS[Number(p.slice(5)) - 1]} ${p.slice(0, 4)}`;
 const pct = (r: number) => `${Math.round(r * 100)}%`;
 
@@ -33,30 +33,30 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
   return (
     <>
       <PageHeader
-        title="Tax & AADE"
-        description="Greek short-term rental obligations: stay declarations, climate fee (ΤΑΚΚ), income tax and compliance"
+        title="Φορολογικά & ΑΑΔΕ"
+        description="Υποχρεώσεις βραχυχρόνιας μίσθωσης: δηλώσεις διαμονής, ΤΑΚΚ, φόρος εισοδήματος και συμμόρφωση"
         actions={
           <>
-            <Button asChild variant="outline"><a href={`/api/tax/export?type=stays&year=${year}`}><Download /> Stays CSV {year}</a></Button>
-            <Button asChild variant="outline"><a href={`/api/tax/export?type=annual&year=${year}`}><Download /> Annual CSV {year}</a></Button>
+            <Button asChild variant="outline"><a href={`/api/tax/export?type=stays&year=${year}`}><Download /> Διαμονές CSV {year}</a></Button>
+            <Button asChild variant="outline"><a href={`/api/tax/export?type=annual&year=${year}`}><Download /> Ετήσια CSV {year}</a></Button>
           </>
         }
       />
 
       <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Tax regime:</span>
-          <Badge tone={business ? "accent" : "info"}>{business ? "Business (έναρξη εργασιών)" : "Individual (property income)"}</Badge>
-          <span className="text-muted-foreground">· {o.propertiesWithAma} propert{o.propertiesWithAma === 1 ? "y" : "ies"} with AMA</span>
+          <span className="text-muted-foreground">Φορολογικό καθεστώς:</span>
+          <Badge tone={business ? "accent" : "info"}>{business ? "Επιχείρηση (έναρξη εργασιών)" : "Ιδιώτης (εισόδημα από ακίνητα)"}</Badge>
+          <span className="text-muted-foreground">· {o.propertiesWithAma} {o.propertiesWithAma === 1 ? "ακίνητο" : "ακίνητα"} με ΑΜΑ</span>
         </div>
         <RegimeSelect value={o.regimeSetting} disabled={!hasRole(ctx, "ADMIN")} />
       </div>
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Declarations due" value={o.totals.declarationsDue} hint={o.totals.declarationsOverdue ? `${o.totals.declarationsOverdue} overdue` : "none overdue"} />
-        <Stat label="ΤΑΚΚ not filed" value={formatMoney(o.totals.climateFeeUnfiled)} hint="closed months" />
-        <Stat label="Properties without AMA" value={o.compliance.filter((c) => !c.ama).length} />
-        <Stat label="Insurance issues" value={o.compliance.filter((c) => c.insuranceStatus !== "OK").length} hint="missing / expiring" />
+        <Stat label="Δηλώσεις διαμονής" value={o.totals.declarationsDue} hint={o.totals.declarationsOverdue ? `${o.totals.declarationsOverdue} εκπρόθεσμες` : "καμία εκπρόθεσμη"} />
+        <Stat label="ΤΑΚΚ προς δήλωση" value={formatMoney(o.totals.climateFeeUnfiled)} hint="μήνες που έκλεισαν" />
+        <Stat label="Ακίνητα χωρίς ΑΜΑ" value={o.compliance.filter((c) => !c.ama).length} />
+        <Stat label="Θέματα ασφάλισης" value={o.compliance.filter((c) => c.insuranceStatus !== "OK").length} hint="λείπει / λήγει" />
       </div>
 
       {o.warnings.length > 0 && (
@@ -79,9 +79,9 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
         <LinkTabs
           active={tab}
           tabs={[
-            { key: "obligations", label: "Obligations", href: "/tax", count: o.totals.declarationsDue },
-            { key: "annual", label: `Annual ${business ? "summary" : "Ε2"}`, href: `/tax?tab=annual&year=${year}` },
-            { key: "compliance", label: "Compliance", href: "/tax?tab=compliance" },
+            { key: "obligations", label: "Υποχρεώσεις", href: "/tax", count: o.totals.declarationsDue },
+            { key: "annual", label: business ? "Ετήσια σύνοψη" : "Ετήσιο Ε2", href: `/tax?tab=annual&year=${year}` },
+            { key: "compliance", label: "Συμμόρφωση", href: "/tax?tab=compliance" },
           ]}
         />
       </div>
@@ -94,8 +94,8 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
         <CardContent className="flex gap-3 pt-5 text-[13px] text-muted-foreground">
           <Info className="mt-0.5 size-4 shrink-0" />
           <div>
-            Calculations follow the rules in force on {formatDay(LAST_REVIEWED, { day: "numeric", month: "long", year: "numeric" })} and are an aid, not tax advice — confirm amounts with your accountant before filing.
-            Sources:{" "}
+            Οι υπολογισμοί ακολουθούν τους κανόνες που ίσχυαν στις {formatDay(LAST_REVIEWED, { day: "numeric", month: "long", year: "numeric" })} και είναι βοήθημα, όχι φορολογική συμβουλή — επιβεβαιώστε τα ποσά με τον λογιστή σας πριν από κάθε υποβολή.
+            Πηγές:{" "}
             {SOURCES.map((s, i) => (
               <span key={s.url}>
                 <a className="underline underline-offset-2 hover:text-foreground" href={s.url} target="_blank" rel="noreferrer">{s.label}</a>
@@ -113,19 +113,19 @@ function Obligations({ o, business }: { o: Awaited<ReturnType<typeof getTaxOverv
   return (
     <div className="grid gap-6">
       <Card className="overflow-hidden">
-        <CardHeader title="Stay declarations (Δήλωση Βραχυχρόνιας Διαμονής)" description="One per stay, in myAADE, by the 20th of the month after check-out (or after a paid cancellation). Late filing: €100 fine." />
+        <CardHeader title="Δηλώσεις Βραχυχρόνιας Διαμονής" description="Μία για κάθε διαμονή, στο myAADE, έως τις 20 του επόμενου μήνα από την αναχώρηση (ή από ακύρωση με πληρωμή). Εκπρόθεσμη υποβολή: πρόστιμο 100 €." />
         {o.pendingDeclarations.length === 0 ? (
-          <EmptyState title="All stays are declared" description="Stays appear here after check-out." />
+          <EmptyState title="Όλες οι διαμονές έχουν δηλωθεί" description="Οι διαμονές εμφανίζονται εδώ μετά την αναχώρηση." />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-y border-border text-left text-xs text-muted-foreground">
-                  <th className="px-5 py-2 font-medium">Guest</th>
-                  <th className="px-5 py-2 font-medium">Property · AMA</th>
-                  <th className="px-5 py-2 font-medium">Stay</th>
-                  <th className="px-5 py-2 text-right font-medium">Amount</th>
-                  <th className="px-5 py-2 font-medium">Deadline</th>
+                  <th className="px-5 py-2 font-medium">Επισκέπτης</th>
+                  <th className="px-5 py-2 font-medium">Ακίνητο · ΑΜΑ</th>
+                  <th className="px-5 py-2 font-medium">Διαμονή</th>
+                  <th className="px-5 py-2 text-right font-medium">Ποσό</th>
+                  <th className="px-5 py-2 font-medium">Προθεσμία</th>
                   <th className="px-5 py-2" />
                 </tr>
               </thead>
@@ -134,14 +134,14 @@ function Obligations({ o, business }: { o: Awaited<ReturnType<typeof getTaxOverv
                   <tr key={s.reservationId}>
                     <td className="px-5 py-2.5">
                       <Link href={`/reservations/${s.reservationId}`} className="font-medium hover:underline">{s.guestName}</Link>
-                      {s.status === "CANCELLED" && <div className="text-xs text-muted-foreground">Paid cancellation</div>}
+                      {s.status === "CANCELLED" && <div className="text-xs text-muted-foreground">Ακύρωση με πληρωμή</div>}
                     </td>
-                    <td className="px-5 py-2.5">{s.propertyName}<div className="text-xs text-muted-foreground">{s.ama ?? <span className="text-danger">No AMA</span>}</div></td>
+                    <td className="px-5 py-2.5">{s.propertyName}<div className="text-xs text-muted-foreground">{s.ama ?? <span className="text-danger">Χωρίς ΑΜΑ</span>}</div></td>
                     <td className="px-5 py-2.5 whitespace-nowrap">{formatDay(s.checkIn, { day: "numeric", month: "short" })} → {formatDay(s.checkOut, { day: "numeric", month: "short" })}</td>
                     <td className="px-5 py-2.5 text-right tabular-nums">{formatMoney(s.totalAmount)}</td>
                     <td className="px-5 py-2.5 whitespace-nowrap">
                       <Badge tone={s.declaration.overdue ? "danger" : s.declaration.daysLeft <= 7 ? "warning" : "neutral"}>
-                        {s.declaration.overdue ? "Overdue · " : ""}{formatDay(s.declaration.deadline, { day: "numeric", month: "short" })}
+                        {s.declaration.overdue ? "Εκπρόθεσμη · " : ""}{formatDay(s.declaration.deadline, { day: "numeric", month: "short" })}
                       </Badge>
                     </td>
                     <td className="px-5 py-2.5 text-right whitespace-nowrap"><NotRequiredButton reservationId={s.reservationId} /> <DeclareButton reservationId={s.reservationId} /></td>
@@ -155,34 +155,34 @@ function Obligations({ o, business }: { o: Awaited<ReturnType<typeof getTaxOverv
 
       <Card className="overflow-hidden">
         <CardHeader
-          title={business ? "Monthly returns: ΤΑΚΚ, VAT and presence fee" : "Climate resilience fee (ΤΑΚΚ) — monthly return"}
-          description={`Per night per property: €8 Apr–Oct / €2 Nov–Mar; detached houses over 80 m²: €15 / €4. Nights are split by calendar month — a stay crossing into a new month goes into both returns. Filed in myAADE by the last day of the following month.${business ? " VAT 13% and the 0.5% presence fee are extracted from each stay's total." : ""}`}
+          title={business ? "Μηνιαίες δηλώσεις: ΤΑΚΚ, ΦΠΑ και τέλος παρεπιδημούντων" : "Τέλος Ανθεκτικότητας (ΤΑΚΚ) — μηνιαία δήλωση"}
+          description={`Ανά νύχτα ανά ακίνητο: 8 € Απρ–Οκτ / 2 € Νοε–Μαρ· μονοκατοικίες άνω των 80 m²: 15 € / 4 €. Οι νύχτες μοιράζονται ανά μήνα — κράτηση που περνά σε νέο μήνα δηλώνεται και στους δύο. Υποβολή στο myAADE έως την τελευταία ημέρα του επόμενου μήνα.${business ? " Ο ΦΠΑ 13% και το τέλος παρεπιδημούντων 0,5% εξάγονται από το σύνολο κάθε κράτησης." : ""}`}
         />
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-y border-border text-left text-xs text-muted-foreground">
-                <th className="px-5 py-2 font-medium">Month</th>
-                <th className="px-5 py-2 text-right font-medium">Stays</th>
-                <th className="px-5 py-2 text-right font-medium">Nights</th>
-                <th className="px-5 py-2 text-right font-medium" title="Stays checking out this month">Gross (check-outs)</th>
+                <th className="px-5 py-2 font-medium">Μήνας</th>
+                <th className="px-5 py-2 text-right font-medium">Διαμονές</th>
+                <th className="px-5 py-2 text-right font-medium">Νύχτες</th>
+                <th className="px-5 py-2 text-right font-medium" title="Κρατήσεις με αναχώρηση μέσα στον μήνα">Ακαθάριστα (αναχωρήσεις)</th>
                 <th className="px-5 py-2 text-right font-medium">ΤΑΚΚ</th>
-                <th className="px-5 py-2 font-medium">Due</th>
-                {business && <th className="px-5 py-2 text-right font-medium">VAT</th>}
-                {business && <th className="px-5 py-2 text-right font-medium">Presence fee</th>}
+                <th className="px-5 py-2 font-medium">Προθεσμία</th>
+                {business && <th className="px-5 py-2 text-right font-medium">ΦΠΑ</th>}
+                {business && <th className="px-5 py-2 text-right font-medium">Τέλος παρεπιδημούντων</th>}
                 <th className="px-5 py-2" />
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {o.monthly.filter((m) => m.stays > 0 || m.climateFeeFiled || !m.closed).map((m) => (
                 <tr key={m.period} className={cn(!m.closed && "text-muted-foreground")}>
-                  <td className="px-5 py-2.5 font-medium whitespace-nowrap">{periodLabel(m.period)}{!m.closed && <span className="ml-1.5 text-xs font-normal">(in progress)</span>}</td>
+                  <td className="px-5 py-2.5 font-medium whitespace-nowrap">{periodLabel(m.period)}{!m.closed && <span className="ml-1.5 text-xs font-normal">(σε εξέλιξη)</span>}</td>
                   <td className="px-5 py-2.5 text-right tabular-nums">{m.stays}</td>
                   <td className="px-5 py-2.5 text-right tabular-nums">{m.nights}</td>
                   <td className="px-5 py-2.5 text-right tabular-nums">{formatMoney(m.gross)}</td>
                   <td className="px-5 py-2.5 text-right font-medium tabular-nums">{formatMoney(m.climateFee)}</td>
                   <td className="px-5 py-2.5 whitespace-nowrap">
-                    {m.climateFeeFiled ? <Badge tone="success">Filed</Badge> : m.climateFee === 0 ? <span className="text-xs">—</span> : <Badge tone={m.climateFeeOverdue ? "danger" : "neutral"}>{m.climateFeeOverdue ? "Overdue · " : ""}{formatDay(m.climateFeeDeadline, { day: "numeric", month: "short" })}</Badge>}
+                    {m.climateFeeFiled ? <Badge tone="success">Δηλώθηκε</Badge> : m.climateFee === 0 ? <span className="text-xs">—</span> : <Badge tone={m.climateFeeOverdue ? "danger" : "neutral"}>{m.climateFeeOverdue ? "Εκπρόθεσμο · " : ""}{formatDay(m.climateFeeDeadline, { day: "numeric", month: "short" })}</Badge>}
                   </td>
                   {business && <td className="px-5 py-2.5 text-right tabular-nums">{formatMoney(m.vat)}</td>}
                   {business && <td className="px-5 py-2.5 text-right tabular-nums">{formatMoney(m.presenceFee)}</td>}
@@ -206,57 +206,57 @@ function Annual({ ctxYear, otherIncome, business, report: r }: { ctxYear: number
       </div>
       {business ? (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat label="Revenue ex VAT" value={formatMoney(r.business.revenueExVat)} />
-          <Stat label="VAT 13%" value={formatMoney(r.business.vat)} />
-          <Stat label="Presence fee 0.5%" value={formatMoney(r.business.presenceFee)} />
-          <Stat label="Profit before tax" value={formatMoney(r.business.profitBeforeTax)} hint={`after ${formatMoney(r.business.expenses)} recorded expenses`} />
+          <Stat label="Έσοδα χωρίς ΦΠΑ" value={formatMoney(r.business.revenueExVat)} />
+          <Stat label="ΦΠΑ 13%" value={formatMoney(r.business.vat)} />
+          <Stat label="Τέλος παρεπιδημούντων 0,5%" value={formatMoney(r.business.presenceFee)} />
+          <Stat label="Κέρδος προ φόρων" value={formatMoney(r.business.profitBeforeTax)} hint={`μετά από ${formatMoney(r.business.expenses)} καταγεγραμμένα έξοδα`} />
         </div>
       ) : (
         <Card>
-          <CardHeader title={`Ε2 estimate — income year ${ctxYear}`} description="Individuals: gross rent is taxed as property income with a flat 5% deduction; actual expenses, cleaning and platform commissions are not deductible." />
+          <CardHeader title={`Εκτίμηση Ε2 — εισοδήματα ${ctxYear}`} description="Ιδιώτες: το ακαθάριστο μίσθωμα φορολογείται ως εισόδημα από ακίνητη περιουσία με έκπτωση 5%· πραγματικά έξοδα, καθαρισμός και προμήθειες πλατφορμών δεν εκπίπτουν." />
           <CardContent className="grid gap-5 lg:grid-cols-[1fr_1fr]">
             <dl className="grid gap-2 text-sm">
-              <Row label="Gross rent (booked stays)" value={formatMoney(r.individual.gross)} />
-              <Row label="− Flat deduction 5%" value={formatMoney(r.individual.deduction)} />
-              <Row label="Taxable" value={formatMoney(r.individual.taxable)} strong />
-              <Row label="Estimated income tax" value={formatMoney(r.individual.estimatedTax)} strong />
+              <Row label="Ακαθάριστο μίσθωμα (κρατήσεις)" value={formatMoney(r.individual.gross)} />
+              <Row label="− Έκπτωση 5%" value={formatMoney(r.individual.deduction)} />
+              <Row label="Φορολογητέο" value={formatMoney(r.individual.taxable)} strong />
+              <Row label="Εκτιμώμενος φόρος" value={formatMoney(r.individual.estimatedTax)} strong />
               <div className="mt-2 flex items-center justify-between gap-3 text-[13px] text-muted-foreground">
-                <span>Other property income (other rentals) already using the scale</span>
+                <span>Άλλα εισοδήματα από ακίνητα (π.χ. μακροχρόνιες μισθώσεις) στην ίδια κλίμακα</span>
                 <OtherIncomeInput value={otherIncome} />
               </div>
             </dl>
             <div className="rounded-xl bg-muted/60 p-4 text-sm">
-              <div className="mb-2 font-medium">Rental income scale {ctxYear}</div>
+              <div className="mb-2 font-medium">Κλίμακα εισοδήματος από ακίνητα {ctxYear}</div>
               <ul className="grid gap-1 text-[13px] text-muted-foreground">
                 {r.individual.scale.map((b, i, all) => (
-                  <li key={i}>{i === 0 ? "Up to" : `${formatMoney(all[i - 1].upTo ?? 0)} –`} {b.upTo ? formatMoney(b.upTo) : "and above"}: <span className="font-medium text-foreground">{pct(b.rate)}</span></li>
+                  <li key={i}>{i === 0 ? "Έως" : `${formatMoney(all[i - 1].upTo ?? 0)} –`} {b.upTo ? formatMoney(b.upTo) : "και άνω"}: <span className="font-medium text-foreground">{pct(b.rate)}</span></li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-muted-foreground">The climate fee you collected ({formatMoney(r.climateFeeCollected)}) is passed to AADE and is not income.</p>
+              <p className="mt-3 text-xs text-muted-foreground">Το ΤΑΚΚ που εισπράξατε ({formatMoney(r.climateFeeCollected)}) αποδίδεται στην ΑΑΔΕ και δεν είναι εισόδημα.</p>
             </div>
           </CardContent>
         </Card>
       )}
       <Card className="overflow-hidden">
-        <CardHeader title="Per property" description="Stays with check-out in the year, including upcoming booked stays and paid cancellations." />
+        <CardHeader title="Ανά ακίνητο" description="Διαμονές με αναχώρηση μέσα στο έτος, μαζί με μελλοντικές κρατήσεις και ακυρώσεις με πληρωμή." />
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-y border-border text-left text-xs text-muted-foreground">
-                <th className="px-5 py-2 font-medium">Property · AMA</th>
-                <th className="px-5 py-2 text-right font-medium">Stays</th>
-                <th className="px-5 py-2 text-right font-medium">Nights</th>
-                <th className="px-5 py-2 text-right font-medium">Gross</th>
-                {business && <th className="px-5 py-2 text-right font-medium">VAT</th>}
-                <th className="px-5 py-2 text-right font-medium">ΤΑΚΚ collected</th>
-                <th className="px-5 py-2 text-right font-medium">Platform fees</th>
-                {business && <th className="px-5 py-2 text-right font-medium">Expenses</th>}
+                <th className="px-5 py-2 font-medium">Ακίνητο · ΑΜΑ</th>
+                <th className="px-5 py-2 text-right font-medium">Διαμονές</th>
+                <th className="px-5 py-2 text-right font-medium">Νύχτες</th>
+                <th className="px-5 py-2 text-right font-medium">Ακαθάριστα</th>
+                {business && <th className="px-5 py-2 text-right font-medium">ΦΠΑ</th>}
+                <th className="px-5 py-2 text-right font-medium">ΤΑΚΚ που εισπράχθηκε</th>
+                <th className="px-5 py-2 text-right font-medium">Προμήθειες πλατφορμών</th>
+                {business && <th className="px-5 py-2 text-right font-medium">Έξοδα</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {r.byProperty.map((p) => (
                 <tr key={p.propertyId}>
-                  <td className="px-5 py-2.5">{p.name}<div className="text-xs text-muted-foreground">{p.ama ?? "No AMA"}</div></td>
+                  <td className="px-5 py-2.5">{p.name}<div className="text-xs text-muted-foreground">{p.ama ?? "Χωρίς ΑΜΑ"}</div></td>
                   <td className="px-5 py-2.5 text-right tabular-nums">{p.stays}</td>
                   <td className="px-5 py-2.5 text-right tabular-nums">{p.nights}</td>
                   <td className="px-5 py-2.5 text-right tabular-nums">{formatMoney(p.gross)}</td>
@@ -290,8 +290,8 @@ function Compliance({ o, propertiesCompliance }: { o: Awaited<ReturnType<typeof 
         <Card key={p.propertyId}>
           <CardHeader
             title={<Link href={`/properties/${p.propertyId}`} className="hover:underline">{p.name}</Link>}
-            description={`${p.kind === "DETACHED_HOUSE" ? "Detached house" : "Apartment"}${p.areaSqm ? ` · ${p.areaSqm} m²` : ""} · AMA ${p.ama ?? "missing"}`}
-            action={<Badge tone={p.insuranceStatus === "OK" && p.missing.length === 0 && p.ama ? "success" : "warning"}>{p.insuranceStatus === "OK" && p.missing.length === 0 && p.ama ? "Compliant" : "Action needed"}</Badge>}
+            description={`${p.kind === "DETACHED_HOUSE" ? "Μονοκατοικία" : "Διαμέρισμα"}${p.areaSqm ? ` · ${p.areaSqm} m²` : ""} · ΑΜΑ ${p.ama ?? "λείπει"}`}
+            action={<Badge tone={p.insuranceStatus === "OK" && p.missing.length === 0 && p.ama ? "success" : "warning"}>{p.insuranceStatus === "OK" && p.missing.length === 0 && p.ama ? "Συμμορφώνεται" : "Χρειάζεται ενέργεια"}</Badge>}
           />
           <CardContent>
             <ComplianceChecklist propertyId={p.propertyId} compliance={(propertiesCompliance.find((x) => x.id === p.propertyId)?.compliance ?? {}) as Record<string, boolean | string | null>} />

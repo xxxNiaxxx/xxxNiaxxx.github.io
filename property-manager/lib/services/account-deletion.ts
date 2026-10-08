@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 
 export const deleteAccountSchema = z.object({
-  password: z.string().min(1, "Enter your password to confirm"),
+  password: z.string().min(1, "Δώστε τον κωδικό σας για επιβεβαίωση"),
 });
 
 /**
@@ -19,9 +19,9 @@ export const deleteAccountSchema = z.object({
 export async function deleteAccount(userId: string, input: unknown) {
   const { password } = deleteAccountSchema.parse(input);
   const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user) throw new AppError("NOT_FOUND", "Account not found");
+  if (!user) throw new AppError("NOT_FOUND", "Ο λογαριασμός δεν βρέθηκε");
   if (!(await bcrypt.compare(password, user.passwordHash))) {
-    throw new AppError("VALIDATION", "Incorrect password", [{ path: "password", message: "Incorrect password" }]);
+    throw new AppError("VALIDATION", "Λάθος κωδικός", [{ path: "password", message: "Λάθος κωδικός" }]);
   }
 
   const memberships = await db.organizationMember.findMany({ where: { userId } });

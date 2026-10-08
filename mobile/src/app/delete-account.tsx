@@ -21,7 +21,7 @@ export default function DeleteAccount() {
       await signOut();
       router.replace("/login");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Could not delete the account. Please try again.");
+      setError(e instanceof ApiError ? e.message : "Δεν ήταν δυνατή η διαγραφή. Δοκιμάστε ξανά.");
     } finally {
       setBusy(false);
     }
@@ -30,20 +30,20 @@ export default function DeleteAccount() {
   return (
     <Screen>
       <Card>
-        <Text style={styles.sectionTitle}>Delete your account?</Text>
+        <Text style={styles.sectionTitle}>Διαγραφή λογαριασμού;</Text>
         <Text style={[styles.rowSub, { marginTop: 8, lineHeight: 19 }]}>
-          This permanently deletes your account and AI chat history. Organizations where you are the only member are deleted
-          with all their properties, guests, reservations, tasks and financial records. In shared organizations only your
-          membership is removed. This cannot be undone.
+          Ο λογαριασμός σας και το ιστορικό συνομιλιών AI διαγράφονται οριστικά. Οι οργανισμοί όπου είστε το μόνο μέλος
+          διαγράφονται μαζί με ακίνητα, επισκέπτες, κρατήσεις, εργασίες και οικονομικά στοιχεία. Στους κοινούς οργανισμούς
+          αφαιρείται μόνο η συμμετοχή σας. Η ενέργεια δεν αναιρείται.
         </Text>
       </Card>
       <View>
-        <Text style={styles.label}>Confirm with your password</Text>
+        <Text style={styles.label}>Επιβεβαίωση με τον κωδικό σας</Text>
         <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" />
       </View>
       {error && <Text style={{ color: colors.danger, backgroundColor: colors.dangerSoft, padding: 12, borderRadius: 10 }}>{error}</Text>}
-      <Button title="Delete permanently" variant="danger" loading={busy} disabled={!password} onPress={confirm} />
-      <Button title="Cancel" variant="ghost" onPress={() => router.back()} />
+      <Button title="Οριστική διαγραφή" variant="danger" loading={busy} disabled={!password} onPress={confirm} />
+      <Button title="Ακύρωση" variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }

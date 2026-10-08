@@ -20,7 +20,7 @@ export function NameForm({ endpoint, label, initial, disabled, success }: { endp
       <Field label={label} htmlFor={endpoint} error={fieldErrors.name} className="flex-1">
         <Input id={endpoint} value={name} onChange={(e) => setName(e.target.value)} disabled={disabled} />
       </Field>
-      <Button type="submit" variant="outline" loading={pending} disabled={disabled || name.trim() === initial || !name.trim()}>Save</Button>
+      <Button type="submit" variant="outline" loading={pending} disabled={disabled || name.trim() === initial || !name.trim()}>Αποθήκευση</Button>
     </form>
   );
 }

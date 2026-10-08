@@ -7,7 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import type { AIAction, ChatMessage, ChatResponse } from "@/lib/types";
 import { colors } from "@/theme";
 
-const SUGGESTIONS = ["What needs my attention today?", "Who checks in tomorrow?", "How much did I make this month?", "Which property performs best?"];
+const SUGGESTIONS = ["Τι χρειάζεται την προσοχή μου σήμερα;", "Ποιος έρχεται αύριο;", "Πόσα έβγαλα αυτόν τον μήνα;", "Τι πρέπει να δηλώσω στην ΑΑΔΕ;"];
 
 /** Renders **bold** without any HTML. */
 function Rich({ text, color }: { text: string; color: string }) {
@@ -46,7 +46,7 @@ export default function AI() {
       setMessages((m) => [...m, res.message]);
       setActions(res.actions);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "The assistant is unavailable right now.");
+      setError(e instanceof ApiError ? e.message : "Ο βοηθός δεν είναι διαθέσιμος αυτή τη στιγμή.");
       setMessages((m) => m.slice(0, -1));
       setInput(content);
     } finally {
@@ -80,9 +80,9 @@ export default function AI() {
             <View style={{ backgroundColor: colors.accentSoft, padding: 14, borderRadius: 18 }}>
               <Ionicons name="sparkles" size={26} color={colors.accent} />
             </View>
-            <Text style={{ fontSize: 20, fontWeight: "700", color: colors.text, marginTop: 14 }}>What can I help with?</Text>
+            <Text style={{ fontSize: 20, fontWeight: "700", color: colors.text, marginTop: 14 }}>Πώς μπορώ να βοηθήσω;</Text>
             <Text style={{ color: colors.mutedText, textAlign: "center", marginTop: 6, paddingHorizontal: 20 }}>
-              I answer from your live data and always ask before sending anything.
+              Απαντώ από τα πραγματικά σας δεδομένα και ρωτάω πάντα πριν στείλω οτιδήποτε.
             </Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 20 }}>
               {SUGGESTIONS.map((s) => (
@@ -96,7 +96,7 @@ export default function AI() {
           <>
             {mode && (
               <Text style={{ alignSelf: "center", fontSize: 11, color: colors.mutedText }}>
-                {mode === "llm" ? "Connected to AI model" : "Offline assistant mode"}
+                {mode === "llm" ? "Συνδεδεμένος με μοντέλο AI" : "Βοηθός εκτός σύνδεσης"}
               </Text>
             )}
             {messages.map((m, i) => (
@@ -117,12 +117,12 @@ export default function AI() {
         <TextInput
           value={input}
           onChangeText={setInput}
-          placeholder="Ask your AI manager…"
+          placeholder="Ρωτήστε τον βοηθό AI…"
           placeholderTextColor={colors.subtleText}
           multiline
           style={{ flex: 1, maxHeight: 120, minHeight: 42, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 12, paddingTop: 11, paddingBottom: 11, fontSize: 15, color: colors.text, backgroundColor: colors.background }}
         />
-        <Pressable onPress={() => send(input)} disabled={!input.trim() || sending} accessibilityLabel="Send"
+        <Pressable onPress={() => send(input)} disabled={!input.trim() || sending} accessibilityLabel="Αποστολή"
           style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", opacity: !input.trim() || sending ? 0.3 : 1 }}>
           <Ionicons name="arrow-up" size={20} color={colors.onPrimary} />
         </Pressable>

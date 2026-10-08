@@ -24,12 +24,12 @@ async function currentUserId(): Promise<string | null> {
 /** The signed-in user, or an UNAUTHORIZED error. */
 export async function requireUser() {
   const userId = await currentUserId();
-  if (!userId) throw new AppError("UNAUTHORIZED", "You need to sign in");
+  if (!userId) throw new AppError("UNAUTHORIZED", "Πρέπει να συνδεθείτε");
   const user = await db.user.findUnique({
     where: { id: userId },
     select: { id: true, email: true, name: true, image: true },
   });
-  if (!user) throw new AppError("UNAUTHORIZED", "You need to sign in");
+  if (!user) throw new AppError("UNAUTHORIZED", "Πρέπει να συνδεθείτε");
   return user;
 }
 
@@ -39,7 +39,7 @@ export async function requireOrganization() {
   // A preference only: resolveMembership ignores organizations the user doesn't belong to.
   const preferred = (await headers()).get(ACTIVE_ORG_HEADER) ?? (await cookies()).get(ACTIVE_ORG_COOKIE)?.value;
   const membership = await resolveMembership(user.id, preferred);
-  if (!membership) throw new AppError("FORBIDDEN", "You are not a member of any organization");
+  if (!membership) throw new AppError("FORBIDDEN", "Δεν είστε μέλος κάποιου οργανισμού");
   return { user, membership, organization: membership.organization };
 }
 
@@ -52,6 +52,6 @@ export async function requireOrganizationMember(): Promise<OrgContext> {
 /** Like requireOrganizationMember, but also enforces a minimum role. */
 export async function requireRole(minimum: Role): Promise<OrgContext> {
   const ctx = await requireOrganizationMember();
-  if (!hasRole(ctx, minimum)) throw new AppError("FORBIDDEN", "You do not have permission to do this");
+  if (!hasRole(ctx, minimum)) throw new AppError("FORBIDDEN", "Δεν έχετε δικαίωμα για αυτή την ενέργεια");
   return ctx;
 }

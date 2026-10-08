@@ -87,6 +87,6 @@ export async function updateGuest(ctx: OrgContext, id: string, input: unknown) {
 export async function deleteGuest(ctx: OrgContext, id: string) {
   await assertGuest(ctx, id);
   const count = await db.reservation.count({ where: { guestId: id, organizationId: ctx.organizationId } });
-  if (count > 0) throw conflict("This guest has reservations and cannot be deleted.");
+  if (count > 0) throw conflict("Ο επισκέπτης έχει κρατήσεις και δεν μπορεί να διαγραφεί.");
   await db.guest.delete({ where: { id } });
 }

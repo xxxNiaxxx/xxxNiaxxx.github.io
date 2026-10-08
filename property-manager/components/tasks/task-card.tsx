@@ -41,9 +41,9 @@ export function TaskCard({ task, members }: { task: TaskDTO; members: { id: stri
     <li className={cn("rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]", !open && "opacity-75")}>
       <div className="flex items-start gap-3">
         <button
-          aria-label={task.status === "COMPLETED" ? "Reopen task" : "Complete task"}
+          aria-label={task.status === "COMPLETED" ? "Επαναφορά εργασίας" : "Ολοκλήρωση εργασίας"}
           disabled={pending || task.status === "CANCELLED"}
-          onClick={() => update({ status: task.status === "COMPLETED" ? "TODO" : "COMPLETED" }, task.status === "COMPLETED" ? "Task reopened" : "Task completed")}
+          onClick={() => update({ status: task.status === "COMPLETED" ? "TODO" : "COMPLETED" }, task.status === "COMPLETED" ? "Η εργασία επανήλθε" : "Η εργασία ολοκληρώθηκε")}
           className={cn(
             "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors",
             task.status === "COMPLETED" ? "border-success bg-success text-white" : "border-border-strong hover:border-success hover:bg-success-soft",
@@ -60,9 +60,9 @@ export function TaskCard({ task, members }: { task: TaskDTO; members: { id: stri
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span>{humanize(task.type)}</span>
             <Link href={`/properties/${task.propertyId}`} className="hover:text-foreground">{task.propertyName}</Link>
-            {task.dueAt && <span className={cn(task.overdue && "font-medium text-danger")}>{task.overdue ? "Overdue · " : ""}{formatDateTime(task.dueAt)}</span>}
-            {task.reservationId && <Link href={`/reservations/${task.reservationId}`} className="hover:text-foreground">Reservation →</Link>}
-            <span className="flex items-center gap-1"><UserRound className="size-3" />{task.assigneeName ?? "Unassigned"}</span>
+            {task.dueAt && <span className={cn(task.overdue && "font-medium text-danger")}>{task.overdue ? "Καθυστερεί · " : ""}{formatDateTime(task.dueAt)}</span>}
+            {task.reservationId && <Link href={`/reservations/${task.reservationId}`} className="hover:text-foreground">Κράτηση →</Link>}
+            <span className="flex items-center gap-1"><UserRound className="size-3" />{task.assigneeName ?? "Χωρίς ανάθεση"}</span>
           </div>
           {task.description && <p className="mt-2 text-[13px] text-muted-foreground">{task.description}</p>}
           {checklist.length > 0 && (
@@ -70,7 +70,7 @@ export function TaskCard({ task, members }: { task: TaskDTO; members: { id: stri
               <span className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
                 <span className="block h-full rounded-full bg-accent transition-all" style={{ width: `${(done / checklist.length) * 100}%` }} />
               </span>
-              Checklist {done}/{checklist.length}
+              Λίστα ελέγχου {done}/{checklist.length}
               <ChevronDown className={cn("size-3.5 transition-transform", expanded && "rotate-180")} />
             </button>
           )}
@@ -89,24 +89,24 @@ export function TaskCard({ task, members }: { task: TaskDTO; members: { id: stri
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {task.status === "TODO" && (
-            <Button size="xs" variant="outline" onClick={() => update({ status: "IN_PROGRESS" }, "Task started")} disabled={pending} className="hidden sm:inline-flex">
-              <Play /> Start
+            <Button size="xs" variant="outline" onClick={() => update({ status: "IN_PROGRESS" }, "Η εργασία ξεκίνησε")} disabled={pending} className="hidden sm:inline-flex">
+              <Play /> Έναρξη
             </Button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon-sm" variant="ghost" aria-label="Task actions"><MoreHorizontal /></Button>
+              <Button size="icon-sm" variant="ghost" aria-label="Ενέργειες εργασίας"><MoreHorizontal /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {task.status === "TODO" && <DropdownMenuItem onSelect={() => update({ status: "IN_PROGRESS" }, "Task started")}><Play /> Start</DropdownMenuItem>}
-              {open && <DropdownMenuItem onSelect={() => update({ status: "COMPLETED" }, "Task completed")}><Check /> Complete</DropdownMenuItem>}
-              {open && <DropdownMenuItem onSelect={() => update({ status: "CANCELLED" }, "Task cancelled")}><CircleSlash /> Cancel</DropdownMenuItem>}
-              {!open && <DropdownMenuItem onSelect={() => update({ status: "TODO" }, "Task reopened")}><RotateCcw /> Reopen</DropdownMenuItem>}
+              {task.status === "TODO" && <DropdownMenuItem onSelect={() => update({ status: "IN_PROGRESS" }, "Η εργασία ξεκίνησε")}><Play /> Έναρξη</DropdownMenuItem>}
+              {open && <DropdownMenuItem onSelect={() => update({ status: "COMPLETED" }, "Η εργασία ολοκληρώθηκε")}><Check /> Ολοκλήρωση</DropdownMenuItem>}
+              {open && <DropdownMenuItem onSelect={() => update({ status: "CANCELLED" }, "Η εργασία ακυρώθηκε")}><CircleSlash /> Ακύρωση</DropdownMenuItem>}
+              {!open && <DropdownMenuItem onSelect={() => update({ status: "TODO" }, "Η εργασία επανήλθε")}><RotateCcw /> Επαναφορά</DropdownMenuItem>}
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>Assign to</DropdownMenuLabel>
-              <DropdownMenuItem onSelect={() => update({ assignedToUserId: null }, "Task unassigned")}>Unassigned</DropdownMenuItem>
+              <DropdownMenuLabel>Ανάθεση σε</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => update({ assignedToUserId: null }, "Η ανάθεση αφαιρέθηκε")}>Χωρίς ανάθεση</DropdownMenuItem>
               {members.map((m) => (
-                <DropdownMenuItem key={m.id} onSelect={() => update({ assignedToUserId: m.id }, `Assigned to ${m.name}`)}>
+                <DropdownMenuItem key={m.id} onSelect={() => update({ assignedToUserId: m.id }, `Ανατέθηκε σε ${m.name}`)}>
                   {m.id === task.assignedToUserId ? <Check /> : <span className="size-4" />} {m.name}
                 </DropdownMenuItem>
               ))}

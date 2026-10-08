@@ -11,9 +11,9 @@ const body = z.object({ email: z.string().trim().min(1), password: z.string().mi
 export const POST = route(async (req) => {
   const { email, password } = body.parse(await readJson(req));
   const user = await verifyCredentials(email, password);
-  if (!user) throw new AppError("UNAUTHORIZED", "Incorrect email or password.");
+  if (!user) throw new AppError("UNAUTHORIZED", "Λάθος email ή κωδικός.");
   const membership = await resolveMembership(user.id);
-  if (!membership) throw new AppError("FORBIDDEN", "You are not a member of any organization");
+  if (!membership) throw new AppError("FORBIDDEN", "Δεν είστε μέλος κάποιου οργανισμού");
   return {
     token: await signMobileToken(user.id),
     user: { id: user.id, name: user.name, email: user.email },

@@ -24,7 +24,7 @@ export function useQueryParams() {
   return { params, set, pending };
 }
 
-export function SearchInput({ placeholder = "Search…", param = "q", className }: { placeholder?: string; param?: string; className?: string }) {
+export function SearchInput({ placeholder = "Αναζήτηση…", param = "q", className }: { placeholder?: string; param?: string; className?: string }) {
   const { params, set, pending } = useQueryParams();
   const [value, setValue] = useState(params.get(param) ?? "");
   const first = useRef(true);
@@ -48,7 +48,7 @@ export function SearchInput({ placeholder = "Search…", param = "q", className 
         className="h-9 w-full rounded-lg border border-border bg-surface pr-8 pl-9 text-sm shadow-sm placeholder:text-subtle-foreground focus:border-accent/60 focus:ring-2 focus:ring-accent/15 focus:outline-none"
       />
       {value && (
-        <button onClick={() => setValue("")} className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-0.5 text-subtle-foreground hover:text-foreground" aria-label="Clear search">
+        <button onClick={() => setValue("")} className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-0.5 text-subtle-foreground hover:text-foreground" aria-label="Καθαρισμός αναζήτησης">
           <X className="size-3.5" />
         </button>
       )}

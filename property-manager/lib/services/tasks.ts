@@ -15,13 +15,13 @@ const include = {
 export const OPEN_STATUSES: TaskStatus[] = ["TODO", "IN_PROGRESS"];
 
 export const DEFAULT_CLEANING_CHECKLIST = [
-  "Strip beds and replace linen",
-  "Clean bathrooms",
-  "Clean kitchen and empty fridge",
-  "Vacuum and mop floors",
-  "Restock toiletries and coffee",
-  "Take out rubbish",
-  "Check for damage and report",
+  "Αλλαγή κλινοσκεπασμάτων",
+  "Καθαρισμός μπάνιων",
+  "Καθαρισμός κουζίνας και ψυγείου",
+  "Σκούπισμα και σφουγγάρισμα",
+  "Αναπλήρωση ειδών μπάνιου και καφέ",
+  "Απομάκρυνση σκουπιδιών",
+  "Έλεγχος για ζημιές και αναφορά",
 ].map((label) => ({ label, done: false }));
 
 export async function listTasks(ctx: OrgContext, query: TaskListQuery = {}, now: Date = new Date()) {
@@ -76,7 +76,7 @@ async function assertRelations(
   await assertProperty(ctx, v.propertyId);
   if (v.reservationId) {
     const r = await assertReservation(ctx, v.reservationId);
-    if (r.propertyId !== v.propertyId) throw badRequest("The reservation belongs to a different property");
+    if (r.propertyId !== v.propertyId) throw badRequest("Η κράτηση αφορά άλλο ακίνητο");
   }
   if (v.assignedToUserId) await assertMember(ctx, v.assignedToUserId);
 }
@@ -120,7 +120,7 @@ export async function updateTask(ctx: OrgContext, id: string, input: unknown) {
 }
 
 export async function deleteTask(ctx: OrgContext, id: string) {
-  if (!hasRole(ctx, "ADMIN")) throw new AppError("FORBIDDEN", "Only admins can delete tasks. Cancel it instead.");
+  if (!hasRole(ctx, "ADMIN")) throw new AppError("FORBIDDEN", "Μόνο οι διαχειριστές μπορούν να διαγράψουν εργασίες. Ακυρώστε την.");
   const row = await db.task.findFirst({ where: { id, organizationId: ctx.organizationId } });
   if (!row) throw notFound("Task");
   await db.task.delete({ where: { id } });

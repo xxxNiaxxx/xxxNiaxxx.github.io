@@ -11,13 +11,13 @@ export const checklistSchema = z
 
 const dueAt = z.preprocess(
   (v) => (v === "" ? null : v),
-  z.coerce.date({ error: "Enter a valid due date" }).nullish(),
+  z.coerce.date({ error: "Δώστε έγκυρη προθεσμία" }).nullish(),
 );
 
 export const taskCreateSchema = z.object({
   propertyId: id,
   reservationId: id.nullish(),
-  title: requiredText("Title", 200),
+  title: requiredText("Τίτλος", 200),
   description: optionalText(4000),
   type: taskType.default("OTHER"),
   priority: taskPriority.default("MEDIUM"),

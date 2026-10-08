@@ -179,12 +179,12 @@ export function businessBreakdown(total: number) {
 // ─── Property compliance (Υπουργείο Τουρισμού, από 1.10.2025) ────────
 
 export const COMPLIANCE_ITEMS = [
-  { key: "fireExtinguisher", label: "Fire extinguisher (πυροσβεστήρας)" },
-  { key: "smokeDetectors", label: "Smoke detectors (ανιχνευτές καπνού)" },
-  { key: "firstAidKit", label: "First aid kit (φαρμακείο)" },
-  { key: "emergencyLighting", label: "Emergency lighting & exit signs" },
-  { key: "electricianDeclaration", label: "Electrician's declaration (υπεύθυνη δήλωση ηλεκτρολόγου)" },
-  { key: "amaDisplayed", label: "AMA shown in every listing" },
+  { key: "fireExtinguisher", label: "Πυροσβεστήρας" },
+  { key: "smokeDetectors", label: "Ανιχνευτές καπνού" },
+  { key: "firstAidKit", label: "Φαρμακείο πρώτων βοηθειών" },
+  { key: "emergencyLighting", label: "Φωτισμός ασφαλείας & σήμανση εξόδων" },
+  { key: "electricianDeclaration", label: "Υπεύθυνη δήλωση ηλεκτρολόγου" },
+  { key: "amaDisplayed", label: "Ο ΑΜΑ εμφανίζεται σε κάθε αγγελία" },
 ] as const;
 export type ComplianceKey = (typeof COMPLIANCE_ITEMS)[number]["key"];
 
