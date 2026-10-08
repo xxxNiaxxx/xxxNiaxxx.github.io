@@ -9,9 +9,10 @@ import { Field, Input, Select } from "@/components/ui/input";
 import { api } from "@/lib/client/api";
 import { useMutation } from "@/lib/client/use-mutation";
 import { formatDateTime } from "@/lib/format";
+import { CALENDAR_SOURCES, SOURCE_LABELS } from "@/lib/reservation-sources";
 import type { CalendarFeedDTO } from "@/lib/services/calendar-feeds";
 
-const SOURCE: Record<string, string> = { AIRBNB: "Airbnb", BOOKING_COM: "Booking.com", OTHER: "Άλλη πλατφόρμα" };
+const SOURCE: Record<string, string> = Object.fromEntries(CALENDAR_SOURCES.map((s) => [s, s === "OTHER" ? "Άλλη πλατφόρμα" : SOURCE_LABELS[s]]));
 
 /** iCal import (Airbnb/Booking → app) and export (app → Airbnb/Booking) for one property. */
 export function CalendarSync({ propertyId, feeds, exportPath, canEdit }: { propertyId: string; feeds: CalendarFeedDTO[]; exportPath: string | null; canEdit: boolean }) {

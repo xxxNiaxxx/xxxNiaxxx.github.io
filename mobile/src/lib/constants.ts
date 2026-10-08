@@ -14,7 +14,25 @@ export const TASK_TITLE_PRESETS: Record<TaskType, string[]> = {
   OTHER: ["Ανεφοδιασμός αναλωσίμων", "Αγορές για το κατάλυμα"],
 };
 
-export const RESERVATION_SOURCES = ["MANUAL", "AIRBNB", "BOOKING_COM", "DIRECT", "OTHER"] as const;
+/** Same order and values as the server (property-manager/lib/reservation-sources.ts). */
+export const RESERVATION_SOURCES = [
+  "BOOKING_COM",
+  "AIRBNB",
+  "VRBO",
+  "EXPEDIA",
+  "AGODA",
+  "TRIP_COM",
+  "HOLIDU",
+  "HOMETOGO",
+  "TRAVEL_AGENCY",
+  "DIRECT",
+  "MANUAL",
+  "OTHER",
+] as const;
+/** Sources that take a commission. */
+export const COMMISSION_SOURCES = RESERVATION_SOURCES.filter((s) => s !== "DIRECT" && s !== "MANUAL");
+/** Platforms whose calendar (iCal) can be imported. */
+export const CALENDAR_SOURCES = ["AIRBNB", "BOOKING_COM", "VRBO", "EXPEDIA", "AGODA", "TRIP_COM", "HOLIDU", "HOMETOGO", "OTHER"] as const;
 
 export const TRANSACTION_CATEGORIES = ["BOOKING", "CLEANING", "MAINTENANCE", "UTILITIES", "SUPPLIES", "PLATFORM_FEE", "OTHER"] as const;
 

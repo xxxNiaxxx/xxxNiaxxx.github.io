@@ -13,6 +13,7 @@ import { AMOUNT_MODE_LABELS, detectAmountMode, roomAndCommission, type AmountMod
 import { autoMap, buildRows, detectDateOrder, FIELD_LABELS, IMPORT_FIELDS, normalizeHeader, REQUIRED_FIELDS, type ColumnMapping, type DateOrder } from "@/lib/import/parse";
 import { api, ApiError } from "@/lib/client/api";
 import { formatDay, formatMoney } from "@/lib/format";
+import { RESERVATION_SOURCES, SOURCE_LABELS } from "@/lib/reservation-sources";
 import { climateFeeForStay, type PropertyKind, type TaxRegime } from "@/lib/tax/gr";
 
 type Source = "BOOKING_COM" | "AIRBNB" | "OTHER";
@@ -29,6 +30,9 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 export function ImportWizard({ properties, pricing }: { properties: Property[]; pricing: { regime: TaxRegime; commissionRates: Record<string, number> } }) {
   const [source, setSource] = useState<Source>("BOOKING_COM");
+  // A generic file: which platform its reservations are from (sets the source and commission).
+  const [otherSource, setOtherSource] = useState<string>("OTHER");
+  const platform = source === "OTHER" ? otherSource : source;
   const [fileName, setFileName] = useState<string | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [data, setData] = useState<unknown[][]>([]);
@@ -82,17 +86,17 @@ export function ImportWizard({ properties, pricing }: { properties: Property[]; 
 
   const rows = useMemo(() => buildRows(data, mapping, dateOrder, today(), headers), [data, mapping, dateOrder, headers]);
   const propertyFor = (listing: string) => properties.find((p) => p.id === (mapping.listing !== undefined ? listingMap[listing] : singleProperty));
-  const rate = pricing.commissionRates[source] ?? 0;
+  const rate = pricing.commissionRates[platform] ?? 0;
   const withFee = rows.map((r) => {
     const p = propertyFor(r.listing);
     const fee = p && r.checkIn && r.checkOut && r.checkOut > r.checkIn ? climateFeeForStay({ checkIn: r.checkIn, checkOut: r.checkOut, totalAmount: Math.max(r.amount, 1) }, { kind: p.kind as PropertyKind, areaSqm: p.areaSqm }) : 0;
     return { ...r, property: p, climateFee: fee };
   });
-  const detected = detectAmountMode(withFee, { ratePercent: rate, source });
+  const detected = detectAmountMode(withFee, { ratePercent: rate, source: platform });
   const mode = amountMode ?? detected.mode;
   const preview = withFee.map((r) => {
     const charged = r.status !== "CANCELLED" || (r.commission ?? 0) > 0;
-    const calc = charged ? roomAndCommission(mode, r.amount, { commission: r.commission, climateFee: r.climateFee, ratePercent: r.commissionPercent ?? rate, source }) : { room: 0, commission: 0 };
+    const calc = charged ? roomAndCommission(mode, r.amount, { commission: r.commission, climateFee: r.climateFee, ratePercent: r.commissionPercent ?? rate, source: platform }) : { room: 0, commission: 0 };
     const problems = [...r.problems, ...(r.property ? [] : ["Διαλέξτε ακίνητο"])];
     return { ...r, ...calc, problems };
   });
@@ -104,7 +108,7 @@ export function ImportWizard({ properties, pricing }: { properties: Property[]; 
     try {
       const res = await api<Result>("/api/reservations/import", {
         body: {
-          source: source === "OTHER" ? "OTHER" : source,
+          source: platform,
           amountMode: mode,
           rows: ready.map((r) => ({
             line: r.line, externalId: r.externalId, propertyId: r.property!.id, guestName: r.guestName, email: r.email, phone: r.phone, country: r.country,
@@ -161,6 +165,15 @@ export function ImportWizard({ properties, pricing }: { properties: Property[]; 
               </button>
             ))}
           </div>
+          {source === "OTHER" && (
+            <Field label="Από ποια πλατφόρμα είναι οι κρατήσεις;" htmlFor="import-platform" hint="Ορίζει την πηγή των κρατήσεων και την προμήθεια που υπολογίζεται.">
+              <Select id="import-platform" value={otherSource} onChange={(e) => setOtherSource(e.target.value)} className="sm:max-w-xs">
+                {RESERVATION_SOURCES.filter((s) => s !== "BOOKING_COM" && s !== "AIRBNB" && s !== "MANUAL").map((s) => (
+                  <option key={s} value={s}>{SOURCE_LABELS[s]}</option>
+                ))}
+              </Select>
+            </Field>
+          )}
           <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-border-strong bg-muted/30 p-6 text-center hover:bg-muted/60">
             {fileName ? <FileSpreadsheet className="size-6 text-accent" /> : <Upload className="size-6 text-muted-foreground" />}
             <span className="text-sm font-medium">{fileName ?? "Επιλέξτε αρχείο Excel ή CSV"}</span>

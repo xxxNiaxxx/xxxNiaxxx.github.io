@@ -4,18 +4,15 @@ import { Pressable, Share, Text, View } from "react-native";
 import { SelectField, TextField } from "@/components/form";
 import { Button, Card, SectionTitle, styles } from "@/components/ui";
 import { api } from "@/lib/api";
-import { formatDateTime } from "@/lib/format";
+import { CALENDAR_SOURCES } from "@/lib/constants";
+import { formatDateTime, humanize } from "@/lib/format";
 import { useSession } from "@/lib/session";
 import type { CalendarFeed, SyncResult } from "@/lib/types";
 import { confirm, notify, useMutation } from "@/lib/use-mutation";
 import { useQuery } from "@/lib/use-query";
 import { colors } from "@/theme";
 
-const SOURCES = [
-  { value: "AIRBNB", label: "Airbnb" },
-  { value: "BOOKING_COM", label: "Booking.com" },
-  { value: "OTHER", label: "Άλλη πλατφόρμα" },
-];
+const SOURCES = CALENDAR_SOURCES.map((value) => ({ value, label: value === "OTHER" ? "Άλλη πλατφόρμα" : humanize(value) }));
 const sourceLabel = (s: string) => SOURCES.find((x) => x.value === s)?.label ?? s;
 const summary = (r: SyncResult) => `${r.created} νέες, ${r.updated} αλλαγές, ${r.cancelled} ακυρώσεις`;
 

@@ -4,6 +4,7 @@ import { Text, View } from "react-native";
 import { NumberField, SelectField, TextField } from "@/components/form";
 import { Button, Card, Screen, SectionTitle, styles } from "@/components/ui";
 import { api } from "@/lib/api";
+import { COMMISSION_SOURCES } from "@/lib/constants";
 import { humanize } from "@/lib/format";
 import { useSession } from "@/lib/session";
 import { useMutation } from "@/lib/use-mutation";
@@ -85,14 +86,17 @@ export default function Settings() {
 
 function PricingCard({ settings, onSaved }: { settings: TaxSettings; onSaved: () => void }) {
   const { run, pending } = useMutation();
-  const [booking, setBooking] = useState(String(settings.commissionRates.BOOKING_COM ?? 0));
-  const [airbnb, setAirbnb] = useState(String(settings.commissionRates.AIRBNB ?? 0));
+  const [rates, setRates] = useState<Record<string, string>>(() =>
+    Object.fromEntries(COMMISSION_SOURCES.map((s) => [s, String(settings.commissionRates[s] ?? 0)])),
+  );
   const [ownRate, setOwnRate] = useState(settings.businessTaxRate == null ? "" : String(settings.businessTaxRate));
   return (
     <Card style={{ gap: 12 }}>
       <SectionTitle title="Προμήθειες & φόρος" />
-      <NumberField label="Προμήθεια Booking.com (%)" value={booking} onChange={setBooking} hint="Υπολογίζεται στην τιμή δωματίου χωρίς το τέλος 0,5% — όχι στο ΤΑΚΚ" />
-      <NumberField label="Προμήθεια Airbnb (%)" value={airbnb} onChange={setAirbnb} />
+      {COMMISSION_SOURCES.map((s) => (
+        <NumberField key={s} label={`Προμήθεια ${humanize(s)} (%)`} value={rates[s]} onChange={(v) => setRates((r) => ({ ...r, [s]: v }))}
+          hint={s === "BOOKING_COM" ? "Υπολογίζεται στην τιμή δωματίου χωρίς το τέλος 0,5% — όχι στο ΤΑΚΚ" : undefined} />
+      ))}
       {settings.regime === "BUSINESS" && (
         <NumberField label="Δικός σας συντελεστής φόρου εισοδήματος (%)" value={ownRate} onChange={setOwnRate} placeholder="κλίμακα"
           hint="Κενό = εκτίμηση από την κλίμακα επιχειρήσεων (χωρίς εισφορές ΕΦΚΑ)" />
@@ -100,7 +104,7 @@ function PricingCard({ settings, onSaved }: { settings: TaxSettings; onSaved: ()
       <Button small title="Αποθήκευση" loading={pending} style={{ alignSelf: "flex-start" }}
         onPress={() => void run(() => api("/api/tax/settings", {
           method: "PATCH",
-          body: { commissionRates: { BOOKING_COM: Number(booking) || 0, AIRBNB: Number(airbnb) || 0 }, ...(settings.regime === "BUSINESS" ? { businessTaxRate: ownRate === "" ? null : Number(ownRate) } : {}) },
+          body: { commissionRates: Object.fromEntries(COMMISSION_SOURCES.map((s) => [s, Number(rates[s]) || 0])), ...(settings.regime === "BUSINESS" ? { businessTaxRate: ownRate === "" ? null : Number(ownRate) } : {}) },
         }), { onSuccess: onSaved })} />
     </Card>
   );
