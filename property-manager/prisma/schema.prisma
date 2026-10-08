@@ -63,15 +63,15 @@ enum TaxRegimeSetting {
 }
 
 model Organization {
-  id        String           @id @default(cuid())
-  name      String
-  taxRegime TaxRegimeSetting @default(AUTO)
+  id              String           @id @default(cuid())
+  name            String
+  taxRegime       TaxRegimeSetting @default(AUTO)
   /// Platform commission % by booking source, e.g. {"BOOKING_COM": 15, "AIRBNB": 15}. Null = defaults.
   commissionRates Json?
   /// Own income tax rate (%) for the business regime; null = estimate from the tax scale.
-  businessTaxRate Decimal? @db.Decimal(5, 2)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  businessTaxRate Decimal?         @db.Decimal(5, 2)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   members         OrganizationMember[]
   properties      Property[]
@@ -139,11 +139,11 @@ model Property {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  reservations Reservation[]
-  tasks        Task[]
-  transactions Transaction[]
-  aiMemories   AIMemory[]
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reservations  Reservation[]
+  tasks         Task[]
+  transactions  Transaction[]
+  aiMemories    AIMemory[]
   calendarFeeds CalendarFeed[]
 
   @@index([organizationId, status])
@@ -522,4 +522,50 @@ model CalendarFeed {
 
   @@unique([propertyId, url])
   @@index([organizationId])
+}
+
+enum WaitlistStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REGISTERED
+}
+
+/// Someone who asked to try the app. Approval gives them a personal sign-up link.
+model WaitlistEntry {
+  id                String         @id @default(cuid())
+  name              String
+  email             String         @unique
+  phone             String?
+  city              String?
+  propertiesCount   Int?
+  /// BOOKING_COM, AIRBNB, DIRECT, OTHER
+  platforms         String[]
+  /// INDIVIDUAL or BUSINESS
+  regime            String?
+  /// ANDROID, IPHONE or NONE (computer only)
+  device            String?
+  /// Google account to add as a tester on Google Play (Android).
+  playEmail         String?
+  message           String?
+  consentAt         DateTime
+  status            WaitlistStatus @default(PENDING)
+  tokenHash         String?        @unique
+  tokenExpiresAt    DateTime?
+  approvedAt        DateTime?
+  /// When the approval email went out (null: not sent, share the link by hand).
+  approvalEmailedAt DateTime?
+  registeredAt      DateTime?
+  userId            String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([status, createdAt])
+}
+
+/// Settings of the whole installation (not of an organization).
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
 }

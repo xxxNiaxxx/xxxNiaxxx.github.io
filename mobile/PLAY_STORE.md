@@ -58,6 +58,10 @@
    | `NEXT_PUBLIC_APP_TIMEZONE` | `Europe/Athens` |
    | `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` | προαιρετικά: χωρίς αυτά δουλεύει ο offline βοηθός |
    | `CRON_SECRET` | ένα μακρύ τυχαίο κείμενο — ενεργοποιεί τον νυχτερινό συγχρονισμό των ημερολογίων iCal |
+   | `ADMIN_EMAILS` | το email σας — βλέπετε και εγκρίνετε τη λίστα αναμονής (`/admin/waitlist`) |
+   | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | αποστολή email. Gmail: `smtp.gmail.com`, `465`, το Gmail σας και ένας **κωδικός εφαρμογής** (Λογαριασμός Google → Ασφάλεια → Κωδικοί εφαρμογών) |
+   | `EMAIL_FROM` | προαιρετικό, π.χ. `Βραχυχρόνια.ai <you@gmail.com>` |
+   | `PLAY_TESTING_URL` | ο σύνδεσμος συμμετοχής της κλειστής δοκιμής (βλ. βήμα 6) — μπαίνει στο email έγκρισης των χρηστών Android |
 
 5. **Deploy.** Ελέγξτε ότι ανοίγουν:
    - `https://YOUR-APP.vercel.app/login`
@@ -137,6 +141,10 @@ eas build -p android --profile production   # .aab για το Google Play
 2. Προσθέστε το email σας στους testers. Ανοίξτε τον σύνδεσμο συμμετοχής στο κινητό και εγκαταστήστε την εφαρμογή.
 3. **Testing → Closed testing:** δημιουργήστε track, προσθέστε **12+ δοκιμαστές** (λίστα email ή Google Group)
    και κάντε release την ίδια έκδοση. Μετρήστε **14 ημέρες**.
+   - Τους δοκιμαστές τους βρίσκετε από τη **λίστα αναμονής** (`/admin/waitlist`): εγκρίνετε όσους θέλετε και πατήστε
+     **«Αντιγραφή Gmail για Google Play»** — επικολλήστε τα στη λίστα email του track.
+   - Αντιγράψτε τον σύνδεσμο **«Join on the web»** του track στη μεταβλητή `PLAY_TESTING_URL` στο Vercel, για να
+     τον λαμβάνουν αυτόματα στο email έγκρισης.
 4. Μετά: **Production → Apply for production access → Create release.**
 
 Επόμενες εκδόσεις:
@@ -164,6 +172,8 @@ eas submit -p android --latest              # προαιρετικό: απαιτ
 | Financial info | Other financial info | ✔ (έσοδα/έξοδα καταλυμάτων) | Optional | App functionality |
 | Messages | Other in-app messages | ✔ (μηνύματα προς επισκέπτες) | Optional | App functionality |
 | App activity | Other user-generated content | ✔ (συνομιλίες AI) | Optional | App functionality |
+
+Η φόρμα της λίστας αναμονής είναι στον ιστότοπο (όχι μέσα στην εφαρμογή), οπότε δεν αλλάζει τις απαντήσεις.
 
 Όλα τα δεδομένα: **not processed ephemerally** (αποθηκεύονται). **Δεν** συλλέγονται τοποθεσία, επαφές,
 φωτογραφίες, αναγνωριστικά συσκευής ή διαφημιστικά IDs.

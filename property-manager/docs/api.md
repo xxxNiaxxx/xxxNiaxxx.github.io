@@ -228,3 +228,20 @@ AI tools available to the model: `get_today_summary`, `get_upcoming_checkins`,
 `list_properties`, `get_reservation`, `list_reservations`, `get_guest`,
 `list_guests`, `get_revenue_summary`, `get_tax_obligations`, `get_annual_tax_estimate`, `create_task` (proposes),
 `create_message_draft` (proposes).
+
+## Waitlist (app administrators)
+
+Registration is closed by default: a new organization needs an approved
+waitlist link (`/register?access=…`, 14 days, only for the approved email) or a
+team invitation. People apply at the public page `/waitlist`. Administrators
+are the emails in `ADMIN_EMAILS`; emails go out through SMTP (`SMTP_*`), and
+without it the approval link is shown to copy by hand.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/api/admin/waitlist` | all entries |
+| POST | `/api/admin/waitlist/:id/approve` | new personal link (replaces an older one), emailed; returns `{ path, emailed }` |
+| POST | `/api/admin/waitlist/:id/reject` | withdraws the link |
+| DELETE | `/api/admin/waitlist/:id` | deletes the entry and its data |
+| GET | `/api/admin/waitlist/export` | CSV (Excel-safe, UTF-8 BOM) |
+| GET/PATCH | `/api/admin/settings` | `{ registrationOpen }` — open sign-up for everyone |
