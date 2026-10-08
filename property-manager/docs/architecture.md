@@ -1,4 +1,4 @@
-# Architecture — AI Property Manager (Phase 1)
+# Architecture — Βραχυχρόνια.ai (Phase 1)
 
 ## 1. What was in the repository before Phase 1
 

@@ -1,4 +1,6 @@
-# AI Property Manager — Phase 1
+# Βραχυχρόνια.ai — Phase 1
+
+AI property manager for short-term rentals (βραχυχρόνια μίσθωση).
 
 Operations dashboard and AI assistant for short-term rental managers:
 properties, guests, reservations, calendar, cleaning/maintenance tasks,
@@ -75,7 +77,7 @@ own PostgreSQL, create it once: `createdb property_manager_test`.
 | `AI_MODEL` | no | default `gpt-4o-mini` |
 | `AI_BASE_URL` | no | default `https://api.openai.com/v1` |
 | `NEXT_PUBLIC_APP_URL` | no | public URL of the app |
-| `NEXT_PUBLIC_APP_NAME` | no | product name shown in the UI (default "AI Property Manager") |
+| `NEXT_PUBLIC_APP_NAME` | no | product name shown in the UI (default "Βραχυχρόνια.ai") |
 | `NEXT_PUBLIC_APP_TIMEZONE` | no | time zone for "today", due times and check-ins (default `Europe/Athens`) |
 
 ## Project layout
