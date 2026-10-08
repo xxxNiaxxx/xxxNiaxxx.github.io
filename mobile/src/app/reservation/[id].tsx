@@ -234,8 +234,12 @@ function DeclarationCard({ tax, reservationId, guestId, onChange }: { tax: StayT
             <Text style={styles.rowSub}>{f.label}</Text>
             {f.value ? (
               <Text style={styles.rowTitle}>{f.value}{f.key === "paymentMethod" && form.paymentMethodIsDefault ? " (προεπιλογή)" : ""}</Text>
+            ) : f.optional ? (
+              <Text style={styles.rowSub}>— (χωρίς αριθμό κράτησης)</Text>
             ) : (
-              <Text style={{ color: colors.warning }}>Λείπει{["guestName", "idType", "idNumber"].includes(f.key) ? " · συμπληρώστε στον επισκέπτη" : ""}</Text>
+              <Text style={{ color: colors.warning }}>
+                Λείπει{["guestName", "idNumber"].includes(f.key) ? " · συμπληρώστε στον επισκέπτη" : ["bookingNumber", "paymentMethod"].includes(f.key) ? " · από την επεξεργασία της κράτησης" : ""}
+              </Text>
             )}
           </View>
           {f.value ? <Ionicons name="copy-outline" size={18} color={colors.accent} /> : null}
@@ -243,7 +247,7 @@ function DeclarationCard({ tax, reservationId, guestId, onChange }: { tax: StayT
       ))}
       <Text style={[styles.rowSub, { marginTop: 4 }]}>Πατήστε ένα στοιχείο για αντιγραφή.</Text>
       <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-        {form.missing.some((m) => m.includes("αναγνωριστικού")) && (
+        {form.missing.some((m) => m.includes("διαβατηρίου")) && (
           <Button small variant="outline" title="Στοιχεία επισκέπτη" onPress={() => router.push(`/guest/edit/${guestId}`)} />
         )}
         <Button small variant="outline" title="Άνοιγμα myAADE" onPress={() => Linking.openURL(AADE_PORTAL_URL)} />

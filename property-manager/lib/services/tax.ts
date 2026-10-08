@@ -1,6 +1,6 @@
 import type { Prisma, TaxFilingKind } from "@prisma/client";
 import { z } from "zod";
-import { defaultPaymentMethod, GUEST_ID_TYPES, PAYMENT_METHODS } from "@/lib/aade";
+import { defaultPaymentMethod, PAYMENT_METHODS } from "@/lib/aade";
 import { RESERVATION_SOURCES } from "@/lib/reservation-sources";
 import { db } from "@/lib/db";
 import { addDaysISO, dateToISO, diffDaysISO, isoToDate, todayISO } from "@/lib/dates";
@@ -166,12 +166,14 @@ const dmy = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice
  */
 export function declarationForm(r: StayRow, info: StayTaxInfo) {
   const method = (r.paymentMethod ?? defaultPaymentMethod(r.source)) as keyof typeof PAYMENT_METHODS | null;
+  const platform = defaultPaymentMethod(r.source) !== null;
   const name = [r.guest.firstName, r.guest.lastName === "—" ? "" : r.guest.lastName].join(" ").trim();
-  const fields = [
+  const fields: { key: string; label: string; value: string | null; optional?: boolean }[] = [
     { key: "ama", label: "ΑΜΑ ακινήτου", value: r.property.ama },
+    // Platform stays have a booking number; direct ones may not.
+    { key: "bookingNumber", label: "Αριθμός κράτησης", value: r.confirmationCode ?? r.externalId ?? null, optional: !platform },
     { key: "guestName", label: "Ονοματεπώνυμο μισθωτή", value: name || null },
-    { key: "idType", label: "Τύπος αναγνωριστικού", value: r.guest.idType ? (GUEST_ID_TYPES[r.guest.idType as keyof typeof GUEST_ID_TYPES] ?? r.guest.idType) : null },
-    { key: "idNumber", label: "Αριθμός αναγνωριστικού", value: r.guest.idNumber },
+    { key: "idNumber", label: "ΑΦΜ / Αριθμός διαβατηρίου", value: r.guest.idNumber },
     { key: "checkIn", label: "Ημερομηνία άφιξης", value: dmy(info.checkIn) },
     { key: "checkOut", label: "Ημερομηνία αναχώρησης", value: dmy(info.checkOut) },
     { key: "paymentMethod", label: "Τρόπος πληρωμής", value: method ? PAYMENT_METHODS[method] : null },
@@ -180,7 +182,7 @@ export function declarationForm(r: StayRow, info: StayTaxInfo) {
   return {
     fields,
     /** Labels of the values still missing (fill them in on the guest or the reservation). */
-    missing: fields.filter((f) => !f.value).map((f) => f.label),
+    missing: fields.filter((f) => !f.value && !f.optional).map((f) => f.label),
     paymentMethodIsDefault: !r.paymentMethod && !!method,
     cancelled: r.status === "CANCELLED",
   };

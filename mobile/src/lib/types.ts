@@ -184,7 +184,7 @@ export interface StayTax {
   presenceFee: number;
   declaration: { required: boolean; status: "PENDING" | "DECLARED" | "NOT_REQUIRED"; triggerDate: string; deadline: string; due: boolean; overdue: boolean; daysLeft: number };
   /** The AADE stay declaration, field by field, ready to copy. */
-  declarationForm: { fields: { key: string; label: string; value: string | null }[]; missing: string[]; paymentMethodIsDefault: boolean; cancelled: boolean };
+  declarationForm: { fields: { key: string; label: string; value: string | null; optional?: boolean }[]; missing: string[]; paymentMethodIsDefault: boolean; cancelled: boolean };
 }
 
 export interface Transaction {
