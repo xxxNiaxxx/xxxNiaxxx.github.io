@@ -37,8 +37,8 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
         <Stat label="Total revenue" value={formatMoney(stats.totalRevenue, stats.currency)} />
         <Stat label="Average stay" value={`${stats.averageStay} nights`} />
       </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="grid content-start gap-6">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="grid min-w-0 content-start gap-6">
           <Card>
             <CardHeader title="Reservation history" />
             {reservations.length ? <ReservationTable reservations={reservations} hideGuest /> : <EmptyState title="No reservations yet" />}
@@ -51,7 +51,7 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
             </CardContent>
           </Card>
         </div>
-        <div className="grid content-start gap-6">
+        <div className="grid min-w-0 content-start gap-6">
           <Card>
             <CardHeader title="Contact" />
             <CardContent>

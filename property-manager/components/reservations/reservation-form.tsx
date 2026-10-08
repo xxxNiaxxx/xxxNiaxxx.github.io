@@ -81,8 +81,9 @@ export function ReservationFormDialog({ properties, guests, reservation, default
       {
         success: editing ? "Reservation updated" : "Reservation created",
         onSuccess: (r) => {
-          onOpenChange(false);
+          setOpen(false);
           if (!editing && r) router.push(`/reservations/${r.id}`);
+          else if (params.get("new")) onOpenChange(false);
         },
       },
     );

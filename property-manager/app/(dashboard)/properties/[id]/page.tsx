@@ -48,8 +48,8 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
         <Stat label="Base price" value={formatMoney(p.basePrice, p.currency)} hint="per night" />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="grid content-start gap-6">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="grid min-w-0 content-start gap-6">
           <Card>
             <CardHeader title="Current stay" />
             <CardContent>
@@ -77,7 +77,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             )}
           </Card>
         </div>
-        <div className="grid content-start gap-6">
+        <div className="grid min-w-0 content-start gap-6">
           <Card>
             <CardHeader title="Details" />
             <CardContent>

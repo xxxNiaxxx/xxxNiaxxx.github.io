@@ -53,7 +53,7 @@ export default async function FinancialsPage({ searchParams }: { searchParams: P
         <Stat label="Net" value={<span className={cn(s.net < 0 && "text-danger")}>{formatMoney(s.net, s.currency)}</span>} />
         <Stat label="Occupancy" value={formatPercent(s.occupancy)} hint={`${s.bookedNights} of ${s.availableNights} nights`} />
       </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
         <Card>
           <CardHeader title="By property" description="Ranked by net income" />
           <CardContent className="grid gap-4">

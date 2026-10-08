@@ -27,9 +27,9 @@ export default async function AIPage({ searchParams }: { searchParams: Promise<{
   return (
     <>
       <PageHeader title="AI Assistant" description="Ask about your operations. Actions always wait for your approval." />
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <Chat key={current?.id ?? "new"} initial={current} mode={mode} />
-        <aside className="grid content-start gap-6">
+        <aside className="grid min-w-0 content-start gap-6">
           {otherPending.length > 0 && (
             <Card>
               <CardHeader title="Pending approvals" description="Proposed in other chats" />

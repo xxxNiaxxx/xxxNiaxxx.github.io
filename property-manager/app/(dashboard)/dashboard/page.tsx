@@ -49,8 +49,8 @@ export default async function DashboardPage() {
         <Stat label="Occupancy" value={formatPercent(s.occupancy)} hint="this month" icon={<Percent />} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-        <div className="grid content-start gap-6">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.35fr_1fr]">
+        <div className="grid min-w-0 content-start gap-6">
           <Card>
             <CardHeader
               title="Needs attention"

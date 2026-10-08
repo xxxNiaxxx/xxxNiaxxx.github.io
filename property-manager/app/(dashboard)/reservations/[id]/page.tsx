@@ -36,8 +36,8 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
           </>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="grid content-start gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="grid min-w-0 content-start gap-6">
           <Card>
             <CardHeader title="Stay" />
             <CardContent>
@@ -64,7 +64,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
             </CardContent>
           </Card>
         </div>
-        <div className="grid content-start gap-6">
+        <div className="grid min-w-0 content-start gap-6">
           <Card>
             <CardHeader title="Contact" />
             <CardContent>
