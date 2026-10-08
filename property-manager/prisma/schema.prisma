@@ -178,6 +178,13 @@ enum ReservationSource {
   BOOKING_COM
   DIRECT
   OTHER
+  VRBO
+  EXPEDIA
+  AGODA
+  TRIP_COM
+  HOLIDU
+  HOMETOGO
+  TRAVEL_AGENCY
 }
 
 enum ReservationStatus {

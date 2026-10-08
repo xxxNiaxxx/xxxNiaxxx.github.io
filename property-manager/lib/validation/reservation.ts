@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { RESERVATION_SOURCES } from "@/lib/reservation-sources";
 import { currency, id, isoDate, money, optionalQuery, optionalText } from "./common";
 import { guestCreateSchema } from "./guest";
 
-export const reservationSource = z.enum(["MANUAL", "AIRBNB", "BOOKING_COM", "DIRECT", "OTHER"]);
+export const reservationSource = z.enum(RESERVATION_SOURCES);
 export const reservationStatus = z.enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"]);
 
 const checkOutAfterCheckIn = {

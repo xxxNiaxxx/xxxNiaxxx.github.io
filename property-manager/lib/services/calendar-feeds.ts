@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { CalendarFeed } from "@prisma/client";
 import { z } from "zod";
+import { CALENDAR_SOURCES } from "@/lib/reservation-sources";
 import { db } from "@/lib/db";
 import { addDaysISO, dateToISO, isoToDate, todayISO } from "@/lib/dates";
 import { AppError, conflict, notFound } from "@/lib/errors";
@@ -15,7 +16,7 @@ export const SYNC_INTERVAL_MINUTES = 30;
 const MAX_ICS_BYTES = 5_000_000;
 
 const feedInput = z.object({
-  source: z.enum(["AIRBNB", "BOOKING_COM", "OTHER"]),
+  source: z.enum(CALENDAR_SOURCES),
   url: z
     .string()
     .trim()

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { api } from "@/lib/client/api";
 import { useMutation } from "@/lib/client/use-mutation";
+import { COMMISSION_SOURCES, SOURCE_LABELS } from "@/lib/reservation-sources";
 import { useQueryParams } from "@/components/ui/filters";
 
 export function DeclareButton({ reservationId, declared }: { reservationId: string; declared?: boolean }) {
@@ -90,9 +91,10 @@ export function PricingSettings({ commissionRates, businessTaxRate, business, di
   );
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-      <span className="text-[13px] font-medium">Προμήθειες:</span>
-      {field("Booking.com", commissionRates.BOOKING_COM ?? 0, (v) => save({ commissionRates: { BOOKING_COM: Number(v) || 0 } }))}
-      {field("Airbnb", commissionRates.AIRBNB ?? 0, (v) => save({ commissionRates: { AIRBNB: Number(v) || 0 } }))}
+      <span className="w-full text-[13px] font-medium">Προμήθειες <span className="font-normal text-muted-foreground">(το ποσοστό του συμβολαίου σας με κάθε πλατφόρμα)</span></span>
+      {COMMISSION_SOURCES.map((s) => (
+        <span key={s}>{field(SOURCE_LABELS[s], commissionRates[s] ?? 0, (v) => save({ commissionRates: { [s]: Number(v) || 0 } }))}</span>
+      ))}
       {business && field("Δικός σας συντελεστής φόρου", businessTaxRate ?? "", (v) => save({ businessTaxRate: v === "" ? null : Number(v) }), "κλίμακα")}
     </div>
   );

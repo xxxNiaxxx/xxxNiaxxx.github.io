@@ -41,10 +41,4 @@ export function PriorityBadge({ value }: { value: string }) {
   return <Badge tone={tones[value] ?? "neutral"}>{humanize(value)}</Badge>;
 }
 
-export const SOURCE_LABELS: Record<string, string> = {
-  MANUAL: "Χειροκίνητη",
-  AIRBNB: "Airbnb",
-  BOOKING_COM: "Booking.com",
-  DIRECT: "Απευθείας",
-  OTHER: "Άλλη",
-};
+export { SOURCE_LABELS } from "@/lib/reservation-sources";

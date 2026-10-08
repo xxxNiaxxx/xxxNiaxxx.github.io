@@ -103,7 +103,7 @@ Create body:
   "guestsCount": 2,                   // ≤ property.maxGuests
   "totalAmount": 950,
   "currency": "EUR",
-  "source": "MANUAL",                 // MANUAL | AIRBNB | BOOKING_COM | DIRECT | OTHER
+  "source": "MANUAL",                 // see lib/reservation-sources.ts: BOOKING_COM | AIRBNB | VRBO | EXPEDIA | AGODA | TRIP_COM | HOLIDU | HOMETOGO | TRAVEL_AGENCY | DIRECT | MANUAL | OTHER
   "confirmationCode": "DH-4100",
   "status": "CONFIRMED",              // CONFIRMED | PENDING (COMPLETED/CANCELLED via PATCH)
   "notes": "…",
@@ -135,7 +135,7 @@ cancellations carry no rent; each row succeeds or fails on its own →
 | Method | Path | Notes |
 | --- | --- | --- |
 | GET | `/api/properties/:id/calendars` | the property's imported feeds and its own export path |
-| POST | `/api/properties/:id/calendars` | ADMIN+ · `{ source: "AIRBNB" \| "BOOKING_COM" \| "OTHER", url }` (public `https://` only) — added and synced right away |
+| POST | `/api/properties/:id/calendars` | ADMIN+ · `{ source, url }` (a platform from `CALENDAR_SOURCES`) (public `https://` only) — added and synced right away |
 | DELETE | `/api/calendars/:id` | ADMIN+ · reservations it created stay |
 | POST | `/api/calendars/sync` | `{ propertyId?, force? }` — without `force` only feeds not read in the last 30 minutes (the web and mobile apps call it on open) |
 | POST | `/api/properties/:id/calendars/export` | ADMIN+ · creates/replaces the secret export link |

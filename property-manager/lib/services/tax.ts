@@ -1,5 +1,6 @@
 import type { Prisma, TaxFilingKind } from "@prisma/client";
 import { z } from "zod";
+import { RESERVATION_SOURCES } from "@/lib/reservation-sources";
 import { db } from "@/lib/db";
 import { addDaysISO, dateToISO, diffDaysISO, isoToDate, todayISO } from "@/lib/dates";
 import { AppError, notFound } from "@/lib/errors";
@@ -53,7 +54,8 @@ export async function getTaxContext(ctx: OrgContext) {
 
 const settingsSchema = z.object({
   taxRegime: z.enum(["AUTO", "INDIVIDUAL", "BUSINESS"]).optional(),
-  commissionRates: z.record(z.enum(["AIRBNB", "BOOKING_COM", "DIRECT", "MANUAL", "OTHER"]), z.coerce.number().min(0).max(50)).optional(),
+  // Partial: the settings save one platform at a time.
+  commissionRates: z.partialRecord(z.enum(RESERVATION_SOURCES), z.coerce.number().min(0).max(50)).optional(),
   businessTaxRate: z.preprocess((v) => (v === "" ? null : v), z.coerce.number().min(0).max(60).nullable()).optional(),
 });
 

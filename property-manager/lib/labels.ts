@@ -29,6 +29,13 @@ export const LABELS: Record<string, string> = {
   MANUAL: "Χειροκίνητη",
   AIRBNB: "Airbnb",
   BOOKING_COM: "Booking.com",
+  VRBO: "Vrbo",
+  EXPEDIA: "Expedia / Hotels.com",
+  AGODA: "Agoda",
+  TRIP_COM: "Trip.com",
+  HOLIDU: "Holidu",
+  HOMETOGO: "HomeToGo",
+  TRAVEL_AGENCY: "Ταξιδιωτικό γραφείο",
   DIRECT: "Απευθείας",
   // Transaction
   INCOME: "Έσοδο",
