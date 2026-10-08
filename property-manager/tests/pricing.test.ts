@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import type { OrgContext } from "@/lib/permissions";
 import { createReservation, updateReservation } from "@/lib/services/reservations";
 import { getAnnualReport, getStayTax, updateTaxSettings } from "@/lib/services/tax";
-import { businessIncomeTax, commissionBase, commissionFor } from "@/lib/tax/gr";
+import { businessIncomeTax, commissionBase, commissionFor, roomFromCommissionBase } from "@/lib/tax/gr";
 import { createGuest, createTenant, resetDatabase } from "./helpers";
 
 const NOW = new Date("2026-10-20T09:00:00Z");
@@ -11,12 +11,15 @@ const NOW = new Date("2026-10-20T09:00:00Z");
 describe("Booking.com price breakdown", () => {
   it("matches Booking's commission base and 15% commission (VAT 13% + 0,5% included)", () => {
     // Real Booking.com breakdowns: room price → commission base → commission.
-    expect(commissionBase(369.53, "BUSINESS")).toBe(367.9);
-    expect(commissionFor(369.53, 15, "BUSINESS")).toBe(55.19);
-    expect(commissionFor(210.03, 15, "BUSINESS")).toBe(31.37);
-    expect(commissionFor(233.28, 15, "BUSINESS")).toBe(34.84);
-    // Individuals have no presence fee in the price.
-    expect(commissionBase(369.53, "INDIVIDUAL")).toBe(369.53);
+    expect(commissionBase(369.53, "BOOKING_COM")).toBe(367.9);
+    expect(commissionBase(210.03, "BOOKING_COM")).toBe(209.1);
+    expect(commissionBase(233.28, "BOOKING_COM")).toBe(232.25);
+    expect(commissionFor(369.53, 15, "BOOKING_COM")).toBe(55.19);
+    expect(commissionFor(210.03, 15, "BOOKING_COM")).toBe(31.37);
+    expect(commissionFor(233.28, 15, "BOOKING_COM")).toBe(34.84);
+    expect(roomFromCommissionBase(209.1, "BOOKING_COM")).toBe(210.03);
+    // Other platforms charge on the whole room price.
+    expect(commissionBase(369.53, "AIRBNB")).toBe(369.53);
   });
 
   it("business income tax scale (estimate)", () => {

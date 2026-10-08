@@ -32,7 +32,7 @@ const rowSchema = z.object({
 
 export const importSchema = z.object({
   source: reservationSource,
-  amountMode: z.enum(["GUEST_TOTAL", "ROOM", "PAYOUT"]),
+  amountMode: z.enum(["COMMISSIONABLE", "GUEST_TOTAL", "ROOM", "PAYOUT"]),
   rows: z.array(rowSchema).min(1).max(2000),
 });
 export type ImportInput = z.infer<typeof importSchema>;
@@ -105,7 +105,7 @@ export async function importReservations(ctx: OrgContext, input: unknown) {
       // A cancellation without commission was free: no rent, no declaration.
       const charged = row.status !== "CANCELLED" || (row.commission ?? 0) > 0;
       const { room, commission } = charged
-        ? roomAndCommission(data.amountMode as AmountMode, row.amount, { commission: row.commission ?? null, climateFee, ratePercent: rate, regime: tax.regime })
+        ? roomAndCommission(data.amountMode as AmountMode, row.amount, { commission: row.commission ?? null, climateFee, ratePercent: rate, source: data.source })
         : { room: 0, commission: 0 };
       const fields = {
         propertyId: row.propertyId,
@@ -124,6 +124,12 @@ export async function importReservations(ctx: OrgContext, input: unknown) {
       let existing = row.externalId
         ? await db.reservation.findFirst({ where: { organizationId: ctx.organizationId, source: data.source, externalId: row.externalId } })
         : null;
+      // A reservation typed in by hand with the booking number as its code.
+      if (!existing && row.externalId) {
+        existing = await db.reservation.findFirst({
+          where: { organizationId: ctx.organizationId, source: data.source, externalId: null, confirmationCode: row.externalId },
+        });
+      }
       // A stay that the iCal calendar created first (no booking number there): same property and dates.
       existing ??= await db.reservation.findFirst({
         where: {

@@ -229,16 +229,30 @@ export function businessIncomeTax(year: number, profit: number) {
 export const DEFAULT_COMMISSION_RATES: Record<string, number> = { BOOKING_COM: 15, AIRBNB: 15 };
 
 /**
- * Amount the platform charges commission on: the room price (VAT included)
- * without the presence fee. Matches Booking.com's "Ποσό στο οποίο υπολογίζεται
- * προμήθεια" (e.g. 369,53 € → 367,90 €). The climate fee is never commissioned.
+ * Booking.com's 0,5% municipal fee inside a Greek room price. Booking splits the
+ * price as net × (1 + 13% + 0,5%), i.e. fee = price × 0,005 / 1,135 — verified
+ * on real breakdowns: 369,53 → 1,63 · 210,03 → 0,93 · 233,28 → 1,03.
  */
-export function commissionBase(roomPrice: number, regime: TaxRegime) {
-  return regime === "BUSINESS" ? round2(roomPrice - businessBreakdown(roomPrice).presenceFee) : roomPrice;
+export function bookingMunicipalFee(roomPrice: number) {
+  return round2((roomPrice * 0.005) / 1.135);
 }
 
-export function commissionFor(roomPrice: number, ratePercent: number, regime: TaxRegime) {
-  return round2((commissionBase(roomPrice, regime) * ratePercent) / 100);
+/**
+ * Amount the platform charges commission on. Booking.com: the room price
+ * without its 0,5% fee ("Ποσό στο οποίο υπολογίζεται προμήθεια", 369,53 →
+ * 367,90). Others: the room price. The climate fee is never commissioned.
+ */
+export function commissionBase(roomPrice: number, source: string) {
+  return source === "BOOKING_COM" ? round2(roomPrice - bookingMunicipalFee(roomPrice)) : roomPrice;
+}
+
+/** Room price from Booking's commissionable amount (the "Price" column of its export): 209,10 → 210,03. */
+export function roomFromCommissionBase(base: number, source: string) {
+  return source === "BOOKING_COM" ? round2(base / (1 - 0.005 / 1.135)) : base;
+}
+
+export function commissionFor(roomPrice: number, ratePercent: number, source: string) {
+  return round2((commissionBase(roomPrice, source) * ratePercent) / 100);
 }
 
 // ─── Property compliance (Υπουργείο Τουρισμού, από 1.10.2025) ────────

@@ -66,12 +66,18 @@ describe("parsing exports", () => {
   });
 
   it("works out what the amount means from the commission", () => {
-    // Booking: 425,53 total with 56 € ΤΑΚΚ and 55,19 commission → guest total.
-    expect(detectAmountMode([{ amount: 425.53, commission: 55.19, commissionPercent: 15, climateFee: 56 }], { ratePercent: 15, regime: "BUSINESS", fallback: "ROOM" }))
-      .toEqual({ mode: "GUEST_TOTAL", detected: true });
+    // Real Booking export: "Price" 209,10 with 31,37 commission is the commissionable amount → room 210,03.
+    expect(detectAmountMode([{ amount: 209.1, commission: 31.37, commissionPercent: 15, climateFee: 40 }], { ratePercent: 15, source: "BOOKING_COM" }))
+      .toEqual({ mode: "COMMISSIONABLE", detected: true });
+    expect(roomAndCommission("COMMISSIONABLE", 209.1, { commission: 31.37, climateFee: 40, ratePercent: 15, source: "BOOKING_COM" })).toEqual({ room: 210.03, commission: 31.37 });
+    expect(roomAndCommission("COMMISSIONABLE", 367.9, { commission: null, climateFee: 56, ratePercent: 15, source: "BOOKING_COM" })).toEqual({ room: 369.53, commission: 55.19 });
+    // Booking total with ΤΑΚΚ: 425,53 with 55,19 → guest total.
+    expect(detectAmountMode([{ amount: 425.53, commission: 55.19, commissionPercent: 15, climateFee: 56 }], { ratePercent: 15, source: "BOOKING_COM" }).mode).toBe("GUEST_TOTAL");
+    // Without commission data Booking defaults to its "Price" meaning, Airbnb to payout.
+    expect(detectAmountMode([{ amount: 209.1, commission: null, commissionPercent: null, climateFee: 40 }], { ratePercent: 15, source: "BOOKING_COM" }).mode).toBe("COMMISSIONABLE");
     // Airbnb payout: 340 after 60 commission (15% of 400).
-    expect(detectAmountMode([{ amount: 340, commission: 60, commissionPercent: null, climateFee: 16 }], { ratePercent: 15, regime: "INDIVIDUAL", fallback: "ROOM" }).mode).toBe("PAYOUT");
-    expect(roomAndCommission("PAYOUT", 340, { commission: null, climateFee: 0, ratePercent: 15, regime: "INDIVIDUAL" })).toEqual({ room: 400, commission: 60 });
+    expect(detectAmountMode([{ amount: 340, commission: 60, commissionPercent: null, climateFee: 16 }], { ratePercent: 15, source: "AIRBNB" }).mode).toBe("PAYOUT");
+    expect(roomAndCommission("PAYOUT", 340, { commission: null, climateFee: 0, ratePercent: 15, source: "AIRBNB" })).toEqual({ room: 400, commission: 60 });
   });
 });
 
@@ -130,6 +136,25 @@ describe("importing reservations", () => {
     expect(res).toMatchObject({ created: 1, failed: 2 });
     expect(res.results.find((r) => r.line === 3)?.message).toMatch(/συμπίπτουν/);
     expect(res.results.find((r) => r.line === 4)?.message).toBe("Το ακίνητο δεν βρέθηκε");
+  });
+
+  it("matches a reservation typed in by hand with the booking number", async () => {
+    const guestId = (await db.guest.create({ data: { organizationId: ctx.organizationId, firstName: "Tabita", lastName: "Ghimire" } })).id;
+    const manual = await db.reservation.create({
+      data: {
+        organizationId: ctx.organizationId, propertyId, guestId, source: "BOOKING_COM", confirmationCode: "6444699988",
+        checkIn: new Date("2027-01-10"), checkOut: new Date("2027-01-15"), guestsCount: 2, totalAmount: 209.1, commission: 0,
+      },
+    });
+    const res = await importReservations(ctx, {
+      source: "BOOKING_COM", amountMode: "COMMISSIONABLE",
+      rows: [row({ line: 5, externalId: "6444699988", guestName: "Tabita Ghimire", checkIn: "2027-01-10", checkOut: "2027-01-15", amount: 209.1, commission: 31.37 })],
+    });
+    expect(res).toMatchObject({ created: 0, updated: 1 });
+    const r = await db.reservation.findUniqueOrThrow({ where: { id: manual.id } });
+    expect(r.externalId).toBe("6444699988");
+    expect(Number(r.totalAmount)).toBe(210.03);
+    expect(Number(r.commission)).toBe(31.37);
   });
 
   it("keeps every column of the export and completes the guest's contact details", async () => {

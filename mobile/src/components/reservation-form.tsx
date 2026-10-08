@@ -46,7 +46,7 @@ export function ReservationForm({ reservation, defaults }: { reservation?: Reser
   const climateFee = property && nights && entered > 0 ? climateFeeForStay(checkIn, checkOut, property) : 0;
   const room = includesFee ? Math.max(0, Math.round((entered - climateFee) * 100) / 100) : entered;
   const rate = pricing.data.commissionRates[source] ?? 0;
-  const autoCommission = room > 0 && rate > 0 ? commissionFor(room, rate, pricing.data.regime) : 0;
+  const autoCommission = room > 0 && rate > 0 ? commissionFor(room, rate, source) : 0;
   const dateError = checkIn && checkOut && checkOut <= checkIn ? "Η αναχώρηση πρέπει να είναι μετά την άφιξη" : undefined;
 
   async function save() {
