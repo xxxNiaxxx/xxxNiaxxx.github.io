@@ -3,12 +3,35 @@
  * Reminders are scheduled on-device with expo-notifications. Remote push infrastructure is
  * intentionally mocked for the MVP (see `registerForRemotePush`).
  */
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import { logger } from './logger';
 
+type NotificationsModule = typeof import('expo-notifications');
+
 const ANDROID_CHANNEL_ID = 'reminders';
-const isSupported = Platform.OS === 'ios' || Platform.OS === 'android';
+
+/**
+ * Expo Go on Android throws as soon as expo-notifications is imported (SDK 53+), so the module
+ * is loaded lazily and only where it works. Elsewhere reminders are skipped and the in-app
+ * notification inbox still works.
+ */
+const isExpoGoAndroid = Platform.OS === 'android' && Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+const isSupported = (Platform.OS === 'ios' || Platform.OS === 'android') && !isExpoGoAndroid;
+
+let cached: NotificationsModule | null | undefined;
+function getNotifications(): NotificationsModule | null {
+  if (cached !== undefined) return cached;
+  if (!isSupported) return (cached = null);
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    cached = require('expo-notifications') as NotificationsModule;
+  } catch (error) {
+    logger.error('notifications.load', error);
+    cached = null;
+  }
+  return cached;
+}
 
 export interface ReminderPayload {
   taskId?: string;
@@ -16,7 +39,8 @@ export interface ReminderPayload {
 }
 
 export async function initNotifications(): Promise<void> {
-  if (!isSupported) return;
+  const Notifications = getNotifications();
+  if (!Notifications) return;
   try {
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
@@ -38,7 +62,8 @@ export async function initNotifications(): Promise<void> {
 }
 
 export async function ensureNotificationPermission(): Promise<boolean> {
-  if (!isSupported) return false;
+  const Notifications = getNotifications();
+  if (!Notifications) return false;
   try {
     const current = await Notifications.getPermissionsAsync();
     if (current.granted) return true;
@@ -51,6 +76,9 @@ export async function ensureNotificationPermission(): Promise<boolean> {
   }
 }
 
+/** True when this build can schedule local reminders (not web, not Expo Go on Android). */
+export const remindersAvailable = isSupported;
+
 /** Schedules a local reminder. Returns the notification id, or null if unavailable. */
 export async function scheduleReminder(
   title: string,
@@ -58,7 +86,8 @@ export async function scheduleReminder(
   date: Date,
   payload: ReminderPayload,
 ): Promise<string | null> {
-  if (!isSupported || date.getTime() <= Date.now()) return null;
+  const Notifications = getNotifications();
+  if (!Notifications || date.getTime() <= Date.now()) return null;
   const granted = await ensureNotificationPermission();
   if (!granted) return null;
   try {
@@ -77,7 +106,8 @@ export async function scheduleReminder(
 }
 
 export async function cancelReminder(id: string | null | undefined): Promise<void> {
-  if (!isSupported || !id) return;
+  const Notifications = getNotifications();
+  if (!Notifications || !id) return;
   try {
     await Notifications.cancelScheduledNotificationAsync(id);
   } catch (error) {
@@ -86,7 +116,8 @@ export async function cancelReminder(id: string | null | undefined): Promise<voi
 }
 
 export async function cancelAllReminders(): Promise<void> {
-  if (!isSupported) return;
+  const Notifications = getNotifications();
+  if (!Notifications) return;
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
   } catch (error) {
@@ -96,7 +127,8 @@ export async function cancelAllReminders(): Promise<void> {
 
 /** Subscribes to taps on delivered notifications. Returns an unsubscribe function. */
 export function onReminderOpened(handler: (payload: ReminderPayload) => void): () => void {
-  if (!isSupported) return () => undefined;
+  const Notifications = getNotifications();
+  if (!Notifications) return () => undefined;
   const sub = Notifications.addNotificationResponseReceivedListener((response) => {
     const data = response.notification.request.content.data as ReminderPayload | undefined;
     handler({ taskId: data?.taskId, benefitId: data?.benefitId });

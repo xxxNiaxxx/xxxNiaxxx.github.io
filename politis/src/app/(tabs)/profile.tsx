@@ -21,7 +21,7 @@ import { Disclaimer, NOT_GOVERNMENT_NOTICE } from '@/components/Disclaimer';
 import { AppText, Card, ListRow, Screen } from '@/components/ui';
 import { showMessage } from '@/lib/dialog';
 import { regionLabels } from '@/lib/labels';
-import { cancelAllReminders, ensureNotificationPermission } from '@/lib/notifications';
+import { cancelAllReminders, ensureNotificationPermission, remindersAvailable } from '@/lib/notifications';
 import { displayValue } from '@/lib/profileQuestions';
 import { confirmDeleteAccount, confirmSignOut } from '@/services/accountActions';
 import { useAppStore } from '@/store/appStore';
@@ -51,7 +51,9 @@ export default function Profile() {
   const edit = (field: ProfileField | 'firstName') => router.push({ pathname: '/profile-edit', params: { field } });
 
   const toggleNotifications = async (enabled: boolean) => {
-    if (enabled) {
+    if (enabled && !remindersAvailable) {
+      showMessage('Ειδοποιήσεις', 'Οι υπενθυμίσεις στη συσκευή δεν είναι διαθέσιμες σε αυτή την έκδοση της εφαρμογής. Θα βλέπεις τις προθεσμίες σου στις «Ειδοποιήσεις» μέσα στην εφαρμογή.');
+    } else if (enabled) {
       const granted = await ensureNotificationPermission();
       if (!granted) showMessage('Ειδοποιήσεις', 'Για να λαμβάνεις υπενθυμίσεις, ενεργοποίησε τις ειδοποιήσεις από τις ρυθμίσεις της συσκευής σου.');
     } else {
