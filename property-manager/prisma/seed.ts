@@ -11,7 +11,7 @@
 import { PrismaClient, type PropertyKind, type ReservationStatus, type TaskType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDaysISO, isoToDate, todayISO, zonedDateTime } from "../lib/dates";
-import { climateFeeByMonth } from "../lib/tax/gr";
+import { climateFeeByMonth, commissionFor } from "../lib/tax/gr";
 
 const db = new PrismaClient();
 
@@ -150,17 +150,21 @@ async function main() {
     if (!isForced && plan.checkIn > addDaysISO(today, 20) && i % 5 === 0) status = "PENDING";
     if (!isForced && i % 13 === 7) status = "CANCELLED";
     const missingCode = plan.propertyIndex === 4 && plan.checkIn === addDaysISO(today, 2);
+    const source = i % 7 === 3 ? "DIRECT" : i % 3 === 0 ? "BOOKING_COM" : i % 3 === 1 ? "AIRBNB" : "MANUAL";
+    const totalAmount = Math.round(Number(property.basePrice) * nights * (0.9 + rand() * 0.3));
     const r = await db.reservation.create({
       data: {
         organizationId: org.id,
         propertyId: property.id,
         guestId: guest.id,
-        source: i % 7 === 3 ? "DIRECT" : "MANUAL",
+        source,
         confirmationCode: missingCode ? null : `DH-${code++}`,
         checkIn: isoToDate(plan.checkIn),
         checkOut: isoToDate(plan.checkOut),
         guestsCount: Math.min(property.maxGuests, between(1, property.maxGuests)),
-        totalAmount: Math.round(Number(property.basePrice) * nights * (0.9 + rand() * 0.3)),
+        totalAmount,
+        // Demo Hospitality has 5 properties with an AMA → business regime; Booking/Airbnb 15%.
+        commission: source === "BOOKING_COM" || source === "AIRBNB" ? commissionFor(totalAmount, 15, "BUSINESS") : 0,
         currency: "EUR",
         status,
         notes: i % 9 === 0 ? "Ζήτησε βρεφικό κρεβάτι." : null,
@@ -174,7 +178,7 @@ async function main() {
   if (freeIndex >= 0) {
     reservations[freeIndex] = await db.reservation.update({
       where: { id: reservations[freeIndex].id },
-      data: { complimentary: true, totalAmount: 0, source: "DIRECT", declarationStatus: "NOT_REQUIRED", notes: "Δωρεάν φιλοξενία — συγγενείς του ιδιοκτήτη." },
+      data: { complimentary: true, totalAmount: 0, commission: 0, source: "DIRECT", declarationStatus: "NOT_REQUIRED", notes: "Δωρεάν φιλοξενία — συγγενείς του ιδιοκτήτη." },
     });
   }
 
@@ -218,9 +222,17 @@ async function main() {
     ],
   });
 
-  // Income for booked stays + expenses.
+  // Income (and platform commission) for booked stays + expenses.
   for (const r of reservations) {
     if ((r.status !== "CONFIRMED" && r.status !== "COMPLETED") || r.complimentary) continue;
+    if (Number(r.commission) > 0) {
+      await db.transaction.create({
+        data: {
+          organizationId: org.id, propertyId: r.propertyId, reservationId: r.id, type: "EXPENSE", category: "PLATFORM_FEE",
+          amount: r.commission, currency: "EUR", transactionDate: r.checkIn, description: `Προμήθεια κράτησης ${r.confirmationCode ?? ""}`.trim(),
+        },
+      });
+    }
     await db.transaction.create({
       data: {
         organizationId: org.id, propertyId: r.propertyId, reservationId: r.id, type: "INCOME", category: "BOOKING",

@@ -75,6 +75,7 @@ export function serializeReservation(r: ReservationRow) {
     totalAmount: toNumber(r.totalAmount),
     currency: r.currency,
     complimentary: r.complimentary,
+    commission: toNumber(r.commission),
     status: r.status,
     notes: r.notes,
     declarationStatus: r.declarationStatus,

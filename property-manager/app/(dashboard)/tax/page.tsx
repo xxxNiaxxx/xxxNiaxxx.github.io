@@ -1,7 +1,7 @@
 import { AlertTriangle, Download, Info } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DeclareButton, FilingButton, NotRequiredButton, OtherIncomeInput, RegimeSelect } from "@/components/tax/actions";
+import { DeclareButton, FilingButton, NotRequiredButton, OtherIncomeInput, PricingSettings, RegimeSelect } from "@/components/tax/actions";
 import { ComplianceChecklist } from "@/components/tax/compliance-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { EmptyState, LinkTabs, PageHeader, Stat } from "@/components/ui/misc";
 import { getPageContext } from "@/lib/auth/page";
 import { formatDay, formatMoney } from "@/lib/format";
 import { hasRole } from "@/lib/permissions";
-import { getAnnualReport, getTaxOverview } from "@/lib/services/tax";
+import { getAnnualReport, getTaxContext, getTaxOverview } from "@/lib/services/tax";
 import { db } from "@/lib/db";
 import { LAST_REVIEWED, SOURCES } from "@/lib/tax/gr";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,7 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
   const { ctx } = await getPageContext();
   const sp = await searchParams;
   const tab = ["obligations", "annual", "compliance"].includes(sp.tab) ? sp.tab : "obligations";
-  const o = await getTaxOverview(ctx);
+  const [o, taxContext] = await Promise.all([getTaxOverview(ctx), getTaxContext(ctx)]);
   const year = Number(sp.year) >= 2018 && Number(sp.year) <= 2100 ? Number(sp.year) : Number(o.today.slice(0, 4));
   const otherIncome = Math.max(0, Number(sp.otherIncome) || 0);
   const business = o.regime === "BUSINESS";
@@ -43,13 +43,16 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
         }
       />
 
-      <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="text-muted-foreground">Φορολογικό καθεστώς:</span>
           <Badge tone={business ? "accent" : "info"}>{business ? "Επιχείρηση (έναρξη εργασιών)" : "Ιδιώτης (εισόδημα από ακίνητα)"}</Badge>
           <span className="text-muted-foreground">· {o.propertiesWithAma} {o.propertiesWithAma === 1 ? "ακίνητο" : "ακίνητα"} με ΑΜΑ</span>
         </div>
         <RegimeSelect value={o.regimeSetting} disabled={!hasRole(ctx, "ADMIN")} />
+        <div className="w-full border-t border-border pt-3 sm:basis-full">
+          <PricingSettings commissionRates={taxContext.commissionRates} businessTaxRate={taxContext.businessTaxRate} business={business} disabled={!hasRole(ctx, "ADMIN")} />
+        </div>
       </div>
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -205,11 +208,14 @@ function Annual({ ctxYear, otherIncome, business, report: r }: { ctxYear: number
         <LinkTabs active={String(ctxYear)} tabs={years.map((y) => ({ key: String(y), label: String(y), href: `/tax?tab=annual&year=${y}${otherIncome ? `&otherIncome=${otherIncome}` : ""}` }))} />
       </div>
       {business ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           <Stat label="Έσοδα χωρίς ΦΠΑ" value={formatMoney(r.business.revenueExVat)} />
           <Stat label="ΦΠΑ 13%" value={formatMoney(r.business.vat)} />
           <Stat label="Τέλος παρεπιδημούντων 0,5%" value={formatMoney(r.business.presenceFee)} />
-          <Stat label="Κέρδος προ φόρων" value={formatMoney(r.business.profitBeforeTax)} hint={`μετά από ${formatMoney(r.business.expenses)} καταγεγραμμένα έξοδα`} />
+          <Stat label="Κέρδος προ φόρων" value={formatMoney(r.business.profitBeforeTax)} hint={`μετά από ${formatMoney(r.business.expenses)} έξοδα (και προμήθειες)`} />
+          <Stat label="Φόρος εισοδήματος (εκτίμηση)" value={formatMoney(r.business.estimatedTax)}
+            hint={r.business.taxRateSource === "SETTING" ? "με τον δικό σας συντελεστή" : `κλίμακα ${ctxYear} · μέσος ${Math.round(r.effectiveTaxRate * 1000) / 10}% · χωρίς εισφορές ΕΦΚΑ`} />
+          <Stat label="Καθαρά μετά φόρων" value={formatMoney(r.business.profitAfterTax)} />
         </div>
       ) : (
         <Card>

@@ -1,17 +1,18 @@
 import { Stack } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { SelectField, TextField } from "@/components/form";
+import { NumberField, SelectField, TextField } from "@/components/form";
 import { Button, Card, Screen, SectionTitle, styles } from "@/components/ui";
 import { api } from "@/lib/api";
 import { humanize } from "@/lib/format";
 import { useSession } from "@/lib/session";
 import { useMutation } from "@/lib/use-mutation";
+import type { TaxSettings } from "@/lib/types";
 import { useQuery } from "@/lib/use-query";
 
 export default function Settings() {
   const { session, serverUrl, refresh, switchOrganization } = useSession();
-  const tax = useQuery<{ setting: "AUTO" | "INDIVIDUAL" | "BUSINESS"; regime: string; propertiesWithAma: number }>("/api/tax/settings");
+  const tax = useQuery<TaxSettings>("/api/tax/settings");
   const profile = useMutation();
   const org = useMutation();
   const regime = useMutation();
@@ -71,11 +72,36 @@ export default function Settings() {
         </Card>
       )}
 
+      {tax.data && admin && <PricingCard settings={tax.data} onSaved={tax.reload} />}
+
       {__DEV__ && (
         <View>
           <Text style={[styles.rowSub, { textAlign: "center" }]}>Server: {serverUrl}</Text>
         </View>
       )}
     </Screen>
+  );
+}
+
+function PricingCard({ settings, onSaved }: { settings: TaxSettings; onSaved: () => void }) {
+  const { run, pending } = useMutation();
+  const [booking, setBooking] = useState(String(settings.commissionRates.BOOKING_COM ?? 0));
+  const [airbnb, setAirbnb] = useState(String(settings.commissionRates.AIRBNB ?? 0));
+  const [ownRate, setOwnRate] = useState(settings.businessTaxRate == null ? "" : String(settings.businessTaxRate));
+  return (
+    <Card style={{ gap: 12 }}>
+      <SectionTitle title="Προμήθειες & φόρος" />
+      <NumberField label="Προμήθεια Booking.com (%)" value={booking} onChange={setBooking} hint="Υπολογίζεται στην τιμή δωματίου χωρίς το τέλος 0,5% — όχι στο ΤΑΚΚ" />
+      <NumberField label="Προμήθεια Airbnb (%)" value={airbnb} onChange={setAirbnb} />
+      {settings.regime === "BUSINESS" && (
+        <NumberField label="Δικός σας συντελεστής φόρου εισοδήματος (%)" value={ownRate} onChange={setOwnRate} placeholder="κλίμακα"
+          hint="Κενό = εκτίμηση από την κλίμακα επιχειρήσεων (χωρίς εισφορές ΕΦΚΑ)" />
+      )}
+      <Button small title="Αποθήκευση" loading={pending} style={{ alignSelf: "flex-start" }}
+        onPress={() => void run(() => api("/api/tax/settings", {
+          method: "PATCH",
+          body: { commissionRates: { BOOKING_COM: Number(booking) || 0, AIRBNB: Number(airbnb) || 0 }, ...(settings.regime === "BUSINESS" ? { businessTaxRate: ownRate === "" ? null : Number(ownRate) } : {}) },
+        }), { onSuccess: onSaved })} />
+    </Card>
   );
 }

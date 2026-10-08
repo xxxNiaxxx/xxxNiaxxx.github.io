@@ -127,29 +127,33 @@ function TaxCard({ tax, reservationId, onChange }: { tax: StayTax; reservationId
   const { run, pending } = useMutation();
   const setStatus = (status: StayTax["declaration"]["status"]) =>
     run(() => api(`/api/reservations/${reservationId}/declaration`, { body: { status } }), { onSuccess: onChange });
-  const row = (label: string, value: string) => (
-    <View style={[styles.row, { paddingVertical: 8 }]}>
-      <Text style={[styles.rowSub, { flex: 1, marginTop: 0 }]}>{label}</Text>
-      <Text style={{ color: colors.text, fontWeight: "600" }}>{value}</Text>
+  const row = (label: string, value: string, strong?: boolean) => (
+    <View key={label} style={[styles.row, { paddingVertical: 8 }]}>
+      <Text style={[styles.rowSub, { flex: 1, marginTop: 0 }, strong && { color: colors.text, fontWeight: "700" }]}>{label}</Text>
+      <Text style={{ color: colors.text, fontWeight: strong ? "700" : "500" }}>{value}</Text>
     </View>
   );
   return (
     <Card>
-      <SectionTitle title="Φορολογικά & ΑΑΔΕ" />
+      <SectionTitle title="Ανάλυση τιμής & φόροι" />
       <Text style={styles.rowSub}>{tax.ama ? `ΑΜΑ ${tax.ama}` : "Το ακίνητο δεν έχει ΑΜΑ"}</Text>
       {tax.complimentary ? (
         <Text style={[styles.rowSub, { marginTop: 8 }]}>Δωρεάν φιλοξενία: δεν είναι μίσθωση — χωρίς έσοδο, ΤΑΚΚ και δήλωση διαμονής.</Text>
       ) : (
         <>
-          {row("ΤΑΚΚ (τέλος ανθεκτικότητας)", formatMoney(tax.climateFee))}
-          {tax.climateFeeMonths.length > 1 && tax.climateFeeMonths.map((m) => row(`  ${m.period} · ${m.nights} νύχτες`, formatMoney(m.amount)))}
+          {row("Τιμή δωματίου", formatMoney(tax.totalAmount))}
+          {row(`ΤΑΚΚ${tax.climateFeeMonths.length > 1 ? ` (${tax.climateFeeMonths.map((m) => `${m.period}: ${formatMoney(m.amount)}`).join(", ")})` : ""}`, formatMoney(tax.climateFee))}
+          {row("Πληρωμή επισκέπτη", formatMoney(tax.guestTotal), true)}
+          {row("− ΤΑΚΚ (αποδίδεται στην ΑΑΔΕ)", formatMoney(tax.climateFee))}
           {tax.regime === "BUSINESS" && (
             <>
-              {row("Μίσθωμα χωρίς ΦΠΑ", formatMoney(tax.rent))}
-              {row("ΦΠΑ 13%", formatMoney(tax.vat))}
-              {row("Τέλος παρεπιδημούντων 0,5%", formatMoney(tax.presenceFee))}
+              {row("− ΦΠΑ 13%", formatMoney(tax.vat))}
+              {row("− Τέλος παρεπιδημούντων 0,5%", formatMoney(tax.presenceFee))}
             </>
           )}
+          {row(`− Προμήθεια${tax.commissionRate ? ` (${tax.commissionRate}%)` : ""}`, formatMoney(tax.commission))}
+          {row(`− Φόρος εισοδήματος (εκτίμηση${tax.incomeTaxRate !== null ? ` ${Math.round(tax.incomeTaxRate * 1000) / 10}%` : ""})`, tax.incomeTax === null ? "—" : formatMoney(tax.incomeTax))}
+          {row("Καθαρά στον ιδιοκτήτη", tax.net === null ? "—" : formatMoney(tax.net), true)}
           {tax.longStay ? (
             <Text style={[styles.rowSub, { marginTop: 8 }]}>60+ νύχτες: δεν είναι βραχυχρόνια μίσθωση — δηλώνεται ως κανονική μίσθωση.</Text>
           ) : tax.declaration.required ? (

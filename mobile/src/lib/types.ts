@@ -15,6 +15,7 @@ export interface Reservation {
   guestsCount: number;
   totalAmount: number;
   complimentary: boolean;
+  commission: number;
   currency: string;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
   notes: string | null;
@@ -105,6 +106,14 @@ export interface SessionInfo {
   organizations: { id: string; name: string; role: Role }[];
 }
 
+export interface TaxSettings {
+  setting: "AUTO" | "INDIVIDUAL" | "BUSINESS";
+  regime: "INDIVIDUAL" | "BUSINESS";
+  propertiesWithAma: number;
+  commissionRates: Record<string, number>;
+  businessTaxRate: number | null;
+}
+
 export interface Property {
   id: string;
   name: string;
@@ -154,6 +163,13 @@ export interface GuestDetails {
 
 export interface StayTax {
   regime: "INDIVIDUAL" | "BUSINESS";
+  totalAmount: number;
+  guestTotal: number;
+  commission: number;
+  commissionRate: number;
+  incomeTax: number | null;
+  incomeTaxRate: number | null;
+  net: number | null;
   ama: string | null;
   complimentary: boolean;
   longStay: boolean;

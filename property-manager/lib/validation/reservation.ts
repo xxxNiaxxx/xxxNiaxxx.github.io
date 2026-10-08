@@ -24,6 +24,10 @@ const fields = z.object({
   notes: optionalText(4000),
   /** Free stay for relatives/friends: no rent, so no income tax, ΤΑΚΚ or AADE declaration. */
   complimentary: z.boolean(),
+  /** Platform commission in €; omitted on create = computed from the source's rate. */
+  commission: money,
+  /** The amount is the guest's total including ΤΑΚΚ (Booking's "Συνολική τιμή κράτησης"); the ΤΑΚΚ is subtracted. */
+  amountIncludesClimateFee: z.boolean(),
 });
 
 const base = fields.extend({
@@ -31,6 +35,8 @@ const base = fields.extend({
   source: reservationSource.default("MANUAL"),
   status: reservationStatus.default("CONFIRMED"),
   complimentary: z.boolean().default(false),
+  commission: money.optional(),
+  amountIncludesClimateFee: z.boolean().default(false),
 });
 
 export const freeStayHasNoRent = {

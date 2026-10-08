@@ -10,7 +10,9 @@ import {
   freeStayHasNoRent,
   type ReservationListQuery,
 } from "@/lib/validation/reservation";
+import { climateFeeForStay, commissionFor, type PropertyKind } from "@/lib/tax/gr";
 import { syncBookingIncome } from "./financials";
+import { getTaxContext } from "./tax";
 import { assertGuest, assertProperty, assertReservation, type Tx } from "./scope";
 import { serializeMessage, serializeReservation, serializeTask } from "./serializers";
 
@@ -49,6 +51,24 @@ export async function assertNoOverlap(
       { reservationId: clash.id },
     );
   }
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * Room price from the entered amount: when the amount is the guest's total
+ * with ΤΑΚΚ (Booking's "Συνολική τιμή κράτησης"), the ΤΑΚΚ of the nights is removed.
+ */
+function roomPrice(
+  amount: number,
+  includesClimateFee: boolean,
+  stay: { checkIn: string; checkOut: string },
+  property: { kind: PropertyKind; areaSqm: number | null },
+) {
+  if (!includesClimateFee || amount <= 0) return amount;
+  const fee = climateFeeForStay({ ...stay, totalAmount: amount }, property);
+  if (fee >= amount) throw badRequest("Το ποσό είναι μικρότερο από το ΤΑΚΚ των νυχτών.");
+  return round2(amount - fee);
 }
 
 /** Runs fn serializably so two concurrent bookings cannot both pass the overlap check. */
@@ -133,6 +153,16 @@ export async function createReservation(ctx: OrgContext, input: unknown) {
     if (!guestId) throw badRequest("Απαιτείται επισκέπτης");
     if (BLOCKING.includes(data.status)) await assertNoOverlap(tx, ctx, data);
 
+    const totalAmount = roomPrice(data.totalAmount, data.amountIncludesClimateFee, data, { kind: property.kind as PropertyKind, areaSqm: property.areaSqm });
+    let commission = 0;
+    if (!data.complimentary) {
+      if (data.commission !== undefined) commission = data.commission;
+      else {
+        const { regime, commissionRates } = await getTaxContext(ctx);
+        commission = commissionFor(totalAmount, commissionRates[data.source] ?? 0, regime);
+      }
+    }
+
     const created = await tx.reservation.create({
       data: {
         organizationId: ctx.organizationId,
@@ -143,7 +173,8 @@ export async function createReservation(ctx: OrgContext, input: unknown) {
         checkIn: isoToDate(data.checkIn),
         checkOut: isoToDate(data.checkOut),
         guestsCount: data.guestsCount,
-        totalAmount: data.totalAmount,
+        totalAmount,
+        commission,
         currency: data.currency,
         status: data.status,
         notes: data.notes,
@@ -160,7 +191,7 @@ export async function createReservation(ctx: OrgContext, input: unknown) {
 }
 
 export async function updateReservation(ctx: OrgContext, id: string, input: unknown) {
-  const data = reservationUpdateSchema.parse(input);
+  const { amountIncludesClimateFee, ...data } = reservationUpdateSchema.parse(input);
   const row = await serializable(async (tx) => {
     const current = await assertReservation(ctx, id, tx);
     const next = {
@@ -181,6 +212,10 @@ export async function updateReservation(ctx: OrgContext, id: string, input: unkn
       ]);
     }
     const property = await assertProperty(ctx, next.propertyId, tx);
+    if (data.totalAmount !== undefined) {
+      data.totalAmount = roomPrice(data.totalAmount, !!amountIncludesClimateFee && !next.complimentary, next, { kind: property.kind as PropertyKind, areaSqm: property.areaSqm });
+    }
+    if (next.complimentary) data.commission = 0;
     if (data.guestsCount !== undefined || data.propertyId) {
       if (next.guestsCount > property.maxGuests) throw badRequest(`Το ${property.name} φιλοξενεί έως ${property.maxGuests} άτομα.`);
     }
