@@ -49,7 +49,7 @@ export function ReservationTable({ reservations, hideProperty, hideGuest }: { re
                 </td>
                 <td className="px-5 py-3 text-muted-foreground">{SOURCE_LABELS[r.source]}</td>
                 <td className="px-5 py-3"><StatusBadge value={r.status} /></td>
-                <td className="px-5 py-3 text-right font-medium tabular-nums">{r.complimentary ? <span className="text-muted-foreground">Δωρεάν</span> : formatMoney(r.totalAmount, r.currency)}</td>
+                <td className="px-5 py-3 text-right font-medium tabular-nums">{r.complimentary ? <span className="text-muted-foreground">Δωρεάν</span> : r.fromCalendar && r.totalAmount === 0 ? <span className="text-xs font-normal text-warning">Λείπει ποσό</span> : formatMoney(r.totalAmount, r.currency)}</td>
               </tr>
             ))}
           </tbody>
@@ -67,7 +67,7 @@ export function ReservationTable({ reservations, hideProperty, hideGuest }: { re
                 </div>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className="text-sm font-medium tabular-nums">{r.complimentary ? "Δωρεάν" : formatMoney(r.totalAmount, r.currency)}</span>
+                <span className="text-sm font-medium tabular-nums">{r.complimentary ? "Δωρεάν" : r.fromCalendar && r.totalAmount === 0 ? "Λείπει ποσό" : formatMoney(r.totalAmount, r.currency)}</span>
                 <StatusBadge value={r.status} />
               </div>
             </Link>

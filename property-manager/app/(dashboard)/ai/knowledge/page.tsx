@@ -26,8 +26,8 @@ export default async function KnowledgePage() {
         title="Γνώσεις AI"
         description="Ό,τι έχει μάθει ο βοηθός από εσάς. Μπορείτε επίσης να του γράψετε στη συνομιλία «Θυμήσου ότι…»."
       />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="grid min-w-0 content-start gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-6">
           {SECTIONS.map((s) => {
             const items = memories.filter((m) => m.kind === s.kind);
             return (

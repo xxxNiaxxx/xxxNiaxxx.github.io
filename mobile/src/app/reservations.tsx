@@ -46,7 +46,7 @@ export default function Reservations() {
               onPress={() => router.push(`/reservation/${r.id}`)}
               right={
                 <View style={{ alignItems: "flex-end", gap: 4 }}>
-                  <Text style={[styles.rowTitle, { fontSize: 14 }]}>{r.complimentary ? "Δωρεάν" : formatMoney(r.totalAmount, r.currency)}</Text>
+                  <Text style={[styles.rowTitle, { fontSize: 14 }]}>{r.complimentary ? "Δωρεάν" : r.fromCalendar && r.totalAmount === 0 ? "Λείπει ποσό" : formatMoney(r.totalAmount, r.currency)}</Text>
                   <Badge label={humanize(r.status)} tone={statusTone[r.status]} />
                 </View>
               }

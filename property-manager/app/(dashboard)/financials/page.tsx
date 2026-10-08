@@ -53,7 +53,7 @@ export default async function FinancialsPage({ searchParams }: { searchParams: P
         <Stat label="Καθαρά" value={<span className={cn(s.net < 0 && "text-danger")}>{formatMoney(s.net, s.currency)}</span>} />
         <Stat label="Πληρότητα" value={formatPercent(s.occupancy)} hint={`${s.bookedNights} από ${s.availableNights} νύχτες`} />
       </div>
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <Card>
           <CardHeader title="Ανά ακίνητο" description="Κατάταξη κατά καθαρά έσοδα" />
           <CardContent className="grid gap-4">

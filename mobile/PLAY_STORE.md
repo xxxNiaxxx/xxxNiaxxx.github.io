@@ -57,6 +57,7 @@
    | `NEXT_PUBLIC_SUPPORT_EMAIL` | το email υποστήριξης |
    | `NEXT_PUBLIC_APP_TIMEZONE` | `Europe/Athens` |
    | `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` | προαιρετικά: χωρίς αυτά δουλεύει ο offline βοηθός |
+   | `CRON_SECRET` | ένα μακρύ τυχαίο κείμενο — ενεργοποιεί τον νυχτερινό συγχρονισμό των ημερολογίων iCal |
 
 5. **Deploy.** Ελέγξτε ότι ανοίγουν:
    - `https://YOUR-APP.vercel.app/login`

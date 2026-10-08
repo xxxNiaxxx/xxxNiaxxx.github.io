@@ -1,3 +1,4 @@
+import { CalendarAutoSync } from "@/components/layout/calendar-auto-sync";
 import { MobileBottomNav, MobileTopBar } from "@/components/layout/mobile-nav";
 import { Sidebar } from "@/components/layout/sidebar";
 import { getPageContext } from "@/lib/auth/page";
@@ -21,6 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-10 lg:pt-10 lg:pb-12">{children}</main>
       </div>
       <MobileBottomNav pendingActions={pendingActions} />
+      <CalendarAutoSync />
     </div>
   );
 }

@@ -33,9 +33,9 @@ export default async function AIPage({ searchParams }: { searchParams: Promise<{
         description="Ρωτήστε για τη λειτουργία των καταλυμάτων σας. Κάθε ενέργεια περιμένει την έγκρισή σας."
         actions={<Button asChild variant="outline"><Link href="/ai/knowledge"><Brain /> Γνώσεις AI</Link></Button>}
       />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <Chat key={current?.id ?? "new"} initial={current} mode={mode} />
-        <aside className="grid min-w-0 content-start gap-6">
+        <aside className="grid min-w-0 grid-cols-1 content-start gap-6">
           {otherPending.length > 0 && (
             <Card>
               <CardHeader title="Προς έγκριση" description="Προτάσεις από άλλες συνομιλίες" />

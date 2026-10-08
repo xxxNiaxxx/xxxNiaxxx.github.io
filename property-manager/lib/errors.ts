@@ -21,6 +21,7 @@ const NOT_FOUND_MESSAGES: Record<string, string> = {
   Action: "Η ενέργεια δεν βρέθηκε",
   Memory: "Η γνώση δεν βρέθηκε",
   Invitation: "Η πρόσκληση δεν βρέθηκε",
+  Calendar: "Το ημερολόγιο δεν βρέθηκε",
 };
 export const notFound = (what: string) => new AppError("NOT_FOUND", NOT_FOUND_MESSAGES[what] ?? "Δεν βρέθηκε");
 export const conflict = (message: string, details?: unknown) => new AppError("CONFLICT", message, details);

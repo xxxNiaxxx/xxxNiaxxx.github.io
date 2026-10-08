@@ -85,6 +85,7 @@ model Organization {
   taxFilings      TaxFiling[]
   aiMemories      AIMemory[]
   invitations     Invitation[]
+  calendarFeeds   CalendarFeed[]
 }
 
 model OrganizationMember {
@@ -133,6 +134,8 @@ model Property {
   areaSqm        Int?
   /// Safety checklist and insurance: { fireExtinguisher: true, …, insuranceExpiresOn: "YYYY-MM-DD" }
   compliance     Json           @default("{}")
+  /// Secret token of the property's public iCal export (for Airbnb/Booking to block dates).
+  icalToken      String?        @unique
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -141,6 +144,7 @@ model Property {
   tasks        Task[]
   transactions Transaction[]
   aiMemories   AIMemory[]
+  calendarFeeds CalendarFeed[]
 
   @@index([organizationId, status])
 }
@@ -198,6 +202,10 @@ model Reservation {
   totalAmount       Decimal               @db.Decimal(12, 2)
   /// Free stay (relatives/friends, no rent): no income, no ΤΑΚΚ, no AADE stay declaration.
   complimentary     Boolean               @default(false)
+  /// The iCal feed that created this reservation (amount and guest still to be filled in).
+  calendarFeedId    String?
+  /// UID of the iCal event, to recognise it on the next sync.
+  icalUid           String?
   /// Platform commission charged on this stay (e.g. Booking.com 15%).
   commission        Decimal               @default(0) @db.Decimal(12, 2)
   currency          String                @default("EUR") @db.Char(3)
@@ -212,11 +220,13 @@ model Reservation {
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   property     Property      @relation(fields: [propertyId], references: [id], onDelete: Restrict)
   guest        Guest         @relation(fields: [guestId], references: [id], onDelete: Restrict)
+  calendarFeed CalendarFeed? @relation(fields: [calendarFeedId], references: [id], onDelete: SetNull)
   tasks        Task[]
   messages     Message[]
   transactions Transaction[]
 
   @@unique([organizationId, source, externalId])
+  @@index([calendarFeedId, icalUid])
   @@index([organizationId, checkIn])
   @@index([propertyId, checkIn, checkOut])
 }
@@ -491,4 +501,23 @@ model AIMemory {
   property     Property?    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, kind, active])
+}
+
+/// An iCal calendar of a property on Airbnb / Booking.com that is imported periodically.
+model CalendarFeed {
+  id             String            @id @default(cuid())
+  organizationId String
+  propertyId     String
+  source         ReservationSource
+  url            String
+  lastSyncedAt   DateTime?
+  lastError      String?
+  createdAt      DateTime          @default(now())
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  property     Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+
+  @@unique([propertyId, url])
+  @@index([organizationId])
 }
