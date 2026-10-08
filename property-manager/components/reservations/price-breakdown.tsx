@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SOURCE_LABELS } from "@/components/ui/status";
 import { formatMoney } from "@/lib/format";
 import { commissionBase } from "@/lib/tax/gr";
@@ -39,6 +40,7 @@ export function PriceBreakdown({ tax, source }: { tax: StayTax; source: string }
         sub={tax.incomeTaxRate !== null ? `${pct(tax.incomeTaxRate)} — ${tax.regime === "BUSINESS" ? "πάνω στο κέρδος (μίσθωμα χωρίς ΦΠΑ − προμήθεια)" : "μέσος συντελεστής Ε2 του έτους, στο μίσθωμα − 5%"}` : undefined} />
       <div className="my-1 border-t border-border" />
       <Row label="Καθαρά στον ιδιοκτήτη" value={tax.net} strong />
+      <Link href="/help#poso-kratisis" className="mt-1 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">Πώς υπολογίζονται;</Link>
     </div>
   );
 }

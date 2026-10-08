@@ -60,6 +60,11 @@ export default function More() {
         </View>
       ))}
       <Card>
+        <Text style={styles.sectionTitle}>Βοήθεια</Text>
+        <Text style={styles.rowSub}>Πώς υπολογίζονται ποσά, προμήθειες και φόροι, και τι ισχύει με πολλά καταλύματα.</Text>
+        <Button title="Πώς λειτουργεί" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(`${serverUrl}/help`)} />
+      </Card>
+      <Card>
         <Text style={styles.sectionTitle}>Απόρρητο</Text>
         <Button title="Πολιτική απορρήτου" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(`${serverUrl}/privacy`)} />
         <Button title="Διαγραφή λογαριασμού" variant="danger" style={{ marginTop: 8 }} onPress={() => router.push("/delete-account")} />

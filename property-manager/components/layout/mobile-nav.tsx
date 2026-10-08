@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
-import { adminNav, isActive, mainNav, mobileNav, settingsNav } from "./nav";
+import { adminNav, helpNav, isActive, mainNav, mobileNav, settingsNav } from "./nav";
 
 export function MobileTopBar({ appName, orgName }: { appName: string; orgName: string }) {
   return (
@@ -30,7 +30,7 @@ export function MobileTopBar({ appName, orgName }: { appName: string; orgName: s
 
 export function MobileBottomNav({ pendingActions, waitlistAdmin = false }: { pendingActions: number; waitlistAdmin?: boolean }) {
   const pathname = usePathname();
-  const more = [...mainNav.filter((n) => !mobileNav.some((m) => m.href === n.href)), ...(waitlistAdmin ? [adminNav] : []), settingsNav];
+  const more = [...mainNav.filter((n) => !mobileNav.some((m) => m.href === n.href)), ...(waitlistAdmin ? [adminNav] : []), settingsNav, helpNav];
   return (
     <nav
       aria-label="Μενού κινητού"

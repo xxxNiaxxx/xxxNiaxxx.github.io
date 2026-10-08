@@ -6,7 +6,7 @@ import { Building, LogOut, UserRound } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
-import { adminNav, isActive, mainNav, settingsNav, type NavItem } from "./nav";
+import { adminNav, helpNav, isActive, mainNav, settingsNav, type NavItem } from "./nav";
 
 function NavLink({ item, pathname, badge }: { item: NavItem; pathname: string; badge?: number }) {
   const active = isActive(pathname, item.href);
@@ -57,6 +57,7 @@ export function Sidebar({
       <div className="mt-4 flex flex-col gap-0.5 border-t border-border pt-4">
         {waitlistAdmin && <NavLink item={adminNav} pathname={pathname} badge={waitlistAdmin.pending} />}
         <NavLink item={settingsNav} pathname={pathname} />
+        <NavLink item={helpNav} pathname={pathname} />
         <Link href="/settings#organization" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-surface/70 hover:text-foreground">
           <Building className="size-[18px] text-subtle-foreground" />
           <span className="truncate">{orgName}</span>

@@ -102,7 +102,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             </CardContent>
           </Card>
           <Card id="calendars">
-            <CardHeader title="Ημερολόγια Airbnb / Booking (iCal)" />
+            <CardHeader title="Ημερολόγια πλατφορμών (iCal)" />
             <CardContent>
               <CalendarSync propertyId={p.id} feeds={calendars.feeds} exportPath={calendars.exportPath} canEdit={hasRole(ctx, "ADMIN")} />
             </CardContent>

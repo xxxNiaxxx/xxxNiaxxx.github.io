@@ -25,7 +25,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
     <>
       <PageHeader
         title="Ακίνητα"
-        description="Όλα σας τα καταλύματα με μια ματιά"
+        description={<>Όλα σας τα καταλύματα με μια ματιά · <Link href="/help#polla-katalymata" className="text-accent underline-offset-4 hover:underline">Πολλά καταλύματα: τι ισχύει</Link></>}
         actions={<PropertyFormDialog trigger={<Button><Plus /> Νέο ακίνητο</Button>} />}
       />
       <div className="mb-5 flex flex-col gap-2 sm:flex-row">

@@ -1,10 +1,11 @@
 import { router, Stack } from "expo-router";
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Linking, Text, View } from "react-native";
 import { LinkRow, NumberField, Segmented } from "@/components/form";
 import { Badge, Button, Card, ErrorBox, Loading, Screen, SectionTitle, Stat, styles, type Tone } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDay, formatMoney, humanize } from "@/lib/format";
+import { useSession } from "@/lib/session";
 import { useMutation } from "@/lib/use-mutation";
 import { useQuery } from "@/lib/use-query";
 import { colors } from "@/theme";
@@ -79,6 +80,7 @@ function Tabs({ tab, setTab }: { tab: "obligations" | "annual" | "compliance"; s
 }
 
 function OverviewTab({ tab, tabs }: { tab: "obligations" | "compliance"; tabs: React.ReactNode }) {
+  const { serverUrl } = useSession();
   const { data, error, loading, refreshing, reload } = useQuery<Overview>("/api/tax/overview");
   const { run, pending } = useMutation();
   const declare = (id: string, status: "DECLARED" | "NOT_REQUIRED") => run(() => api(`/api/reservations/${id}/declaration`, { body: { status } }), { onSuccess: () => void reload() });
@@ -115,6 +117,8 @@ function OverviewTab({ tab, tabs }: { tab: "obligations" | "compliance"; tabs: R
       <Text style={styles.rowSub}>
         Καθεστώς: <Text style={{ fontWeight: "700", color: colors.text }}>{humanize(data.regime)}</Text> · {data.propertiesWithAma} ακίνητα με ΑΜΑ
         {data.regimeSetting === "AUTO" ? " (αυτόματα)" : ""}
+        {" · "}
+        <Text style={{ color: colors.accent, fontWeight: "600" }} onPress={() => Linking.openURL(`${serverUrl}/help#foros`)}>Πώς υπολογίζονται;</Text>
       </Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
         <Stat label="Δηλώσεις διαμονής" value={data.totals.declarationsDue} hint={data.totals.declarationsOverdue ? `${data.totals.declarationsOverdue} εκπρόθεσμες` : "καμία εκπρόθεσμη"} />
