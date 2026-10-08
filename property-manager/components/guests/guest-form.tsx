@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { Field, Input, Textarea } from "@/components/ui/input";
+import { Field, Input, Select, Textarea } from "@/components/ui/input";
+import { GUEST_LANGUAGES } from "@/lib/i18n/guest-language";
 import { api, formValues } from "@/lib/client/api";
 import { useMutation } from "@/lib/client/use-mutation";
 import type { GuestDTO } from "@/lib/services/serializers";
@@ -26,8 +27,16 @@ export function GuestFields({ guest, err, prefix = "" }: { guest?: GuestDTO; err
       <Field label="Τηλέφωνο" htmlFor={n("phone")} error={e("phone")}>
         <Input id={n("phone")} name={n("phone")} type="tel" defaultValue={guest?.phone ?? ""} aria-invalid={!!e("phone")} />
       </Field>
-      <Field label="Χώρα" htmlFor={n("country")} error={e("country")} className="sm:col-span-2">
+      <Field label="Χώρα" htmlFor={n("country")} error={e("country")}>
         <Input id={n("country")} name={n("country")} defaultValue={guest?.country ?? ""} placeholder="π.χ. Ελλάδα, Γερμανία" />
+      </Field>
+      <Field label="Γλώσσα μηνυμάτων" htmlFor={n("language")} hint="Σε αυτή τη γλώσσα γράφει ο βοηθός AI">
+        <Select id={n("language")} name={n("language")} defaultValue={guest?.languagePreference ?? ""}>
+          <option value="">Αυτόματα από τη χώρα</option>
+          {GUEST_LANGUAGES.map((l) => (
+            <option key={l.code} value={l.code}>{l.name}</option>
+          ))}
+        </Select>
       </Field>
     </div>
   );

@@ -1,5 +1,6 @@
 import type { Guest, Prisma, Property, Reservation, Task, Message, Transaction } from "@prisma/client";
 import { dateToISO, diffDaysISO } from "@/lib/dates";
+import { guestLanguage } from "@/lib/i18n/guest-language";
 import { checklistSchema, type ChecklistItem } from "@/lib/validation/task";
 
 /** API/UI shapes. Prisma rows never leave the services layer directly. */
@@ -39,6 +40,10 @@ export function serializeGuest(g: Guest) {
     email: g.email,
     phone: g.phone,
     country: g.country,
+    /** Explicit preference, or null when derived from the country. */
+    languagePreference: g.language,
+    /** Language used for messages to this guest. */
+    language: guestLanguage(g),
     notes: g.notes,
     createdAt: g.createdAt.toISOString(),
   };

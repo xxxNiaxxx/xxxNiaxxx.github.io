@@ -48,6 +48,7 @@ export function ActionCard({ action, onChange }: { action: AIActionDTO; onChange
           <p className="text-[13px] text-muted-foreground">
             Προς <span className="font-medium text-foreground">{str(p.guestName)}</span>
             {str(p.context) && <> · {str(p.context)}</>}
+            {str(p.languageName) && <> · <span className="font-medium text-foreground">{str(p.languageName)}</span></>}
           </p>
           {editing ? (
             <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} className="mt-2 min-h-36" aria-label="Επεξεργασία μηνύματος" autoFocus />

@@ -42,6 +42,7 @@ export function ActionCard({ action, onChange }: { action: AIAction; onChange: (
           <Text style={styles.rowSub}>
             Προς <Text style={{ color: colors.text, fontWeight: "600" }}>{str(p.guestName)}</Text>
             {str(p.context) ? ` · ${str(p.context)}` : ""}
+            {str(p.languageName) ? ` · ${str(p.languageName)}` : ""}
           </Text>
           {editing ? (
             <TextInput value={draft} onChangeText={setDraft} multiline style={[styles.input, { height: 160, marginTop: 8, paddingTop: 10, textAlignVertical: "top" }]} />

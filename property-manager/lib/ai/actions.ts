@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { dateToISO } from "@/lib/dates";
 import { AppError, badRequest, notFound } from "@/lib/errors";
 import { formatDay } from "@/lib/format";
+import { guestLanguage, languageName } from "@/lib/i18n/guest-language";
 import type { OrgContext } from "@/lib/permissions";
 import { createMessage } from "@/lib/services/messages";
 import { assertGuest, assertProperty, assertReservation } from "@/lib/services/scope";
@@ -20,6 +21,8 @@ export const sendGuestMessagePayload = z.object({
   message: z.string().trim().min(1, "Το μήνυμα δεν μπορεί να είναι κενό").max(5000),
   guestName: z.string().optional(),
   context: z.string().optional(),
+  language: z.string().optional(),
+  languageName: z.string().optional(),
 });
 
 export const createTaskPayload = taskCreateSchema.extend({
@@ -58,7 +61,8 @@ async function normalizeMessagePayload(ctx: OrgContext, raw: unknown) {
     const property = await assertProperty(ctx, r.propertyId);
     context = `${property.name} · ${formatDay(dateToISO(r.checkIn))} → ${formatDay(dateToISO(r.checkOut))}`;
   }
-  return { ...p, guestName: `${guest.firstName} ${guest.lastName}`, context };
+  const language = guestLanguage(guest);
+  return { ...p, guestName: `${guest.firstName} ${guest.lastName}`, context, language, languageName: languageName(language) };
 }
 
 async function normalizeTaskPayload(ctx: OrgContext, raw: unknown) {

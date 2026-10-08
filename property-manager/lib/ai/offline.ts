@@ -5,6 +5,8 @@ import type { RevenueSummary } from "@/lib/services/financials";
 import type { GuestListItem } from "@/lib/services/guests";
 import type { PropertyDTO, ReservationDTO, TaskDTO } from "@/lib/services/serializers";
 import type { AIActionDTO } from "./actions";
+import { guestLanguage, languageName } from "@/lib/i18n/guest-language";
+import { guestMessageTemplate } from "@/lib/i18n/guest-messages";
 import { runTool, type ToolContext } from "./tools";
 
 /**
@@ -202,29 +204,6 @@ async function findGuest(original: string, call: Call) {
   return { guest: null, ambiguous: [] as GuestListItem[] };
 }
 
-/** Message templates: Greek for guests from Greece/Cyprus, English otherwise. */
-function guestMessage(kind: "checkin" | "thanks" | "general", guest: GuestListItem, r: ReservationDTO | undefined) {
-  const greek = guest.country === "GR" || guest.country === "CY";
-  if (!r) {
-    return greek
-      ? `Γεια σας ${guest.firstName},\n\nΣας ευχαριστούμε που μείνατε μαζί μας. Είμαστε στη διάθεσή σας για οτιδήποτε χρειαστείτε.\n\nΜε εκτίμηση`
-      : `Hi ${guest.firstName},\n\nThank you for being our guest. Let us know if there's anything we can help with.\n\nBest regards`;
-  }
-  if (kind === "checkin") {
-    return greek
-      ? `Γεια σας ${guest.firstName},\n\nΣας περιμένουμε στο ${r.propertyName} στις ${formatDay(r.checkIn, { day: "numeric", month: "long" })}. Το check-in είναι από τις 15:00. Το πρωί της άφιξής σας θα σας στείλουμε τον κωδικό της πόρτας και οδηγίες — απαντήστε μας με την ώρα που υπολογίζετε να φτάσετε.\n\nΚαλό ταξίδι!`
-      : `Hi ${guest.firstName},\n\nWe're looking forward to welcoming you at ${r.propertyName} on ${r.checkIn}. Check-in is from 15:00. We'll share the door code and directions on the morning of your arrival — just reply here with your expected arrival time.\n\nSee you soon!`;
-  }
-  if (kind === "thanks") {
-    return greek
-      ? `Γεια σας ${guest.firstName},\n\nΣας ευχαριστούμε που μείνατε στο ${r.propertyName}! Ελπίζουμε να περάσατε υπέροχα. Αν σας άρεσε η διαμονή, μια κριτική θα μας βοηθούσε πολύ.\n\nΜε εκτίμηση`
-      : `Hi ${guest.firstName},\n\nThank you for staying at ${r.propertyName}! We hope you had a wonderful time. If you enjoyed your stay, we'd really appreciate a review.\n\nWarm regards`;
-  }
-  return greek
-    ? `Γεια σας ${guest.firstName},\n\nΕπικοινωνούμε για τη διαμονή σας στο ${r.propertyName} (${formatDay(r.checkIn)} → ${formatDay(r.checkOut)}). Πείτε μας αν χρειάζεστε οτιδήποτε.\n\nΜε εκτίμηση`
-    : `Hi ${guest.firstName},\n\nJust checking in about your stay at ${r.propertyName} (${r.checkIn} → ${r.checkOut}). Let us know if there's anything you need.\n\nBest regards`;
-}
-
 async function draftMessage(original: string, t: string, call: Call, tc: ToolContext) {
   const { guest, ambiguous } = await findGuest(original, call);
   if (!guest) {
@@ -236,6 +215,7 @@ async function draftMessage(original: string, t: string, call: Call, tc: ToolCon
   const reservation = reservations
     .filter((r) => r.guestId === guest.id && r.status !== "CANCELLED")
     .sort((a, b) => a.checkIn.localeCompare(b.checkIn))[0];
+  const lang = guestLanguage(guest);
   const kind = has(t, "check-in", "check in", "instruction", "arriv", "οδηγι", "αφιξ")
     ? "checkin"
     : has(t, "thank", "review", "check-out", "checkout", "ευχαριστ", "κριτικ", "αναχωρ")
@@ -244,10 +224,15 @@ async function draftMessage(original: string, t: string, call: Call, tc: ToolCon
   const result = await call<{ proposedAction?: AIActionDTO; error?: string }>("create_message_draft", {
     guestId: guest.id,
     ...(reservation ? { reservationId: reservation.id } : {}),
-    message: guestMessage(kind, guest, reservation),
+    message: guestMessageTemplate(kind, lang, {
+      name: guest.firstName,
+      property: reservation?.propertyName ?? undefined,
+      checkIn: reservation?.checkIn,
+      checkOut: reservation?.checkOut,
+    }),
   });
   if (!result.proposedAction) return `Δεν μπόρεσα να ετοιμάσω το μήνυμα: ${result.error ?? "άγνωστο σφάλμα"}.`;
-  return `Ετοίμασα μήνυμα προς **${guest.fullName}**${reservation ? ` για τη διαμονή στο ${reservation.propertyName}` : ""}. Δείτε το παρακάτω — δεν στέλνεται τίποτα χωρίς την έγκρισή σας.`;
+  return `Ετοίμασα μήνυμα προς **${guest.fullName}**${reservation ? ` για τη διαμονή στο ${reservation.propertyName}` : ""}, στα **${languageName(lang).toLowerCase()}** (γλώσσα του επισκέπτη). Δείτε το παρακάτω — δεν στέλνεται τίποτα χωρίς την έγκρισή σας.`;
 }
 
 async function proposeTask(t: string, call: Call, tc: ToolContext) {

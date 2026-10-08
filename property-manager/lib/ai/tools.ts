@@ -207,7 +207,7 @@ export const tools = [
   tool({
     name: "create_message_draft",
     description:
-      "PROPOSE a message to a guest (e.g. check-in instructions). It is NOT sent until the user approves it in the UI. Look up guestId (and reservationId if relevant) first.",
+      "PROPOSE a message to a guest (e.g. check-in instructions). It is NOT sent until the user approves it in the UI. Look up guestId (and reservationId if relevant) first, and write `message` in the guest's `language`.",
     input: z.object({ guestId: z.string(), reservationId: z.string().optional(), message: z.string() }),
     run: async (i, tc) => ({
       proposedAction: await proposeAction(tc.org, {

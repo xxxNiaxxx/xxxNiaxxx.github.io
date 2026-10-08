@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GUEST_LANGUAGE_CODES } from "@/lib/i18n/guest-language";
 import { optionalEmail, optionalQuery, optionalText, requiredText } from "./common";
 
 export const guestCreateSchema = z.object({
@@ -7,6 +8,8 @@ export const guestCreateSchema = z.object({
   email: optionalEmail,
   phone: optionalText(40).refine((v) => !v || /^[+()\d\s.-]{5,40}$/.test(v), "Δώστε έγκυρο τηλέφωνο"),
   country: optionalText(80),
+  /** "" = automatic (from the country) */
+  language: z.preprocess((v) => (v === "" ? null : v), z.enum(GUEST_LANGUAGE_CODES).nullish()),
   notes: optionalText(4000),
 });
 
