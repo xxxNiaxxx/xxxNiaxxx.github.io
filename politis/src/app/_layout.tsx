@@ -3,6 +3,7 @@ import { router, SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { DialogHost } from '@/components/DialogHost';
 import { analytics } from '@/lib/analytics';
 import { logger } from '@/lib/logger';
 import { initNotifications, onReminderOpened } from '@/lib/notifications';
@@ -69,6 +70,7 @@ export default function RootLayout() {
           <Stack.Screen name="tasks/new" options={{ presentation: 'modal' }} />
           <Stack.Screen name="profile-edit" options={{ presentation: 'modal' }} />
         </Stack>
+        <DialogHost />
       </SafeAreaProvider>
     </QueryClientProvider>
   );
