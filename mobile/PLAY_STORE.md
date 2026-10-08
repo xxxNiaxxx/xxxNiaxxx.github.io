@@ -24,22 +24,35 @@
 ## 1. Βάση δεδομένων (Neon)
 
 1. Δημιουργήστε project στο Neon (περιοχή: Frankfurt / `eu-central-1`).
-2. Από το **Connection details** αντιγράψτε **δύο** διευθύνσεις:
-   - **Pooled connection** (έχει `-pooler` στο όνομα): θα είναι το `DATABASE_URL`
-   - **Direct connection**: θα είναι το `DIRECT_URL`
+   Αν έχετε ήδη project από τις δοκιμές στον υπολογιστή, μπορείτε να χρησιμοποιήσετε το ίδιο.
+2. Από το **Connect** αντιγράψτε **δύο** διευθύνσεις:
+   - με ενεργό το **Connection pooling** (έχει `-pooler` στο όνομα): θα είναι το `DATABASE_URL`
+   - χωρίς pooling: θα είναι το `DIRECT_URL`
+3. **Αν η βάση έχει τα δοκιμαστικά δεδομένα** (`npm run db:seed` από τις δοκιμές), ο λογαριασμός
+   `demo@demo-hospitality.test` έχει τον γνωστό κωδικό `demo1234`. Πριν ανεβεί online, σβήστε τα
+   από τον φάκελο `property-manager` (με το `.env` να δείχνει στο Neon):
+
+   ```bash
+   npm run db:remove-demo
+   ```
+
+   Σβήνει **μόνο** τον οργανισμό «Demo Hospitality» και τους demo χρήστες — όχι τα δικά σας δεδομένα.
 
 ## 2. Server (Vercel)
 
 1. Στο Vercel: **Add New → Project** και επιλέξτε το repository `xxxNiaxxx.github.io` στο GitHub.
-2. **Root Directory:** `property-manager`
-3. **Build Command:** `npm run vercel-build` (εφαρμόζει τα migrations της βάσης και μετά κάνει build)
+2. **Root Directory:** `property-manager` (πατήστε **Edit** δίπλα στο Root Directory).
+   Το Framework Preset γίνεται αυτόματα **Next.js**.
+3. **Build Command:** τίποτα — το `property-manager/vercel.json` ορίζει ήδη `npm run vercel-build`
+   (εφαρμόζει τα migrations της βάσης και μετά κάνει build) και περιοχή **Φρανκφούρτη** (`fra1`),
+   δίπλα στη βάση του Neon.
 4. **Environment Variables:**
 
    | Όνομα | Τιμή |
    | --- | --- |
    | `DATABASE_URL` | Neon pooled URL |
    | `DIRECT_URL` | Neon direct URL |
-   | `AUTH_SECRET` | τρέξτε `openssl rand -base64 32` και επικολλήστε το αποτέλεσμα |
+   | `AUTH_SECRET` | ένα **νέο**, μακρύ τυχαίο κείμενο (όχι αυτό του υπολογιστή σας). Στα Windows: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
    | `NEXT_PUBLIC_APP_URL` | `https://YOUR-APP.vercel.app` |
    | `NEXT_PUBLIC_SUPPORT_EMAIL` | το email υποστήριξης |
    | `NEXT_PUBLIC_APP_TIMEZONE` | `Europe/Athens` |
@@ -51,15 +64,21 @@
    - `https://YOUR-APP.vercel.app/account-deletion` (διαγραφή λογαριασμού, χρειάζεται για το Play)
 
 6. **Λογαριασμός για τον έλεγχο της Google.** Η Google θέλει στοιχεία σύνδεσης για να δοκιμάσει την εφαρμογή.
-   Φορτώστε τα demo δεδομένα στη βάση παραγωγής από τον υπολογιστή σας:
+   Φορτώστε τα demo δεδομένα με **δικό σας, ιδιωτικό κωδικό** (όχι `demo1234`, που είναι δημόσια γνωστός),
+   από τον φάκελο `property-manager` με το `.env` να δείχνει στο Neon:
 
    ```bash
-   cd property-manager
-   DATABASE_URL="<pooled>" DIRECT_URL="<direct>" npm run db:seed
+   # Windows (Command Prompt)
+   set DEMO_PASSWORD=ένας-δικός-σας-κωδικός
+   npm run db:seed
+
+   # Mac / Linux
+   DEMO_PASSWORD="ένας-δικός-σας-κωδικός" npm run db:seed
    ```
 
-   Ο λογαριασμός είναι `demo@demo-hospitality.test` / `demo1234`. Το seed μπορείτε να το ξανατρέξετε
-   όποτε θέλετε: επαναφέρει μόνο τον demo οργανισμό.
+   Δώστε στη Google το `demo@demo-hospitality.test` και αυτόν τον κωδικό. Online η σελίδα σύνδεσης
+   **δεν** δείχνει τα στοιχεία του demo (εκτός αν βάλετε `SHOW_DEMO_LOGIN=1` στο Vercel).
+   Το seed επαναφέρει μόνο τον demo οργανισμό· `npm run db:remove-demo` τον σβήνει όταν δεν χρειάζεται.
 
 ## 3. Ρύθμιση της εφαρμογής Android
 

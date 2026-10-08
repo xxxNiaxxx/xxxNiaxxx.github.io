@@ -80,7 +80,8 @@ simulated in Phase 1 (stored as `SENT` on the internal channel).
 | `npm test` | Vitest against `TEST_DATABASE_URL` (migrated automatically, **wiped by the tests**) |
 | `npm run db:migrate` | create/apply migrations in development |
 | `npm run db:deploy` | apply migrations in production |
-| `npm run db:seed` | load demo data |
+| `npm run db:seed` | load demo data (`DEMO_PASSWORD` sets a private password instead of `demo1234`) |
+| `npm run db:remove-demo` | delete only the demo organization and demo users |
 | `npm run db:reset` | drop, re-migrate and re-seed the dev database |
 
 The Docker database creates `property_manager_test` on first start. With your
@@ -119,8 +120,11 @@ tests/                 Vitest suites (authorization, reservations, tasks, AI, da
 
 ## Deploying (Vercel + Neon)
 
-Root directory `property-manager`, build command `npm run vercel-build` (runs
-`prisma migrate deploy` then `next build`), env vars as above. Full walkthrough,
+Root directory `property-manager`; `vercel.json` sets the build command
+`npm run vercel-build` (runs `prisma migrate deploy` then `next build`) and the
+Frankfurt region next to Neon. Env vars as above. In production the login page
+hides the demo credentials (set `SHOW_DEMO_LOGIN=1` to show them); remove the demo
+data with `npm run db:remove-demo` or seed it with a private `DEMO_PASSWORD`. Full walkthrough,
 including the Google Play release of the Android app: [`../mobile/PLAY_STORE.md`](../mobile/PLAY_STORE.md).
 
 Public pages required by Google Play: `/privacy` and `/account-deletion`.
