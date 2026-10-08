@@ -42,7 +42,7 @@ export function TodayAgenda({ agenda }: { agenda: DashboardData["todayAgenda"] }
     />
   );
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <Section title="Αφίξεις" icon={<LogIn />} count={agenda.checkIns.length}>
         {agenda.checkIns.map((r) => (
           <Row key={r.id} href={`/reservations/${r.id}`} primary={r.guestName ?? "Επισκέπτης"} secondary={`${r.propertyName} · ${r.guestsCount} άτομα · ${r.nights} νύχτες`} />

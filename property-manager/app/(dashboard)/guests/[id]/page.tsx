@@ -38,8 +38,8 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
         <Stat label="Συνολικά έσοδα" value={formatMoney(stats.totalRevenue, stats.currency)} />
         <Stat label="Μέση διαμονή" value={`${stats.averageStay} νύχτες`} />
       </div>
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="grid min-w-0 content-start gap-6">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-6">
           <Card>
             <CardHeader title="Ιστορικό κρατήσεων" />
             {reservations.length ? <ReservationTable reservations={reservations} hideGuest /> : <EmptyState title="Δεν υπάρχουν κρατήσεις ακόμη" />}
@@ -52,7 +52,7 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
             </CardContent>
           </Card>
         </div>
-        <div className="grid min-w-0 content-start gap-6">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-6">
           <Card>
             <CardHeader title="Επικοινωνία" />
             <CardContent>

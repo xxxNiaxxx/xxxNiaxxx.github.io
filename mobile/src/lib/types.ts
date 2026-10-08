@@ -15,6 +15,7 @@ export interface Reservation {
   guestsCount: number;
   totalAmount: number;
   complimentary: boolean;
+  fromCalendar: boolean;
   commission: number;
   currency: string;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
@@ -234,4 +235,20 @@ export interface Memory {
   messageKind: string | null;
   source: "MANUAL" | "CHAT" | "EDIT";
   active: boolean;
+}
+
+export interface CalendarFeed {
+  id: string;
+  source: string;
+  url: string;
+  lastSyncedAt: string | null;
+  lastError: string | null;
+}
+
+export interface SyncResult {
+  created: number;
+  updated: number;
+  cancelled: number;
+  errors?: string[];
+  error?: string;
 }

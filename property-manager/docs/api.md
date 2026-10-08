@@ -130,6 +130,27 @@ booking number update the reservation imported before (no duplicates); free
 cancellations carry no rent; each row succeeds or fails on its own →
 `{ created, updated, failed, results[] }`.
 
+## iCal calendars (Airbnb / Booking.com)
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/api/properties/:id/calendars` | the property's imported feeds and its own export path |
+| POST | `/api/properties/:id/calendars` | ADMIN+ · `{ source: "AIRBNB" \| "BOOKING_COM" \| "OTHER", url }` (public `https://` only) — added and synced right away |
+| DELETE | `/api/calendars/:id` | ADMIN+ · reservations it created stay |
+| POST | `/api/calendars/sync` | `{ propertyId?, force? }` — without `force` only feeds not read in the last 30 minutes (the web and mobile apps call it on open) |
+| POST | `/api/properties/:id/calendars/export` | ADMIN+ · creates/replaces the secret export link |
+| GET | `/api/ical/:token` | **public** iCal of the property's stays (no guest data) for Airbnb/Booking to block dates |
+| GET | `/api/cron/ical` | Vercel Cron, nightly (`vercel.json`), `Authorization: Bearer $CRON_SECRET` |
+
+Sync rules: new stays are created as reservations with amount 0 and a placeholder
+guest ("Επισκέπτης Airbnb"); changed dates are updated; stays that disappear before
+arrival are cancelled; dates already taken by another reservation are skipped; a
+cancelled reservation is never revived. Airbnb host blocks ("Not available") are
+ignored; Booking.com marks every unavailable night "CLOSED - Not available", so
+manual closures there also appear (cancel them once — they stay cancelled). The
+file import fills in these stays (same property and dates, or the Airbnb code)
+instead of duplicating them.
+
 ## Calendar
 
 | Method | Path | Notes |

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { isoToDate } from "@/lib/dates";
 import { AppError } from "@/lib/errors";
 import { roomAndCommission, type AmountMode } from "@/lib/import/amounts";
 import type { OrgContext } from "@/lib/permissions";
@@ -102,11 +103,21 @@ export async function importReservations(ctx: OrgContext, input: unknown) {
         ...(row.notes ? { notes: row.notes } : {}),
       };
 
-      const existing = row.externalId
+      let existing = row.externalId
         ? await db.reservation.findFirst({ where: { organizationId: ctx.organizationId, source: data.source, externalId: row.externalId } })
         : null;
+      // A stay that the iCal calendar created first (no booking number there): same property and dates.
+      existing ??= await db.reservation.findFirst({
+        where: {
+          organizationId: ctx.organizationId, propertyId: row.propertyId, calendarFeedId: { not: null }, externalId: null,
+          status: { not: "CANCELLED" }, checkIn: isoToDate(row.checkIn), checkOut: isoToDate(row.checkOut),
+        },
+      });
       if (existing) {
-        const updated = await updateReservation(ctx, existing.id, fields);
+        // Calendar stays have a placeholder guest: put the real one.
+        const guest = existing.calendarFeedId ? { guestId: await findOrCreateGuest(ctx, row) } : {};
+        const updated = await updateReservation(ctx, existing.id, { ...fields, ...guest });
+        if (row.externalId && !existing.externalId) await db.reservation.update({ where: { id: existing.id }, data: { externalId: row.externalId } });
         results.push({ line: row.line, outcome: "updated", reservationId: updated.id });
       } else {
         const guestId = await findOrCreateGuest(ctx, row);

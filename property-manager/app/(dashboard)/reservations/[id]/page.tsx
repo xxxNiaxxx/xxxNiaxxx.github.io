@@ -47,8 +47,8 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
           </>
         }
       />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="grid min-w-0 content-start gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-6">
           <Card>
             <CardHeader title="Διαμονή" />
             <CardContent>
@@ -59,7 +59,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
                   { label: "Άφιξη", value: formatDay(r.checkIn, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) },
                   { label: "Αναχώρηση", value: formatDay(r.checkOut, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) },
                   { label: "Άτομα", value: r.guestsCount },
-                  { label: "Τιμή δωματίου", value: r.complimentary ? "Δωρεάν φιλοξενία" : formatMoney(r.totalAmount, r.currency) },
+                  { label: "Τιμή δωματίου", value: r.complimentary ? "Δωρεάν φιλοξενία" : r.fromCalendar && r.totalAmount === 0 ? <span className="text-warning">Λείπει — από το ημερολόγιο {SOURCE_LABELS[r.source]}</span> : formatMoney(r.totalAmount, r.currency) },
                   { label: "Πηγή", value: SOURCE_LABELS[r.source] },
                   { label: "Κωδικός κράτησης", value: r.confirmationCode ?? <span className="text-warning">Λείπει</span> },
                 ]}
@@ -75,7 +75,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
             </CardContent>
           </Card>
         </div>
-        <div className="grid min-w-0 content-start gap-6">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-6">
           <Card>
             <CardHeader title="Ανάλυση τιμής & φόροι" description={tax.ama ? `ΑΜΑ ${tax.ama}` : "Το ακίνητο δεν έχει ΑΜΑ"} />
             <CardContent className="grid gap-3 text-sm">

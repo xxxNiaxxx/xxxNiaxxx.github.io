@@ -15,6 +15,9 @@ import { getPropertyDetails } from "@/lib/services/properties";
 import { ComplianceChecklist } from "@/components/tax/compliance-card";
 import { AddMemoryForm, MemoryItem } from "@/components/ai/knowledge";
 import { listMemories } from "@/lib/ai/memory";
+import { CalendarSync } from "@/components/properties/calendar-sync";
+import { getPropertyCalendars } from "@/lib/services/calendar-feeds";
+import { hasRole } from "@/lib/permissions";
 
 export const metadata: Metadata = { title: "Ακίνητο" };
 
@@ -22,7 +25,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const { ctx } = await getPageContext();
   const d = await orNotFound(getPropertyDetails(ctx, id));
-  const guestInfo = await listMemories(ctx, { kind: "GUEST_INFO", propertyId: id });
+  const [guestInfo, calendars] = await Promise.all([listMemories(ctx, { kind: "GUEST_INFO", propertyId: id }), getPropertyCalendars(ctx, id)]);
   const p = d.property;
   const cur = d.currentReservation;
 
@@ -52,8 +55,8 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
         <Stat label="Βασική τιμή" value={formatMoney(p.basePrice, p.currency)} hint="ανά νύχτα" />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="grid min-w-0 content-start gap-6">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-6">
           <Card>
             <CardHeader title="Τρέχουσα διαμονή" />
             <CardContent>
@@ -81,7 +84,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             )}
           </Card>
         </div>
-        <div className="grid min-w-0 content-start gap-6">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-6">
           <Card>
             <CardHeader title="Στοιχεία" />
             <CardContent>
@@ -96,6 +99,12 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
                 ]}
               />
               {p.description && <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{p.description}</p>}
+            </CardContent>
+          </Card>
+          <Card id="calendars">
+            <CardHeader title="Ημερολόγια Airbnb / Booking (iCal)" />
+            <CardContent>
+              <CalendarSync propertyId={p.id} feeds={calendars.feeds} exportPath={calendars.exportPath} canEdit={hasRole(ctx, "ADMIN")} />
             </CardContent>
           </Card>
           <Card>

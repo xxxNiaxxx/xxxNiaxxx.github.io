@@ -7,7 +7,7 @@ import { getTaxOverview } from "./tax";
 import { serializeReservation, serializeTask, toNumber } from "./serializers";
 import { OPEN_STATUSES } from "./tasks";
 
-export type AttentionKind = "OVERDUE_TASK" | "MISSING_CLEANING" | "MISSING_INFO" | "NO_CHECKIN_MESSAGE" | "AI_ACTION" | "TAX_DEADLINE" | "COMPLIANCE";
+export type AttentionKind = "OVERDUE_TASK" | "MISSING_CLEANING" | "MISSING_INFO" | "NO_CHECKIN_MESSAGE" | "AI_ACTION" | "TAX_DEADLINE" | "COMPLIANCE" | "MISSING_AMOUNT";
 
 export interface AttentionItem {
   kind: AttentionKind;
@@ -170,6 +170,21 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
     });
   }
   attention.push(...(await taxAttention(ctx, now)));
+  // Stays brought in by an iCal calendar have no price yet: taxes and income are incomplete.
+  const noAmount = await db.reservation.findMany({
+    where: { organizationId: org, calendarFeedId: { not: null }, complimentary: false, totalAmount: 0, status: { in: ["CONFIRMED", "COMPLETED"] } },
+    select: { id: true, checkIn: true },
+    orderBy: { checkIn: "asc" },
+  });
+  if (noAmount.length) {
+    attention.push({
+      kind: "MISSING_AMOUNT",
+      severity: "medium",
+      title: noAmount.length === 1 ? "1 κράτηση από ημερολόγιο χωρίς ποσό" : `${noAmount.length} κρατήσεις από ημερολόγιο χωρίς ποσό`,
+      detail: "Συμπληρώστε το ποσό ή κάντε εισαγωγή του αρχείου κρατήσεων του Booking/Airbnb.",
+      href: noAmount.length === 1 ? `/reservations/${noAmount[0].id}` : "/reservations/import",
+    });
+  }
   const severityRank = { high: 0, medium: 1, low: 2 };
   attention.sort((a, b) => severityRank[a.severity] - severityRank[b.severity]);
 

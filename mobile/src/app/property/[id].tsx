@@ -1,5 +1,6 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
+import { CalendarSyncCard } from "@/components/calendar-sync";
 import { CheckRow, DateField, LinkRow } from "@/components/form";
 import { Badge, Button, Card, ErrorBox, Loading, Screen, SectionTitle, Stat, statusTone, styles } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -82,6 +83,8 @@ export default function PropertyScreen() {
           </View>
         ))}
       </Card>
+
+      <CalendarSyncCard propertyId={p.id} onSynced={reload} />
 
       <Card style={{ gap: 4 }}>
         <SectionTitle title="Προδιαγραφές (από 1/10/2025)" />

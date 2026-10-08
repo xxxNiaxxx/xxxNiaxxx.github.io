@@ -75,6 +75,8 @@ export function serializeReservation(r: ReservationRow) {
     totalAmount: toNumber(r.totalAmount),
     currency: r.currency,
     complimentary: r.complimentary,
+    /** Brought in by an iCal calendar (amount/guest may still be missing). */
+    fromCalendar: Boolean(r.calendarFeedId),
     commission: toNumber(r.commission),
     status: r.status,
     notes: r.notes,

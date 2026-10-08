@@ -1,6 +1,8 @@
 import { router } from "expo-router";
+import { useEffect } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Badge, Card, Empty, ErrorBox, Loading, Screen, SectionTitle, Stat, statusTone, styles } from "@/components/ui";
+import { api } from "@/lib/api";
 import { formatDay, formatMoney, formatPercent, formatTime, humanize } from "@/lib/format";
 import type { Dashboard, Reservation, Task } from "@/lib/types";
 import { useQuery } from "@/lib/use-query";
@@ -10,6 +12,7 @@ const severityColor = { high: colors.danger, medium: colors.warning, low: colors
 const SUGGESTIONS = ["Τι χρειάζεται την προσοχή μου σήμερα;", "Ποιος έρχεται αύριο;", "Πόσα έβγαλα αυτόν τον μήνα;"];
 
 function hrefToRoute(href: string) {
+  if (href.startsWith("/reservations/import")) return "/reservations" as const;
   const m = href.match(/^\/reservations\/([^/?]+)/);
   if (m) return `/reservation/${m[1]}` as const;
   const p = href.match(/^\/properties\/([^/?]+)/);
@@ -22,6 +25,13 @@ function hrefToRoute(href: string) {
 
 export default function Today() {
   const { data, error, loading, refreshing, reload } = useQuery<Dashboard>("/api/dashboard");
+  // Read the Airbnb/Booking calendars (the server skips ones read in the last 30 minutes).
+  useEffect(() => {
+    api<{ created: number; updated: number; cancelled: number }>("/api/calendars/sync", { body: {} })
+      .then((r) => r.created + r.updated + r.cancelled > 0 && void reload())
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   if (loading && !data) return <Loading />;
 
   return (
