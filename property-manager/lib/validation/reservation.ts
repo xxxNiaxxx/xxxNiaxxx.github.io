@@ -49,6 +49,8 @@ export const reservationCreateSchema = base
   .extend({
     guestId: id.optional(),
     newGuest: guestCreateSchema.optional(),
+    /** Id in the source channel (Booking number, Airbnb code) — imports update instead of duplicating. */
+    externalId: optionalText(100),
   })
   .refine((v) => v.checkOut > v.checkIn, checkOutAfterCheckIn)
   .refine((v) => !v.complimentary || v.totalAmount === 0, freeStayHasNoRent)

@@ -118,6 +118,18 @@ transaction in sync. A free stay (`complimentary: true`, relatives/friends with
 no payment) has no income, no ΤΑΚΚ and no AADE stay declaration; it is rejected
 with `422` if `totalAmount` is above 0. PATCH only changes the fields it is given.
 
+### Import from Booking.com / Airbnb
+
+`POST /api/reservations/import` — `{ source, amountMode, rows[] }`. The file (Excel/CSV
+export) is parsed in the browser (`lib/import/parse.ts`: column auto-mapping in
+English/Greek, dates, amounts, statuses) and only confirmed rows are sent.
+`amountMode`: `GUEST_TOTAL` (guest total with ΤΑΚΚ, e.g. Booking's price), `ROOM`
+(room price) or `PAYOUT` (what the host received after commission, e.g. Airbnb
+earnings) — detected from the file's commission amounts when present. Rows with a
+booking number update the reservation imported before (no duplicates); free
+cancellations carry no rent; each row succeeds or fails on its own →
+`{ created, updated, failed, results[] }`.
+
 ## Calendar
 
 | Method | Path | Notes |

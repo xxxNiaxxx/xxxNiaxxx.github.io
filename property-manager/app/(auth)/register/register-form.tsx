@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { registerAction, type AuthFormState } from "../actions";
 
 export function RegisterForm({ invite }: { invite?: { token: string; email: string } }) {
@@ -18,7 +19,7 @@ export function RegisterForm({ invite }: { invite?: { token: string; email: stri
         <Input id="email" name="email" type="email" autoComplete="email" required defaultValue={invite?.email ?? state.values?.email} readOnly={!!invite} aria-invalid={!!err.email} />
       </Field>
       <Field label="Κωδικός" htmlFor="password" error={err.password} hint="Τουλάχιστον 8 χαρακτήρες">
-        <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} aria-invalid={!!err.password} />
+        <PasswordInput id="password" name="password" autoComplete="new-password" required minLength={8} aria-invalid={!!err.password} />
       </Field>
       {!invite && (
         <Field label="Όνομα επιχείρησης / οργανισμού" htmlFor="organizationName" error={err.organizationName} hint="π.χ. Aegean Stays">
