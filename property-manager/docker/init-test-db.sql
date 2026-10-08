@@ -1,0 +1,1 @@
+CREATE DATABASE property_manager_test;

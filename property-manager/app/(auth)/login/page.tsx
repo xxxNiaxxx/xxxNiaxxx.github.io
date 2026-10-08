@@ -1,0 +1,28 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { LoginForm } from "./login-form";
+
+export const metadata: Metadata = { title: "Σύνδεση" };
+
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next } = await searchParams;
+  return (
+    <>
+      <h1 className="text-2xl font-semibold tracking-tight">Καλώς ήρθατε</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Συνδεθείτε για να διαχειριστείτε τα ακίνητά σας.</p>
+      <LoginForm next={next} />
+      <p className="mt-6 text-sm text-muted-foreground">
+        Πρώτη φορά εδώ;{" "}
+        <Link href="/register" className="font-medium text-foreground underline-offset-4 hover:underline">
+          Δημιουργία λογαριασμού
+        </Link>
+      </p>
+      <div className="mt-8 rounded-xl border border-dashed border-border-strong bg-surface p-4 text-[13px] text-muted-foreground">
+        <p className="font-medium text-foreground">Δοκιμαστικός λογαριασμός</p>
+        <p className="mt-1">
+          demo@demo-hospitality.test · <span className="font-mono">demo1234</span>
+        </p>
+      </div>
+    </>
+  );
+}
