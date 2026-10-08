@@ -1,11 +1,20 @@
 # Βραχυχρόνια.ai — mobile (Expo)
 
-Companion app for the web app in [`../property-manager`](../property-manager):
-**Home** (what needs attention today), **Calendar** (14-day occupancy strip +
-arrivals/departures), **Tasks** (complete/start/cancel, cleaning checklists),
-**AI** (chat with Approve / Edit / Cancel for proposed actions) and reservation
-details with guest messaging. It talks to the same REST API using a bearer
-token (`POST /api/mobile/session`).
+Mobile app for the web app in [`../property-manager`](../property-manager) —
+everything the web app shows is also here:
+
+* **Tabs:** Home (what needs attention today), Calendar, Tasks (complete/start/cancel,
+  cleaning checklists, new task with common titles), AI (chat with Approve / Edit / Cancel).
+* **More:** Reservations (search, filters, create/edit/cancel, free stays, tax & AADE
+  declaration per stay, guest messages with translation), Properties (details, month
+  figures, compliance checklist, create/edit, activate/deactivate), Guests, Financials
+  (month summary, transactions, add income/expense), Tax & AADE (stay declarations,
+  monthly ΤΑΚΚ/VAT filings, annual Ε2 estimate, compliance), AI knowledge, Team
+  (members, roles, invitation links via the share sheet) and Settings (profile,
+  organization, team switcher, tax regime).
+
+Only the CSV exports for the accountant stay on the web. It talks to the same REST API
+using a bearer token (`POST /api/mobile/session`).
 
 Expo SDK 57 · Expo Router · works in **Expo Go** (no native build needed).
 

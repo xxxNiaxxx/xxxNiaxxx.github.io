@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import { RESERVATION_SOURCES } from "@/lib/constants";
 import { addDays, formatMoney, humanize } from "@/lib/format";
 import type { Guest, Property, Reservation } from "@/lib/types";
-import { useMutation } from "@/lib/use-mutation";
+import { goBack, useMutation } from "@/lib/use-mutation";
 import { useQuery } from "@/lib/use-query";
 
 const nightsBetween = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
@@ -58,7 +58,7 @@ export function ReservationForm({ reservation, defaults }: { reservation?: Reser
     else body.guestId = guestId || undefined;
     await run(
       () => api<Reservation>(editing ? `/api/reservations/${reservation!.id}` : "/api/reservations", { method: editing ? "PATCH" : "POST", body }),
-      { onSuccess: (r) => (editing ? router.back() : router.replace(`/reservation/${r.id}`)) },
+      { onSuccess: (r) => (editing ? goBack(`/reservation/${r.id}`) : router.replace(`/reservation/${r.id}`)) },
     );
   }
 

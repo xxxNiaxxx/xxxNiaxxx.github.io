@@ -9,7 +9,7 @@ import { colors, radius } from "@/theme";
 export function Field({ label, error, hint, children }: { label: string; error?: string; hint?: string; children: React.ReactNode }) {
   return (
     <View>
-      <Text style={styles.label}>{label}</Text>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
       {children}
       {error ? <Text style={{ color: colors.danger, fontSize: 12, marginTop: 4 }}>{error}</Text> : hint ? <Text style={{ color: colors.mutedText, fontSize: 12, marginTop: 4 }}>{hint}</Text> : null}
     </View>
@@ -81,7 +81,7 @@ export function SelectField({
     <Field label={label} error={error} hint={hint}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={label}
+        accessibilityLabel={label || placeholder}
         onPress={() => setOpen(true)}
         style={[styles.input, { flexDirection: "row", alignItems: "center" }, error && { borderColor: colors.danger }]}
       >

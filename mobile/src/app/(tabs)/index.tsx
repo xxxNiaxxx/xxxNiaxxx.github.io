@@ -12,6 +12,9 @@ const SUGGESTIONS = ["Τι χρειάζεται την προσοχή μου σ�
 function hrefToRoute(href: string) {
   const m = href.match(/^\/reservations\/([^/?]+)/);
   if (m) return `/reservation/${m[1]}` as const;
+  const p = href.match(/^\/properties\/([^/?]+)/);
+  if (p) return `/property/${p[1]}` as const;
+  if (href.startsWith("/tax")) return "/tax" as const;
   if (href.startsWith("/tasks")) return "/tasks" as const;
   if (href.startsWith("/ai")) return "/ai" as const;
   return null;

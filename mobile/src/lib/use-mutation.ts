@@ -1,3 +1,4 @@
+import { router, type Href } from "expo-router";
 import { useState } from "react";
 import { Alert, Platform } from "react-native";
 import { ApiError } from "./api";
@@ -43,4 +44,10 @@ export function confirm(title: string, message: string | undefined, action: stri
     { text: "Όχι", style: "cancel" },
     { text: action, style: "destructive", onPress: onConfirm },
   ]);
+}
+
+/** Back to the previous screen, or to `fallback` when the screen was opened directly. */
+export function goBack(fallback: Href) {
+  if (router.canGoBack()) router.back();
+  else router.replace(fallback);
 }
