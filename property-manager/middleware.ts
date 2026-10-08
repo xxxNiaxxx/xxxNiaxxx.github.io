@@ -4,7 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
  * Cheap edge redirect for signed-out visitors. Real authentication and
  * organization checks happen server-side in every page and API handler.
  */
-const PUBLIC = ["/login", "/register"];
+const AUTH_PAGES = ["/login", "/register"];
+/** Readable without signing in (Google Play requires public URLs for these). */
+const PUBLIC = [...AUTH_PAGES, "/privacy", "/account-deletion"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -15,7 +17,7 @@ export function middleware(req: NextRequest) {
     url.search = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname)}`;
     return NextResponse.redirect(url);
   }
-  if (hasSession && PUBLIC.some((p) => pathname.startsWith(p))) {
+  if (hasSession && AUTH_PAGES.some((p) => pathname.startsWith(p))) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
   return NextResponse.next();

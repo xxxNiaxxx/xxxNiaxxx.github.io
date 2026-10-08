@@ -20,6 +20,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="reservation/[id]" options={{ title: "Reservation", headerBackTitle: "Back" }} />
+        <Stack.Screen name="delete-account" options={{ title: "Delete account", presentation: "modal" }} />
       </Stack>
     </SessionProvider>
   );

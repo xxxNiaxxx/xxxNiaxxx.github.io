@@ -75,7 +75,8 @@ own PostgreSQL, create it once: `createdb property_manager_test`.
 
 | Name | Required | Description |
 | --- | --- | --- |
-| `DATABASE_URL` | yes | PostgreSQL connection string |
+| `DATABASE_URL` | yes | PostgreSQL connection string (pooled URL on Neon) |
+| `DIRECT_URL` | yes | direct connection for migrations (same as `DATABASE_URL` locally) |
 | `TEST_DATABASE_URL` | for tests | separate database used by `npm test` |
 | `AUTH_SECRET` | yes | Auth.js secret (`openssl rand -base64 32`) |
 | `AI_API_KEY` | no | enables the LLM; server-only, never sent to the browser |
@@ -83,6 +84,7 @@ own PostgreSQL, create it once: `createdb property_manager_test`.
 | `AI_BASE_URL` | no | default `https://api.openai.com/v1` |
 | `NEXT_PUBLIC_APP_URL` | no | public URL of the app |
 | `NEXT_PUBLIC_APP_NAME` | no | product name shown in the UI (default "Βραχυχρόνια.ai") |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | for Play | contact shown on `/privacy` and `/account-deletion` |
 | `NEXT_PUBLIC_APP_TIMEZONE` | no | time zone for "today", due times and check-ins (default `Europe/Athens`) |
 
 ## Project layout
@@ -99,6 +101,16 @@ lib/ai                 provider abstraction, tools, offline assistant, chat loop
 prisma/                schema, migrations, seed
 tests/                 Vitest suites (authorization, reservations, tasks, AI, dashboard)
 ```
+
+## Deploying (Vercel + Neon)
+
+Root directory `property-manager`, build command `npm run vercel-build` (runs
+`prisma migrate deploy` then `next build`), env vars as above. Full walkthrough,
+including the Google Play release of the Android app: [`../mobile/PLAY_STORE.md`](../mobile/PLAY_STORE.md).
+
+Public pages required by Google Play: `/privacy` and `/account-deletion`.
+Users can delete their account in **Settings → Delete account** (web) or
+**More → Delete account** (Android); see `lib/services/account-deletion.ts`.
 
 ## Security notes
 

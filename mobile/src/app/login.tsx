@@ -1,4 +1,5 @@
 import { Redirect } from "expo-router";
+import * as Linking from "expo-linking";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from "react-native";
 import { Button, Loading, styles } from "@/components/ui";
@@ -51,20 +52,29 @@ export default function Login() {
         </View>
         {error && <Text style={{ color: colors.danger, backgroundColor: colors.dangerSoft, padding: 12, borderRadius: 10 }}>{error}</Text>}
         <Button title="Sign in" loading={busy} disabled={!email || !password} onPress={submit} />
-        <Button
-          title="Use demo account"
-          variant="outline"
-          onPress={() => {
-            setEmail("demo@demo-hospitality.test");
-            setPassword("demo1234");
-          }}
-        />
+        <Button title="Create an account" variant="outline" onPress={() => Linking.openURL(`${server}/register`)} />
+        <Text style={[styles.rowSub, { textAlign: "center" }]} onPress={() => Linking.openURL(`${server}/privacy`)}>
+          Privacy policy
+        </Text>
 
-        <View style={{ marginTop: 24 }}>
-          <Text style={styles.label}>Server</Text>
-          <TextInput style={styles.input} value={server} onChangeText={setServer} autoCapitalize="none" autoCorrect={false} keyboardType="url" />
-          <Text style={[styles.rowSub, { marginTop: 6 }]}>The computer running the web app (npm run dev:lan), reachable from this phone.</Text>
-        </View>
+        {/* Development only: the store build talks to the server baked in via EXPO_PUBLIC_API_URL. */}
+        {__DEV__ && (
+          <View style={{ marginTop: 24, gap: 12 }}>
+            <Button
+              title="Use demo account"
+              variant="ghost"
+              onPress={() => {
+                setEmail("demo@demo-hospitality.test");
+                setPassword("demo1234");
+              }}
+            />
+            <View>
+              <Text style={styles.label}>Server</Text>
+              <TextInput style={styles.input} value={server} onChangeText={setServer} autoCapitalize="none" autoCorrect={false} keyboardType="url" />
+              <Text style={[styles.rowSub, { marginTop: 6 }]}>The computer running the web app (npm run dev:lan), reachable from this phone.</Text>
+            </View>
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

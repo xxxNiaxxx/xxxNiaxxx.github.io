@@ -4,7 +4,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url       = env("DATABASE_URL")
+  /// Direct (non-pooled) connection used by migrations. Same as DATABASE_URL locally;
+  /// on Neon/Supabase use the pooled URL above and the direct URL here.
+  directUrl = env("DIRECT_URL")
 }
 
 // ─── Identity & tenancy ──────────────────────────────────────────────

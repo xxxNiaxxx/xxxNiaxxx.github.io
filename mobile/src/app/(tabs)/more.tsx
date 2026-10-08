@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { Alert, Linking, Text, View } from "react-native";
 import { Button, Card, Screen, styles } from "@/components/ui";
 import { useSession } from "@/lib/session";
@@ -31,6 +32,11 @@ export default function More() {
           Properties, guests, reservations, financials and settings are available in the web app.
         </Text>
         <Button title="Open web app" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(serverUrl)} />
+      </Card>
+      <Card>
+        <Text style={styles.sectionTitle}>Privacy</Text>
+        <Button title="Privacy policy" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(`${serverUrl}/privacy`)} />
+        <Button title="Delete account" variant="danger" style={{ marginTop: 8 }} onPress={() => router.push("/delete-account")} />
       </Card>
       <Button
         title="Sign out"

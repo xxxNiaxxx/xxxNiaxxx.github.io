@@ -37,7 +37,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         const [token, savedUrl] = await Promise.all([storage.get(TOKEN_KEY), storage.get(SERVER_KEY)]);
-        const url = savedUrl ?? defaultServerUrl();
+        // Store builds always use the bundled server; a saved URL is a development override.
+        const url = __DEV__ ? (savedUrl ?? defaultServerUrl()) : defaultServerUrl();
         setServerUrl(url);
         configureApi({ baseUrl: url, token });
         if (token) await refresh();

@@ -49,6 +49,16 @@ or set `EXPO_PUBLIC_API_URL` in `mobile/.env` (see `.env.example`).
 * **"Project is incompatible with this version of Expo Go"** — update Expo Go;
   this project uses SDK 57.
 
+## Google Play
+
+The app is configured for a Play Store release: package `ai.brachychronia.app`, icons,
+EAS build profiles (`eas.json`), in-app account deletion and a privacy policy. The
+store build talks to the hosted server set in `eas.json` (`EXPO_PUBLIC_API_URL`).
+In store builds the demo-account button and the server field are hidden.
+
+Step-by-step guide (Greek), with listing texts and Data safety answers:
+**[PLAY_STORE.md](PLAY_STORE.md)**. Store graphics are in `store/`.
+
 ## Scripts
 
 | Command | |

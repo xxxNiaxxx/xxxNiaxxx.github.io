@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DeleteAccount } from "@/components/settings/delete-account";
 import { NameForm } from "@/components/settings/name-form";
 import { OrgSwitcher } from "@/components/settings/org-switcher";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +58,13 @@ export default async function SettingsPage() {
               </li>
             ))}
           </ul>
+        </Card>
+        <Card>
+          <CardHeader title="Delete account" description="Permanently delete your account and, where you are the only member, your organization's data." />
+          <CardContent className="flex flex-wrap items-center justify-between gap-3">
+            <a href="/privacy" className="text-[13px] text-muted-foreground underline-offset-4 hover:underline">Privacy policy</a>
+            <DeleteAccount />
+          </CardContent>
         </Card>
       </div>
     </>
