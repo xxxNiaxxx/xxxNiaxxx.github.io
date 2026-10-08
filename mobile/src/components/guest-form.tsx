@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { SelectField, TextField } from "@/components/form";
 import { Button, Card, Screen } from "@/components/ui";
+import { GUEST_ID_TYPE_KEYS, GUEST_ID_TYPES } from "@/lib/aade";
 import { api } from "@/lib/api";
 import { GUEST_LANGUAGES } from "@/lib/constants";
 import type { Guest } from "@/lib/types";
@@ -18,6 +19,8 @@ export function GuestForm({ guest }: { guest?: Guest }) {
     country: guest?.country ?? "",
     language: guest?.languagePreference ?? "",
     notes: guest?.notes ?? "",
+    idType: guest?.idType ?? "",
+    idNumber: guest?.idNumber ?? "",
   });
   const set = (k: keyof typeof f) => (v: string) => setF((x) => ({ ...x, [k]: v }));
 
@@ -37,6 +40,9 @@ export function GuestForm({ guest }: { guest?: Guest }) {
         <TextField label="Χώρα" value={f.country} onChangeText={set("country")} error={err.country} />
         <SelectField label="Γλώσσα μηνυμάτων" value={f.language} onChange={set("language")}
           options={[{ value: "", label: "Αυτόματα (από τη χώρα)" }, ...GUEST_LANGUAGES.map((l) => ({ value: l.code, label: l.name }))]} />
+        <SelectField label="Τύπος ταυτοποίησης (ΑΑΔΕ)" value={f.idType} onChange={set("idType")}
+          options={[{ value: "", label: "—" }, ...GUEST_ID_TYPE_KEYS.map((k) => ({ value: k, label: GUEST_ID_TYPES[k] }))]} />
+        <TextField label="Αριθμός ταυτότητας / διαβατηρίου / ΑΦΜ" value={f.idNumber} onChangeText={set("idNumber")} autoCapitalize="characters" error={err.idNumber} />
         <TextField label="Σημειώσεις" value={f.notes} onChangeText={set("notes")} multiline />
       </Card>
       <Button title={editing ? "Αποθήκευση" : "Δημιουργία επισκέπτη"} loading={pending} onPress={save} />

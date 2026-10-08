@@ -13,6 +13,7 @@ import { diffDaysISO } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import type { ReservationDTO } from "@/lib/services/serializers";
 import { climateFeeForStay, commissionFor, type PropertyKind, type TaxRegime } from "@/lib/tax/gr";
+import { defaultPaymentMethod, PAYMENT_METHOD_KEYS, PAYMENT_METHODS } from "@/lib/aade";
 import { cn } from "@/lib/utils";
 
 export interface PropertyOption {
@@ -232,7 +233,13 @@ export function ReservationFormDialog({ properties, guests, reservation, pricing
                 {editing && <option value="CANCELLED">Ακυρώθηκε</option>}
               </Select>
             </Field>
-            <Field label="9. Σημειώσεις" htmlFor="notes" className="sm:col-span-2">
+            <Field label="Τρόπος πληρωμής (ΑΑΔΕ)" htmlFor="paymentMethod" hint="Για τη δήλωση στο Μητρώο">
+              <Select id="paymentMethod" name="paymentMethod" defaultValue={reservation?.paymentMethod ?? ""}>
+                <option value="">{defaultPaymentMethod(source) ? `Αυτόματα: ${PAYMENT_METHODS[defaultPaymentMethod(source)!]}` : "— Επιλέξτε —"}</option>
+                {PAYMENT_METHOD_KEYS.map((k) => <option key={k} value={k}>{PAYMENT_METHODS[k]}</option>)}
+              </Select>
+            </Field>
+            <Field label="9. Σημειώσεις" htmlFor="notes">
               <Textarea id="notes" name="notes" defaultValue={reservation?.notes ?? ""} className="min-h-9" rows={1} />
             </Field>
           </div>

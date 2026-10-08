@@ -73,19 +73,20 @@ model Organization {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
-  members         OrganizationMember[]
-  properties      Property[]
-  guests          Guest[]
-  reservations    Reservation[]
-  tasks           Task[]
-  messages        Message[]
-  transactions    Transaction[]
-  aiConversations AIConversation[]
-  aiActions       AIAction[]
-  taxFilings      TaxFiling[]
-  aiMemories      AIMemory[]
-  invitations     Invitation[]
-  calendarFeeds   CalendarFeed[]
+  members           OrganizationMember[]
+  properties        Property[]
+  guests            Guest[]
+  reservations      Reservation[]
+  tasks             Task[]
+  messages          Message[]
+  transactions      Transaction[]
+  aiConversations   AIConversation[]
+  aiActions         AIAction[]
+  taxFilings        TaxFiling[]
+  aiMemories        AIMemory[]
+  invitations       Invitation[]
+  calendarFeeds     CalendarFeed[]
+  calendarConflicts CalendarConflict[]
 }
 
 model OrganizationMember {
@@ -159,6 +160,9 @@ model Guest {
   country        String?
   /// Preferred language for messages (ISO 639-1). Null: derived from the country.
   language       String?
+  /// Identity for the AADE stay declaration: ID_CARD, PASSPORT or TAX_ID (ΑΦΜ).
+  idType         String?
+  idNumber       String?
   notes          String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -222,6 +226,8 @@ model Reservation {
   notes             String?
   cancelledAt       DateTime?
   declarationStatus StayDeclarationStatus @default(PENDING)
+  /// For the AADE stay declaration (see lib/aade.ts); null = the platform default.
+  paymentMethod     String?
   declaredAt        DateTime?
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
@@ -523,12 +529,41 @@ model CalendarFeed {
   lastError      String?
   createdAt      DateTime          @default(now())
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  property     Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  property     Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   reservations Reservation[]
+  conflicts    CalendarConflict[]
 
   @@unique([propertyId, url])
   @@index([organizationId])
+}
+
+/// A stay in a platform calendar that falls on dates already taken by another
+/// reservation: a possible double booking, shown until it is resolved.
+model CalendarConflict {
+  id             String    @id @default(cuid())
+  organizationId String
+  propertyId     String
+  feedId         String
+  icalUid        String
+  start          DateTime  @db.Date
+  end            DateTime  @db.Date
+  /// Platform booking code of the stay, when the calendar gives one.
+  code           String?
+  /// The reservations it overlaps.
+  reservationIds String[]
+  detectedAt     DateTime  @default(now())
+  notifiedAt     DateTime?
+  /// The stay left the calendar or no longer overlaps.
+  resolvedAt     DateTime?
+  /// Marked by the team as not a double booking.
+  dismissedAt    DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  feed         CalendarFeed @relation(fields: [feedId], references: [id], onDelete: Cascade)
+
+  @@unique([feedId, icalUid, start, end])
+  @@index([organizationId, resolvedAt, dismissedAt])
 }
 
 enum WaitlistStatus {

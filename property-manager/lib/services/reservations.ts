@@ -194,6 +194,7 @@ export async function createReservation(ctx: OrgContext, input: unknown) {
         status: data.status,
         notes: data.notes,
         complimentary: data.complimentary,
+        paymentMethod: data.paymentMethod ?? null,
         // A free stay is not a rental, so it needs no AADE stay declaration.
         ...(data.complimentary ? { declarationStatus: "NOT_REQUIRED" as const } : {}),
       },

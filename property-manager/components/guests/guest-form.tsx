@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea } from "@/components/ui/input";
+import { GUEST_ID_TYPE_KEYS, GUEST_ID_TYPES } from "@/lib/aade";
 import { GUEST_LANGUAGES } from "@/lib/i18n/guest-language";
 import { api, formValues } from "@/lib/client/api";
 import { useMutation } from "@/lib/client/use-mutation";
@@ -37,6 +38,15 @@ export function GuestFields({ guest, err, prefix = "" }: { guest?: GuestDTO; err
             <option key={l.code} value={l.code}>{l.name}</option>
           ))}
         </Select>
+      </Field>
+      <Field label="Τύπος ταυτοποίησης" htmlFor={n("idType")} error={e("idType")} hint="Για τη δήλωση στο Μητρώο ΑΑΔΕ">
+        <Select id={n("idType")} name={n("idType")} defaultValue={guest?.idType ?? ""}>
+          <option value="">—</option>
+          {GUEST_ID_TYPE_KEYS.map((k) => <option key={k} value={k}>{GUEST_ID_TYPES[k]}</option>)}
+        </Select>
+      </Field>
+      <Field label="Αριθμός ταυτότητας / διαβατηρίου / ΑΦΜ" htmlFor={n("idNumber")} error={e("idNumber")}>
+        <Input id={n("idNumber")} name={n("idNumber")} defaultValue={guest?.idNumber ?? ""} autoComplete="off" />
       </Field>
     </div>
   );

@@ -245,3 +245,17 @@ without it the approval link is shown to copy by hand.
 | DELETE | `/api/admin/waitlist/:id` | deletes the entry and its data |
 | GET | `/api/admin/waitlist/export` | CSV (Excel-safe, UTF-8 BOM) |
 | GET/PATCH | `/api/admin/settings` | `{ registrationOpen }` — open sign-up for everyone |
+
+## Guest replies, AADE declaration, double bookings
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| POST | `/api/ai/reply` | `{ reservationId, guestMessage }` → `{ reply, offline, usedInfo, conversationUrl }` — a draft in the guest's language from the property's notes (LLM when `AI_API_KEY` is set) |
+| POST | `/api/calendar-conflicts/:id/dismiss` | ADMIN+ · marks a possible double booking as checked |
+
+`GET /api/reservations/:id` also returns `tax.declarationForm` (the AADE stay
+declaration field by field: `fields[{ key, label, value }]`, `missing`) and
+`conflicts` (possible double bookings found by the calendar sync: a platform
+stay on dates already taken that is not just our own dates mirrored back).
+Guests have `idType` (`ID_CARD` | `PASSPORT` | `TAX_ID`) and `idNumber`;
+reservations have `paymentMethod` (see `lib/aade.ts`, null = platform default).

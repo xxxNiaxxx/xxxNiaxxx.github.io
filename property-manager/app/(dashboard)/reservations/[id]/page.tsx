@@ -4,6 +4,8 @@ import Link from "next/link";
 import { MessageComposer } from "@/components/guests/message-composer";
 import { MessageList } from "@/components/guests/message-list";
 import { CancelReservationButton } from "@/components/reservations/cancel-button";
+import { ConflictBanner } from "@/components/reservations/conflict-banner";
+import { GuestReply } from "@/components/reservations/guest-reply";
 import { PriceBreakdown } from "@/components/reservations/price-breakdown";
 import { ReservationFormDialog } from "@/components/reservations/reservation-form";
 import { TaskListCompact } from "@/components/tasks/task-list-compact";
@@ -15,21 +17,23 @@ import { getPageContext, orNotFound } from "@/lib/auth/page";
 import { formatDay, formatMoney } from "@/lib/format";
 import { getFormOptions } from "@/lib/services/options";
 import { getReservationDetails } from "@/lib/services/reservations";
+import { hasRole } from "@/lib/permissions";
+import { listOpenConflicts } from "@/lib/services/calendar-conflicts";
 import { getStayTax } from "@/lib/services/tax";
 import { getGuest } from "@/lib/services/guests";
 import { languageName } from "@/lib/i18n/guest-language";
-import { DeclareButton } from "@/components/tax/actions";
-import { Badge } from "@/components/ui/badge";
+import { DeclarationCard } from "@/components/tax/declaration-card";
 
 export const metadata: Metadata = { title: "Κράτηση" };
 
 export default async function ReservationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { ctx } = await getPageContext();
-  const [{ reservation: r, tasks, messages, platform }, options, tax] = await Promise.all([
+  const [{ reservation: r, tasks, messages, platform }, options, tax, conflicts] = await Promise.all([
     orNotFound(getReservationDetails(ctx, id)),
     getFormOptions(ctx),
     orNotFound(getStayTax(ctx, id)),
+    listOpenConflicts(ctx, { reservationId: id }),
   ]);
   const open = r.status === "CONFIRMED" || r.status === "PENDING";
   const guest = await getGuest(ctx, r.guestId);
@@ -47,6 +51,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
           </>
         }
       />
+      <ConflictBanner conflicts={conflicts} reservationId={r.id} canDismiss={hasRole(ctx, "ADMIN")} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="grid min-w-0 grid-cols-1 content-start gap-6">
           <Card>
@@ -79,8 +84,9 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
             </Card>
           )}
           <Card>
-            <CardHeader title="Μηνύματα επισκέπτη" description="Οδηγίες άφιξης και άλλη επικοινωνία" />
+            <CardHeader title="Μηνύματα επισκέπτη" description="Απαντήσεις με τον βοηθό AI, οδηγίες άφιξης και ιστορικό" />
             <CardContent className="grid gap-4">
+              <GuestReply reservationId={r.id} guestId={r.guestId} />
               {open && <MessageComposer guestId={r.guestId} reservationId={r.id} guestLanguageName={languageName(guest.language)} aiEnabled={Boolean(process.env.AI_API_KEY)} />}
               <MessageList messages={messages} />
             </CardContent>
@@ -98,19 +104,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
                   {tax.longStay ? (
                     <p className="text-[13px] text-muted-foreground">60+ νύχτες: δεν είναι βραχυχρόνια μίσθωση — δηλώνεται ως κανονική μίσθωση.</p>
                   ) : tax.declaration.required ? (
-                    <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
-                      <div>
-                        <div className="text-[13px] text-muted-foreground">Δήλωση διαμονής</div>
-                        {tax.declaration.status === "DECLARED" ? (
-                          <Badge tone="success">Δηλώθηκε</Badge>
-                        ) : (
-                          <Badge tone={tax.declaration.overdue ? "danger" : "neutral"}>
-                            {tax.declaration.overdue ? "Εκπρόθεσμη · " : "Έως "}{formatDay(tax.declaration.deadline, { day: "numeric", month: "short", year: "numeric" })}
-                          </Badge>
-                        )}
-                      </div>
-                      {tax.declaration.triggerDate <= new Date().toISOString().slice(0, 10) && <DeclareButton reservationId={r.id} declared={tax.declaration.status === "DECLARED"} />}
-                    </div>
+                    <p className="text-[13px] text-muted-foreground">Τα στοιχεία της δήλωσης διαμονής είναι στην κάρτα «Δήλωση στο Μητρώο ΑΑΔΕ».</p>
                   ) : (
                     <p className="text-[13px] text-muted-foreground">Δεν απαιτείται δήλωση διαμονής.</p>
                   )}
@@ -118,6 +112,21 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
               )}
             </CardContent>
           </Card>
+          {!tax.complimentary && !tax.longStay && tax.declaration.required && (
+            <Card>
+              <CardHeader title="Δήλωση στο Μητρώο ΑΑΔΕ" description="Τα στοιχεία της δήλωσης διαμονής, έτοιμα για αντιγραφή" />
+              <CardContent>
+                <DeclarationCard
+                  reservationId={r.id}
+                  guestId={r.guestId}
+                  propertyId={r.propertyId}
+                  form={tax.declarationForm}
+                  declaration={tax.declaration}
+                  canDeclare={tax.declaration.triggerDate <= new Date().toISOString().slice(0, 10)}
+                />
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardHeader title="Επικοινωνία" />
             <CardContent>

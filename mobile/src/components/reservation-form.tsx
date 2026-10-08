@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 import { CheckRow, DateField, NumberField, Segmented, SelectField, TextField } from "@/components/form";
 import { Button, Card, Loading, Screen, styles } from "@/components/ui";
+import { defaultPaymentMethod, PAYMENT_METHOD_KEYS, PAYMENT_METHODS } from "@/lib/aade";
 import { api } from "@/lib/api";
 import { RESERVATION_SOURCES } from "@/lib/constants";
 import { addDays, formatMoney, humanize } from "@/lib/format";
@@ -36,6 +37,7 @@ export function ReservationForm({ reservation, defaults }: { reservation?: Reser
   const [code, setCode] = useState(reservation?.confirmationCode ?? "");
   const [status, setStatus] = useState<string>(reservation?.status ?? "CONFIRMED");
   const [notes, setNotes] = useState(reservation?.notes ?? "");
+  const [paymentMethod, setPaymentMethod] = useState(reservation?.paymentMethod ?? "");
 
   if (!properties.data || !guests.data || !pricing.data) return <Loading />;
   const active = properties.data.filter((p) => p.status === "ACTIVE" || p.id === reservation?.propertyId);
@@ -63,6 +65,7 @@ export function ReservationForm({ reservation, defaults }: { reservation?: Reser
       confirmationCode: code,
       status,
       notes,
+      paymentMethod,
     };
     if (editing) body.guestId = guestId;
     else if (guestMode === "new") body.newGuest = newGuest;
@@ -121,6 +124,11 @@ export function ReservationForm({ reservation, defaults }: { reservation?: Reser
         <TextField label="Κωδικός κράτησης" value={code} onChangeText={setCode} placeholder="Προαιρετικό" error={err.confirmationCode} />
         <SelectField label="Κατάσταση" value={status} onChange={setStatus}
           options={["CONFIRMED", "PENDING", ...(editing ? ["COMPLETED", "CANCELLED"] : [])].map((s) => ({ value: s, label: humanize(s) }))} />
+        <SelectField label="Τρόπος πληρωμής (για την ΑΑΔΕ)" value={paymentMethod} onChange={setPaymentMethod}
+          options={[
+            { value: "", label: defaultPaymentMethod(source) ? `Αυτόματα: ${PAYMENT_METHODS[defaultPaymentMethod(source)!]}` : "— Επιλέξτε —" },
+            ...PAYMENT_METHOD_KEYS.map((k) => ({ value: k, label: PAYMENT_METHODS[k] })),
+          ]} />
         <TextField label="Σημειώσεις" value={notes} onChangeText={setNotes} multiline />
       </Card>
 

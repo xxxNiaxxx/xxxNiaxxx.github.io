@@ -20,6 +20,7 @@ export interface Reservation {
   currency: string;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
   notes: string | null;
+  paymentMethod: string | null;
 }
 
 export interface Task {
@@ -153,6 +154,8 @@ export interface Guest {
   languagePreference: string | null;
   language: string;
   notes: string | null;
+  idType: string | null;
+  idNumber: string | null;
 }
 
 export interface GuestDetails {
@@ -180,6 +183,8 @@ export interface StayTax {
   vat: number;
   presenceFee: number;
   declaration: { required: boolean; status: "PENDING" | "DECLARED" | "NOT_REQUIRED"; triggerDate: string; deadline: string; due: boolean; overdue: boolean; daysLeft: number };
+  /** The AADE stay declaration, field by field, ready to copy. */
+  declarationForm: { fields: { key: string; label: string; value: string | null }[]; missing: string[]; paymentMethodIsDefault: boolean; cancelled: boolean };
 }
 
 export interface Transaction {
