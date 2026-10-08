@@ -1,15 +1,20 @@
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { conflict } from "@/lib/errors";
+import { AppError, conflict } from "@/lib/errors";
 import { registerSchema } from "@/lib/validation/auth";
 import { acceptInvitation } from "./invitations";
+import { claimWaitlistAccess, isRegistrationOpen } from "./waitlist";
+
+export const CLOSED_REGISTRATION_MESSAGE = "Η εγγραφή γίνεται προς το παρόν μόνο με πρόσκληση. Γραφτείτε στη λίστα αναμονής και θα σας στείλουμε σύνδεσμο.";
 
 /**
  * Creates a user. With an invitation they join that team; otherwise they get
- * their own organization as OWNER.
+ * their own organization as OWNER. While registration is closed, a new
+ * organization needs an approved waitlist link.
  */
 export async function registerAccount(input: unknown) {
   const data = registerSchema.parse(input);
+  if (!data.invite && !data.access && !(await isRegistrationOpen())) throw new AppError("FORBIDDEN", CLOSED_REGISTRATION_MESSAGE);
   const existing = await db.user.findUnique({ where: { email: data.email } });
   if (existing) throw conflict("Υπάρχει ήδη λογαριασμός με αυτό το email. Συνδεθείτε.");
   const passwordHash = await bcrypt.hash(data.password, 12);
@@ -19,6 +24,7 @@ export async function registerAccount(input: unknown) {
       const { organizationId } = await acceptInvitation(tx, user, data.invite);
       return { userId: user.id, organizationId };
     }
+    if (data.access) await claimWaitlistAccess(tx, user, data.access);
     const organization = await tx.organization.create({ data: { name: data.organizationName! } });
     await tx.organizationMember.create({ data: { organizationId: organization.id, userId: user.id, role: "OWNER" } });
     return { userId: user.id, organizationId: organization.id };

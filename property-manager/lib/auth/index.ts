@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import type { Role } from "@prisma/client";
 import { auth } from "@/lib/auth/config";
 import { db } from "@/lib/db";
+import { isPlatformAdmin } from "@/lib/email";
 import { AppError } from "@/lib/errors";
 import { hasRole, type OrgContext } from "@/lib/permissions";
 import { resolveMembership } from "./membership";
@@ -54,4 +55,11 @@ export async function requireRole(minimum: Role): Promise<OrgContext> {
   const ctx = await requireOrganizationMember();
   if (!hasRole(ctx, minimum)) throw new AppError("FORBIDDEN", "Δεν έχετε δικαίωμα για αυτή την ενέργεια");
   return ctx;
+}
+
+/** A signed-in user listed in ADMIN_EMAILS (manages the waitlist), or FORBIDDEN. */
+export async function requirePlatformAdmin() {
+  const user = await requireUser();
+  if (!isPlatformAdmin(user.email)) throw new AppError("FORBIDDEN", "Μόνο οι διαχειριστές της εφαρμογής έχουν πρόσβαση");
+  return user;
 }

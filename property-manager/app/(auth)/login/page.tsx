@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { isRegistrationOpen } from "@/lib/services/waitlist";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Σύνδεση" };
@@ -9,6 +10,7 @@ const showDemoLogin = process.env.NODE_ENV !== "production" || process.env.SHOW_
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
+  const open = await isRegistrationOpen();
   return (
     <>
       <h1 className="text-2xl font-semibold tracking-tight">Καλώς ήρθατε</h1>
@@ -16,8 +18,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <LoginForm next={next} />
       <p className="mt-6 text-sm text-muted-foreground">
         Πρώτη φορά εδώ;{" "}
-        <Link href="/register" className="font-medium text-foreground underline-offset-4 hover:underline">
-          Δημιουργία λογαριασμού
+        <Link href={open ? "/register" : "/waitlist"} className="font-medium text-foreground underline-offset-4 hover:underline">
+          {open ? "Δημιουργία λογαριασμού" : "Θέλω να δοκιμάσω την εφαρμογή"}
         </Link>
       </p>
       {showDemoLogin && (

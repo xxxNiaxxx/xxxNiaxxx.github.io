@@ -1,5 +1,6 @@
 import {
   Building2,
+  Inbox,
   CalendarDays,
   ClipboardList,
   Landmark,
@@ -31,6 +32,9 @@ export const mainNav: NavItem[] = [
 ];
 
 export const settingsNav: NavItem = { href: "/settings", label: "Ρυθμίσεις", icon: Settings };
+
+/** Only for the app's administrators (ADMIN_EMAILS). */
+export const adminNav: NavItem = { href: "/admin/waitlist", label: "Λίστα αναμονής", icon: Inbox };
 
 /** Mobile bottom bar: Home, Calendar, Tasks, AI (+ "More" menu). */
 export const mobileNav: NavItem[] = [

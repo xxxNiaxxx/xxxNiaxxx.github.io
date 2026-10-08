@@ -8,6 +8,8 @@ export const registerSchema = z.object({
   /** Not needed when joining an existing team through an invitation. */
   organizationName: requiredText("Όνομα οργανισμού", 120).optional(),
   invite: z.string().trim().min(1).max(200).optional(),
+  /** Personal sign-up link from the waitlist. */
+  access: z.string().trim().min(1).max(200).optional(),
 }).refine((v) => v.invite || v.organizationName, { message: "Το πεδίο «Όνομα οργανισμού» είναι υποχρεωτικό", path: ["organizationName"] });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
