@@ -10,13 +10,13 @@ import { AADE_PORTAL_URL } from "@/lib/aade";
 import { formatDay } from "@/lib/format";
 import { DeclareButton } from "./actions";
 
-interface Field { key: string; label: string; value: string | null }
+interface Field { key: string; label: string; value: string | null; optional?: boolean }
 
 /** Where each missing value is filled in. */
 const FIX: Record<string, "guest" | "reservation" | "property"> = {
   ama: "property",
+  bookingNumber: "reservation",
   guestName: "guest",
-  idType: "guest",
   idNumber: "guest",
   paymentMethod: "reservation",
   amount: "reservation",
@@ -99,6 +99,8 @@ export function DeclarationCard({
                   {f.value}
                   {f.key === "paymentMethod" && form.paymentMethodIsDefault && <span className="ml-1 text-xs font-normal text-muted-foreground">(προεπιλογή πλατφόρμας)</span>}
                 </div>
+              ) : f.optional ? (
+                <div className="text-muted-foreground">— <span className="text-xs">(χωρίς αριθμό κράτησης· συμπληρώστε τον από «Επεξεργασία» αν υπάρχει)</span></div>
               ) : (
                 <div className="text-warning">
                   Λείπει
@@ -116,7 +118,7 @@ export function DeclarationCard({
       </ul>
 
       {form.missing.length > 0 && (
-        <p className="text-xs text-muted-foreground">Τον αριθμό ταυτότητας ή διαβατηρίου τον ζητάτε από τον επισκέπτη (π.χ. στο check-in).</p>
+        <p className="text-xs text-muted-foreground">Το ΑΦΜ (Έλληνες) ή τον αριθμό διαβατηρίου (ξένοι) τον ζητάτε από τον επισκέπτη, π.χ. στο check-in.</p>
       )}
 
       <div className="flex flex-wrap items-center gap-2">
