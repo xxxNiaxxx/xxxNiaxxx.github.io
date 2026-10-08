@@ -63,7 +63,7 @@ export default function ReservationScreen() {
           <Badge label={humanize(r.status)} tone={statusTone[r.status]} />
         </View>
         <Text style={[styles.rowSub, { marginTop: 6 }]}>{formatDay(r.checkIn)} → {formatDay(r.checkOut)} · {r.nights} νύχτες · {r.guestsCount} άτομα</Text>
-        <Text style={{ fontSize: 22, fontWeight: "700", color: colors.text, marginTop: 10 }}>{formatMoney(r.totalAmount, r.currency)}</Text>
+        <Text style={{ fontSize: 22, fontWeight: "700", color: colors.text, marginTop: 10 }}>{r.complimentary ? "Δωρεάν φιλοξενία" : formatMoney(r.totalAmount, r.currency)}</Text>
         <Text style={styles.rowSub}>{r.confirmationCode ?? "Χωρίς κωδικό κράτησης"} · {humanize(r.source)}</Text>
         {r.notes && <Text style={{ marginTop: 10, backgroundColor: colors.muted, padding: 10, borderRadius: 10, color: colors.text }}>{r.notes}</Text>}
         <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>

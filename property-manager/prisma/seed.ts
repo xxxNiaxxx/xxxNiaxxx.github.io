@@ -164,6 +164,15 @@ async function main() {
     reservations.push(r);
   }
 
+  // One free stay for relatives: no rent, no ΤΑΚΚ, no AADE declaration.
+  const freeIndex = reservations.findIndex((r, i) => !forced.includes(selected[i]) && r.status === "CONFIRMED" && r.checkIn > isoToDate(addDaysISO(today, 7)));
+  if (freeIndex >= 0) {
+    reservations[freeIndex] = await db.reservation.update({
+      where: { id: reservations[freeIndex].id },
+      data: { complimentary: true, totalAmount: 0, source: "DIRECT", declarationStatus: "NOT_REQUIRED", notes: "Δωρεάν φιλοξενία — συγγενείς του ιδιοκτήτη." },
+    });
+  }
+
   // AADE stay declarations: everything that left before this month is declared; recent departures are pending.
   const monthStart = `${today.slice(0, 7)}-01`;
   for (const r of reservations) {
@@ -206,7 +215,7 @@ async function main() {
 
   // Income for booked stays + expenses.
   for (const r of reservations) {
-    if (r.status !== "CONFIRMED" && r.status !== "COMPLETED") continue;
+    if ((r.status !== "CONFIRMED" && r.status !== "COMPLETED") || r.complimentary) continue;
     await db.transaction.create({
       data: {
         organizationId: org.id, propertyId: r.propertyId, reservationId: r.id, type: "INCOME", category: "BOOKING",

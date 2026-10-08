@@ -14,6 +14,7 @@ export interface Reservation {
   nights: number;
   guestsCount: number;
   totalAmount: number;
+  complimentary: boolean;
   currency: string;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
   notes: string | null;

@@ -58,7 +58,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
                   { label: "Άφιξη", value: formatDay(r.checkIn, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) },
                   { label: "Αναχώρηση", value: formatDay(r.checkOut, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) },
                   { label: "Άτομα", value: r.guestsCount },
-                  { label: "Σύνολο", value: formatMoney(r.totalAmount, r.currency) },
+                  { label: "Σύνολο", value: r.complimentary ? "Δωρεάν φιλοξενία" : formatMoney(r.totalAmount, r.currency) },
                   { label: "Πηγή", value: SOURCE_LABELS[r.source] },
                   { label: "Κωδικός κράτησης", value: r.confirmationCode ?? <span className="text-warning">Λείπει</span> },
                 ]}
@@ -78,31 +78,37 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
           <Card>
             <CardHeader title="Φορολογικά & ΑΑΔΕ" description={tax.ama ? `ΑΜΑ ${tax.ama}` : "Το ακίνητο δεν έχει ΑΜΑ"} />
             <CardContent className="grid gap-3 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">ΤΑΚΚ (τέλος ανθεκτικότητας)</span><span className="font-medium tabular-nums">{formatMoney(tax.climateFee)}</span></div>
-              {tax.regime === "BUSINESS" && (
-                <>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Μίσθωμα χωρίς ΦΠΑ</span><span className="tabular-nums">{formatMoney(tax.rent)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">ΦΠΑ 13% · τέλος παρεπιδημούντων 0,5%</span><span className="tabular-nums">{formatMoney(tax.vat)} · {formatMoney(tax.presenceFee)}</span></div>
-                </>
-              )}
-              {tax.longStay ? (
-                <p className="text-[13px] text-muted-foreground">60+ νύχτες: δεν είναι βραχυχρόνια μίσθωση — δηλώνεται ως κανονική μίσθωση.</p>
-              ) : tax.declaration.required ? (
-                <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
-                  <div>
-                    <div className="text-[13px] text-muted-foreground">Δήλωση διαμονής</div>
-                    {tax.declaration.status === "DECLARED" ? (
-                      <Badge tone="success">Δηλώθηκε</Badge>
-                    ) : (
-                      <Badge tone={tax.declaration.overdue ? "danger" : "neutral"}>
-                        {tax.declaration.overdue ? "Εκπρόθεσμη · " : "Έως "}{formatDay(tax.declaration.deadline, { day: "numeric", month: "short", year: "numeric" })}
-                      </Badge>
-                    )}
-                  </div>
-                  {tax.declaration.triggerDate <= new Date().toISOString().slice(0, 10) && <DeclareButton reservationId={r.id} declared={tax.declaration.status === "DECLARED"} />}
-                </div>
+              {tax.complimentary ? (
+                <p className="text-[13px] text-muted-foreground">Δωρεάν φιλοξενία: δεν είναι μίσθωση — χωρίς έσοδο, ΤΑΚΚ και δήλωση διαμονής.</p>
               ) : (
-                <p className="text-[13px] text-muted-foreground">Δεν απαιτείται δήλωση διαμονής.</p>
+                <>
+                  <div className="flex justify-between"><span className="text-muted-foreground">ΤΑΚΚ (τέλος ανθεκτικότητας)</span><span className="font-medium tabular-nums">{formatMoney(tax.climateFee)}</span></div>
+                  {tax.regime === "BUSINESS" && (
+                    <>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Μίσθωμα χωρίς ΦΠΑ</span><span className="tabular-nums">{formatMoney(tax.rent)}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">ΦΠΑ 13% · τέλος παρεπιδημούντων 0,5%</span><span className="tabular-nums">{formatMoney(tax.vat)} · {formatMoney(tax.presenceFee)}</span></div>
+                    </>
+                  )}
+                  {tax.longStay ? (
+                    <p className="text-[13px] text-muted-foreground">60+ νύχτες: δεν είναι βραχυχρόνια μίσθωση — δηλώνεται ως κανονική μίσθωση.</p>
+                  ) : tax.declaration.required ? (
+                    <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+                      <div>
+                        <div className="text-[13px] text-muted-foreground">Δήλωση διαμονής</div>
+                        {tax.declaration.status === "DECLARED" ? (
+                          <Badge tone="success">Δηλώθηκε</Badge>
+                        ) : (
+                          <Badge tone={tax.declaration.overdue ? "danger" : "neutral"}>
+                            {tax.declaration.overdue ? "Εκπρόθεσμη · " : "Έως "}{formatDay(tax.declaration.deadline, { day: "numeric", month: "short", year: "numeric" })}
+                          </Badge>
+                        )}
+                      </div>
+                      {tax.declaration.triggerDate <= new Date().toISOString().slice(0, 10) && <DeclareButton reservationId={r.id} declared={tax.declaration.status === "DECLARED"} />}
+                    </div>
+                  ) : (
+                    <p className="text-[13px] text-muted-foreground">Δεν απαιτείται δήλωση διαμονής.</p>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

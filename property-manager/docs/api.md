@@ -92,14 +92,17 @@ Create body:
   "source": "MANUAL",                 // MANUAL | AIRBNB | BOOKING_COM | DIRECT | OTHER
   "confirmationCode": "DH-4100",
   "status": "CONFIRMED",              // CONFIRMED | PENDING (COMPLETED/CANCELLED via PATCH)
-  "notes": "…"
+  "notes": "…",
+  "complimentary": false              // free stay: totalAmount must be 0
 }
 ```
 
 Rules: no two `CONFIRMED` stays may share a night at the same property
 (same-day turnover is allowed) → `409`. Checked in a serializable transaction.
 Confirmed/completed reservations automatically keep one `BOOKING` income
-transaction in sync.
+transaction in sync. A free stay (`complimentary: true`, relatives/friends with
+no payment) has no income, no ΤΑΚΚ and no AADE stay declaration; it is rejected
+with `422` if `totalAmount` is above 0. PATCH only changes the fields it is given.
 
 ## Calendar
 

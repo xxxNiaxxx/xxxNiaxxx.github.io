@@ -10,18 +10,33 @@ const checkOutAfterCheckIn = {
   path: ["checkOut"],
 };
 
-const base = z.object({
+/** Fields without defaults — updates must leave omitted fields untouched. */
+const fields = z.object({
   propertyId: id,
   checkIn: isoDate,
   checkOut: isoDate,
   guestsCount: z.coerce.number().int().min(1, "Τουλάχιστον 1 επισκέπτης").max(100),
   totalAmount: money,
+  currency: currency.unwrap(),
+  source: reservationSource,
+  confirmationCode: optionalText(60),
+  status: reservationStatus,
+  notes: optionalText(4000),
+  /** Free stay for relatives/friends: no rent, so no income tax, ΤΑΚΚ or AADE declaration. */
+  complimentary: z.boolean(),
+});
+
+const base = fields.extend({
   currency,
   source: reservationSource.default("MANUAL"),
-  confirmationCode: optionalText(60),
   status: reservationStatus.default("CONFIRMED"),
-  notes: optionalText(4000),
+  complimentary: z.boolean().default(false),
 });
+
+export const freeStayHasNoRent = {
+  message: "Η δωρεάν φιλοξενία δεν έχει ενοίκιο — το ποσό πρέπει να είναι 0",
+  path: ["totalAmount"],
+};
 
 /** Either an existing guestId or a new guest to create alongside. */
 export const reservationCreateSchema = base
@@ -30,15 +45,17 @@ export const reservationCreateSchema = base
     newGuest: guestCreateSchema.optional(),
   })
   .refine((v) => v.checkOut > v.checkIn, checkOutAfterCheckIn)
+  .refine((v) => !v.complimentary || v.totalAmount === 0, freeStayHasNoRent)
   .refine((v) => Boolean(v.guestId) !== Boolean(v.newGuest), {
     message: "Επιλέξτε υπάρχοντα επισκέπτη ή καταχωρίστε νέο",
     path: ["guestId"],
   });
 
-export const reservationUpdateSchema = base
+export const reservationUpdateSchema = fields
   .extend({ guestId: id })
   .partial()
-  .refine((v) => !v.checkIn || !v.checkOut || v.checkOut > v.checkIn, checkOutAfterCheckIn);
+  .refine((v) => !v.checkIn || !v.checkOut || v.checkOut > v.checkIn, checkOutAfterCheckIn)
+  .refine((v) => !v.complimentary || v.totalAmount === undefined || v.totalAmount === 0, freeStayHasNoRent);
 
 export const reservationListQuery = z.object({
   q: optionalQuery(z.string().trim().max(100)),
