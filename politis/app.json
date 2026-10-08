@@ -1,14 +1,14 @@
 {
   "expo": {
     "name": "Ξεμπέρδεψα",
-    "slug": "politis",
+    "slug": "xemperdepsa",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "gr.politis.app"
+      "bundleIdentifier": "gr.xemperdepsa.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "gr.politis.app"
+      "package": "gr.xemperdepsa.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -43,7 +43,7 @@
         }
       ]
     ],
-    "scheme": "politis",
+    "scheme": "xemperdepsa",
     "experiments": {
       "typedRoutes": false
     }
