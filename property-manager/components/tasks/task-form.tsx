@@ -7,10 +7,12 @@ import { Dialog, DialogContent, DialogFooter, DialogTrigger } from "@/components
 import { Field, Input, Select, Textarea } from "@/components/ui/input";
 import { api, formValues } from "@/lib/client/api";
 import { useMutation } from "@/lib/client/use-mutation";
-import { PRIORITIES, TASK_TYPES } from "@/lib/constants";
+import { PRIORITIES, TASK_TITLE_PRESETS, TASK_TYPES } from "@/lib/constants";
 import { zonedDateTime } from "@/lib/dates";
 import { humanize } from "@/lib/format";
 
+const CUSTOM = "__custom";
+type TaskType = (typeof TASK_TYPES)[number];
 
 export function TaskFormDialog({
   properties,
@@ -30,6 +32,17 @@ export function TaskFormDialog({
   const params = useSearchParams();
   const [open, setOpen] = useState(Boolean(defaultOpen));
   const { run, pending, fieldErrors: err } = useMutation();
+  const [preset, setPreset] = useState("");
+  const [customTitle, setCustomTitle] = useState("");
+  const [type, setType] = useState<TaskType>("CLEANING");
+  const title = preset === CUSTOM ? customTitle : preset;
+
+  function choosePreset(value: string) {
+    setPreset(value);
+    // Picking a common title also sets its type.
+    const match = TASK_TYPES.find((t) => TASK_TITLE_PRESETS[t].includes(value));
+    if (match) setType(match);
+  }
 
   function onOpenChange(next: boolean) {
     setOpen(next);
@@ -56,12 +69,28 @@ export function TaskFormDialog({
             void _t;
             await run(() => api("/api/tasks", { body: { ...rest, dueAt, reservationId: defaults?.reservationId ?? null } }), {
               success: "Η εργασία δημιουργήθηκε",
-              onSuccess: () => onOpenChange(false),
+              onSuccess: () => {
+                onOpenChange(false);
+                setPreset("");
+                setCustomTitle("");
+              },
             });
           }}
         >
-          <Field label="Τίτλος" htmlFor="title" error={err.title} className="sm:col-span-2">
-            <Input id="title" name="title" required placeholder="Καθαρισμός αλλαγής" aria-invalid={!!err.title} />
+          <Field label="Τίτλος" htmlFor="titlePreset" error={err.title} className="sm:col-span-2">
+            <Select id="titlePreset" value={preset} onChange={(e) => choosePreset(e.target.value)} aria-invalid={!!err.title}>
+              <option value="" disabled>Επιλέξτε εργασία…</option>
+              {TASK_TYPES.map((t) => (
+                <optgroup key={t} label={humanize(t)}>
+                  {TASK_TITLE_PRESETS[t].map((p) => <option key={p} value={p}>{p}</option>)}
+                </optgroup>
+              ))}
+              <option value={CUSTOM}>Άλλος τίτλος…</option>
+            </Select>
+            {preset === CUSTOM && (
+              <Input id="title" className="mt-2" autoFocus required placeholder="Γράψτε τον τίτλο της εργασίας" value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} aria-label="Τίτλος εργασίας" aria-invalid={!!err.title} />
+            )}
+            <input type="hidden" name="title" value={title} />
           </Field>
           <Field label="Ακίνητο" htmlFor="propertyId" error={err.propertyId}>
             <Select id="propertyId" name="propertyId" defaultValue={defaults?.propertyId ?? properties[0]?.id}>
@@ -69,7 +98,7 @@ export function TaskFormDialog({
             </Select>
           </Field>
           <Field label="Τύπος" htmlFor="type">
-            <Select id="type" name="type" defaultValue="CLEANING">
+            <Select id="type" name="type" value={type} onChange={(e) => setType(e.target.value as TaskType)}>
               {TASK_TYPES.map((t) => <option key={t} value={t}>{humanize(t)}</option>)}
             </Select>
           </Field>

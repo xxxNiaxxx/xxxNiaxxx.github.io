@@ -14,20 +14,30 @@ const dueAt = z.preprocess(
   z.coerce.date({ error: "Δώστε έγκυρη προθεσμία" }).nullish(),
 );
 
-export const taskCreateSchema = z.object({
+/** "" from a form select ("Χωρίς ανάθεση") means none. */
+const optionalId = z.preprocess((v) => (v === "" ? null : v), id.nullish());
+
+/** Fields without defaults — updates must leave omitted fields untouched. */
+const fields = z.object({
   propertyId: id,
-  reservationId: id.nullish(),
+  reservationId: optionalId,
   title: requiredText("Τίτλος", 200),
   description: optionalText(4000),
-  type: taskType.default("OTHER"),
-  priority: taskPriority.default("MEDIUM"),
-  status: taskStatus.default("TODO"),
+  type: taskType,
+  priority: taskPriority,
+  status: taskStatus,
   dueAt,
-  assignedToUserId: id.nullish(),
+  assignedToUserId: optionalId,
   checklist: checklistSchema.optional(),
 });
 
-export const taskUpdateSchema = taskCreateSchema.partial();
+export const taskCreateSchema = fields.extend({
+  type: taskType.default("OTHER"),
+  priority: taskPriority.default("MEDIUM"),
+  status: taskStatus.default("TODO"),
+});
+
+export const taskUpdateSchema = fields.partial();
 
 export const taskTab = z.enum(["today", "upcoming", "overdue", "completed", "all"]);
 

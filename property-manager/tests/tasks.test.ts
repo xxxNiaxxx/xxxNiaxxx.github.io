@@ -55,4 +55,16 @@ describe("tasks", () => {
     const mine = await listTasks(a, { assignee: "me" });
     expect(mine.map((t) => t.id)).toContain(task.id);
   });
+
+  it("a partial update keeps type, priority and status", async () => {
+    const task = await createTask(a, { propertyId: aProperty, title: "Deep clean", type: "CLEANING", priority: "HIGH" });
+    await updateTask(a, task.id, { status: "IN_PROGRESS" });
+    const ticked = await updateTask(a, task.id, { checklist: task.checklist.map((c, i) => ({ ...c, done: i === 0 })) });
+    expect(ticked).toMatchObject({ type: "CLEANING", priority: "HIGH", status: "IN_PROGRESS" });
+  });
+
+  it("an empty assignee from the form means unassigned", async () => {
+    const task = await createTask(a, { propertyId: aProperty, title: "Pool", assignedToUserId: "", reservationId: "" });
+    expect(task.assignedToUserId).toBeNull();
+  });
 });
