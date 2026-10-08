@@ -1,9 +1,37 @@
-import { router } from "expo-router";
-import { Alert, Linking, Text, View } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { router, type Href } from "expo-router";
+import { Linking, Pressable, Text, View } from "react-native";
 import { Button, Card, Screen, styles } from "@/components/ui";
 import { humanize } from "@/lib/format";
 import { useSession } from "@/lib/session";
+import { confirm } from "@/lib/use-mutation";
 import { colors } from "@/theme";
+
+type IconName = React.ComponentProps<typeof Ionicons>["name"];
+
+const SECTIONS: { title: string; items: { label: string; icon: IconName; href: Href; detail?: string }[] }[] = [
+  {
+    title: "Διαχείριση",
+    items: [
+      { label: "Κρατήσεις", icon: "book-outline", href: "/reservations" },
+      { label: "Ακίνητα", icon: "business-outline", href: "/properties" },
+      { label: "Επισκέπτες", icon: "people-outline", href: "/guests" },
+      { label: "Οικονομικά", icon: "wallet-outline", href: "/financials" },
+      { label: "Φορολογικά & ΑΑΔΕ", icon: "library-outline", href: "/tax", detail: "Δηλώσεις διαμονής, ΤΑΚΚ, Ε2" },
+    ],
+  },
+  {
+    title: "Βοηθός AI",
+    items: [{ label: "Γνώσεις του βοηθού", icon: "bulb-outline", href: "/knowledge", detail: "Τι έχει μάθει από την ομάδα" }],
+  },
+  {
+    title: "Οργανισμός",
+    items: [
+      { label: "Ομάδα", icon: "people-circle-outline", href: "/team", detail: "Μέλη και προσκλήσεις" },
+      { label: "Ρυθμίσεις", icon: "settings-outline", href: "/settings", detail: "Προφίλ, οργανισμός" },
+    ],
+  },
+];
 
 export default function More() {
   const { session, serverUrl, signOut } = useSession();
@@ -12,38 +40,31 @@ export default function More() {
     <Screen>
       <Card>
         <Text style={styles.sectionTitle}>{session.user.name ?? session.user.email}</Text>
-        <Text style={styles.rowSub}>{session.user.email}</Text>
-        <View style={[styles.row, { marginTop: 12 }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.rowSub}>Οργανισμός</Text>
-            <Text style={styles.rowTitle}>{session.organization.name}</Text>
-          </View>
-          <Text style={[styles.rowSub, { color: colors.accent }]}>{humanize(session.role)}</Text>
-        </View>
-        <View style={styles.row}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.rowSub}>Server</Text>
-            <Text style={styles.rowTitle} numberOfLines={1}>{serverUrl}</Text>
-          </View>
-        </View>
+        <Text style={styles.rowSub}>{session.organization.name} · {humanize(session.role)}</Text>
       </Card>
-      <Card>
-        <Text style={styles.sectionTitle}>Πλήρης εφαρμογή</Text>
-        <Text style={[styles.rowSub, { marginTop: 4 }]}>
-          Ακίνητα, επισκέπτες, κρατήσεις, οικονομικά, φορολογικά και ρυθμίσεις υπάρχουν στην εφαρμογή web.
-        </Text>
-        <Button title="Άνοιγμα εφαρμογής web" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(serverUrl)} />
-      </Card>
+      {SECTIONS.map((section) => (
+        <View key={section.title}>
+          <Text style={{ fontSize: 12, fontWeight: "700", color: colors.mutedText, textTransform: "uppercase", marginBottom: 6, marginLeft: 4 }}>{section.title}</Text>
+          <Card style={{ paddingVertical: 4 }}>
+            {section.items.map((item, i) => (
+              <Pressable key={item.label} onPress={() => router.push(item.href)} style={({ pressed }) => [styles.row, i === 0 && { borderTopWidth: 0 }, pressed && { opacity: 0.6 }]}>
+                <Ionicons name={item.icon} size={22} color={colors.accent} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle}>{item.label}</Text>
+                  {item.detail ? <Text style={styles.rowSub}>{item.detail}</Text> : null}
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.subtleText} />
+              </Pressable>
+            ))}
+          </Card>
+        </View>
+      ))}
       <Card>
         <Text style={styles.sectionTitle}>Απόρρητο</Text>
         <Button title="Πολιτική απορρήτου" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(`${serverUrl}/privacy`)} />
         <Button title="Διαγραφή λογαριασμού" variant="danger" style={{ marginTop: 8 }} onPress={() => router.push("/delete-account")} />
       </Card>
-      <Button
-        title="Αποσύνδεση"
-        variant="danger"
-        onPress={() => Alert.alert("Αποσύνδεση;", undefined, [{ text: "Ακύρωση", style: "cancel" }, { text: "Αποσύνδεση", style: "destructive", onPress: () => void signOut() }])}
-      />
+      <Button title="Αποσύνδεση" variant="danger" onPress={() => confirm("Αποσύνδεση;", undefined, "Αποσύνδεση", () => void signOut())} />
     </Screen>
   );
 }

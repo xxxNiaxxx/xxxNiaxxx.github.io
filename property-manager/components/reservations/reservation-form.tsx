@@ -49,6 +49,7 @@ export function ReservationFormDialog({ properties, guests, reservation, default
   const [propertyId, setPropertyId] = useState(reservation?.propertyId ?? defaults?.propertyId ?? properties.find((p) => p.status === "ACTIVE")?.id ?? "");
   const [checkIn, setCheckIn] = useState(reservation?.checkIn ?? defaults?.checkIn ?? "");
   const [checkOut, setCheckOut] = useState(reservation?.checkOut ?? defaults?.checkOut ?? "");
+  const [free, setFree] = useState(reservation?.complimentary ?? false);
   const property = properties.find((p) => p.id === propertyId);
   const nights = checkIn && checkOut && checkOut > checkIn ? diffDaysISO(checkIn, checkOut) : 0;
   const suggested = property && nights ? property.basePrice * nights : null;
@@ -70,6 +71,8 @@ export function ReservationFormDialog({ properties, guests, reservation, default
     const v = formValues(e.currentTarget);
     const newGuest = Object.fromEntries(Object.entries(v).filter(([k]) => k.startsWith("newGuest.")).map(([k, val]) => [k.slice(9), val]));
     const body: Record<string, unknown> = Object.fromEntries(Object.entries(v).filter(([k]) => !k.startsWith("newGuest.")));
+    body.complimentary = free;
+    if (free) body.totalAmount = 0;
     if (!editing) {
       if (guestMode === "new") {
         body.newGuest = newGuest;
@@ -153,9 +156,21 @@ export function ReservationFormDialog({ properties, guests, reservation, default
             </Field>
           </div>
 
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-muted/30 p-3">
+            <input type="checkbox" checked={free} onChange={(e) => setFree(e.target.checked)} className="mt-0.5 size-4 accent-[var(--color-accent)]" />
+            <span className="grid gap-0.5">
+              <span className="text-[13px] font-medium">Δωρεάν φιλοξενία</span>
+              <span className="text-xs text-muted-foreground">Συγγενείς ή φίλοι χωρίς καμία πληρωμή. Δεν είναι μίσθωση: χωρίς έσοδο, ΤΑΚΚ και δήλωση στην ΑΑΔΕ.</span>
+            </span>
+          </label>
+
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="6. Συνολικό ποσό" htmlFor="totalAmount" error={err.totalAmount} hint={suggested ? `Πρόταση ${formatMoney(suggested, property?.currency)} (${nights} × βασική τιμή)` : undefined}>
-              <Input id="totalAmount" name="totalAmount" type="number" min={0} step="0.01" required defaultValue={reservation?.totalAmount ?? ""} placeholder={suggested ? String(suggested) : ""} />
+            <Field label="6. Συνολικό ποσό" htmlFor="totalAmount" error={err.totalAmount} hint={free ? "Χωρίς ενοίκιο" : suggested ? `Πρόταση ${formatMoney(suggested, property?.currency)} (${nights} × βασική τιμή)` : undefined}>
+              {free ? (
+                <Input key="free" id="totalAmount" type="number" value={0} disabled readOnly />
+              ) : (
+                <Input key="paid" id="totalAmount" name="totalAmount" type="number" min={0} step="0.01" required defaultValue={reservation?.totalAmount ?? ""} placeholder={suggested ? String(suggested) : ""} />
+              )}
             </Field>
             <Field label="7. Πηγή" htmlFor="source">
               <Select id="source" name="source" defaultValue={reservation?.source ?? "MANUAL"}>

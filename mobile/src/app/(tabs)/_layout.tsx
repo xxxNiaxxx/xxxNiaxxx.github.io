@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Redirect, Tabs } from "expo-router";
+import { Redirect, router, Tabs } from "expo-router";
 import type { ColorValue } from "react-native";
-import { Loading } from "@/components/ui";
+import { Button, Loading } from "@/components/ui";
 import { useSession } from "@/lib/session";
 import { colors } from "@/theme";
 
@@ -25,7 +25,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: "Αρχική", headerTitle: session.organization.name, tabBarIcon: icon("home-outline") }} />
       <Tabs.Screen name="calendar" options={{ title: "Ημερολόγιο", tabBarIcon: icon("calendar-outline") }} />
-      <Tabs.Screen name="tasks" options={{ title: "Εργασίες", tabBarIcon: icon("checkbox-outline") }} />
+      <Tabs.Screen name="tasks" options={{ title: "Εργασίες", tabBarIcon: icon("checkbox-outline"), headerRight: () => <Button small title="Νέα" style={{ marginRight: 12 }} onPress={() => router.push("/task/new")} /> }} />
       <Tabs.Screen name="ai" options={{ title: "AI", headerTitle: "Βοηθός AI", tabBarIcon: icon("sparkles-outline") }} />
       <Tabs.Screen name="more" options={{ title: "Περισσότερα", tabBarIcon: icon("menu-outline") }} />
     </Tabs>

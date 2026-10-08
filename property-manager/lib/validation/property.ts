@@ -3,20 +3,21 @@ import { currency, isoDate, money, optionalQuery, optionalText, positiveInt, req
 
 export const propertyStatus = z.enum(["ACTIVE", "INACTIVE"]);
 
-export const propertyCreateSchema = z.object({
+/** Fields without defaults — updates must leave omitted fields untouched. */
+const fields = z.object({
   name: requiredText("Όνομα", 120),
   description: optionalText(4000),
   address: optionalText(300),
   city: requiredText("Πόλη / περιοχή", 120),
   country: requiredText("Χώρα", 120),
-  bedrooms: positiveInt("Υπνοδωμάτια", 50).default(1),
-  bathrooms: positiveInt("Μπάνια", 50).default(1),
-  maxGuests: positiveInt("Μέγιστοι επισκέπτες", 100).pipe(z.number().min(1, "Τουλάχιστον 1 επισκέπτης")).default(2),
-  status: propertyStatus.default("ACTIVE"),
+  bedrooms: positiveInt("Υπνοδωμάτια", 50),
+  bathrooms: positiveInt("Μπάνια", 50),
+  maxGuests: positiveInt("Μέγιστοι επισκέπτες", 100).pipe(z.number().min(1, "Τουλάχιστον 1 επισκέπτης")),
+  status: propertyStatus,
   basePrice: money,
-  currency,
+  currency: currency.unwrap(),
   ama: optionalText(20).refine((v) => !v || /^\d{6,15}$/.test(v), "Ο ΑΜΑ είναι ο αριθμητικός κωδικός από το Μητρώο της ΑΑΔΕ"),
-  kind: z.enum(["APARTMENT", "DETACHED_HOUSE"]).default("APARTMENT"),
+  kind: z.enum(["APARTMENT", "DETACHED_HOUSE"]),
   areaSqm: z.preprocess((v) => (v === "" || v == null ? null : v), z.coerce.number().int().min(5).max(5000).nullable()).optional(),
   compliance: z
     .object({
@@ -31,7 +32,16 @@ export const propertyCreateSchema = z.object({
     .optional(),
 });
 
-export const propertyUpdateSchema = propertyCreateSchema.partial();
+export const propertyCreateSchema = fields.extend({
+  bedrooms: fields.shape.bedrooms.default(1),
+  bathrooms: fields.shape.bathrooms.default(1),
+  maxGuests: fields.shape.maxGuests.default(2),
+  status: propertyStatus.default("ACTIVE"),
+  currency,
+  kind: fields.shape.kind.default("APARTMENT"),
+});
+
+export const propertyUpdateSchema = fields.partial();
 
 export const propertyListQuery = z.object({
   q: optionalQuery(z.string().trim().max(100)),

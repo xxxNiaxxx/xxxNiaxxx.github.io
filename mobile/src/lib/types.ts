@@ -14,6 +14,7 @@ export interface Reservation {
   nights: number;
   guestsCount: number;
   totalAmount: number;
+  complimentary: boolean;
   currency: string;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
   notes: string | null;
@@ -21,6 +22,7 @@ export interface Reservation {
 
 export interface Task {
   id: string;
+  assignedToUserId?: string | null;
   propertyId: string;
   propertyName: string | null;
   reservationId: string | null;
@@ -94,8 +96,126 @@ export interface ChatResponse {
   actions: AIAction[];
 }
 
+export type Role = "OWNER" | "ADMIN" | "MEMBER";
+
 export interface SessionInfo {
   user: { id: string; name: string | null; email: string };
   organization: { id: string; name: string };
-  role: string;
+  role: Role;
+  organizations: { id: string; name: string; role: Role }[];
+}
+
+export interface Property {
+  id: string;
+  name: string;
+  description: string | null;
+  address: string | null;
+  city: string;
+  country: string;
+  bedrooms: number;
+  bathrooms: number;
+  maxGuests: number;
+  status: "ACTIVE" | "INACTIVE";
+  basePrice: number;
+  currency: string;
+  ama: string | null;
+  kind: "APARTMENT" | "DETACHED_HOUSE";
+  areaSqm: number | null;
+  compliance: Record<string, boolean | string | null>;
+}
+
+export interface PropertyDetails {
+  property: Property;
+  currentReservation: Reservation | null;
+  upcomingReservations: Reservation[];
+  openTasks: Task[];
+  month: { from: string; to: string; income: number; expenses: number; net: number; occupancy: number; bookedNights: number };
+}
+
+export interface Guest {
+  id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string | null;
+  phone: string | null;
+  country: string | null;
+  languagePreference: string | null;
+  language: string;
+  notes: string | null;
+}
+
+export interface GuestDetails {
+  guest: Guest;
+  reservations: Reservation[];
+  messages: Message[];
+  stats: { stays: number; totalRevenue: number; averageStay: number; currency: string };
+}
+
+export interface StayTax {
+  regime: "INDIVIDUAL" | "BUSINESS";
+  ama: string | null;
+  complimentary: boolean;
+  longStay: boolean;
+  climateFee: number;
+  climateFeeMonths: { period: string; nights: number; amount: number }[];
+  rent: number;
+  vat: number;
+  presenceFee: number;
+  declaration: { required: boolean; status: "PENDING" | "DECLARED" | "NOT_REQUIRED"; triggerDate: string; deadline: string; due: boolean; overdue: boolean; daysLeft: number };
+}
+
+export interface Transaction {
+  id: string;
+  propertyId: string;
+  propertyName: string | null;
+  reservationId: string | null;
+  type: "INCOME" | "EXPENSE";
+  category: string;
+  amount: number;
+  currency: string;
+  description: string | null;
+  transactionDate: string;
+}
+
+export interface RevenueSummary {
+  from: string;
+  to: string;
+  currency: string;
+  income: number;
+  expenses: number;
+  net: number;
+  occupancy: number;
+  bookedNights: number;
+  availableNights: number;
+  byProperty: { propertyId: string; name: string; income: number; expenses: number; net: number; occupancy: number; bookedNights: number }[];
+  byCategory: { category: string; income: number; expenses: number }[];
+}
+
+export interface Member {
+  userId: string;
+  name: string;
+  email: string;
+  role: Role;
+  joinedAt: string;
+}
+
+export interface Invitation {
+  id: string;
+  email: string;
+  role: Role;
+  invitedByName: string | null;
+  expiresAt: string;
+}
+
+export interface Memory {
+  id: string;
+  kind: "GUEST_INFO" | "PREFERENCE" | "MESSAGE_TEMPLATE";
+  content: string;
+  propertyId: string | null;
+  propertyName: string | null;
+  language: string | null;
+  messageKind: string | null;
+  source: "MANUAL" | "CHAT" | "EDIT";
+  active: boolean;
 }

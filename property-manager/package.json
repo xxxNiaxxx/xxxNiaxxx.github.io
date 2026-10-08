@@ -15,6 +15,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
+    "db:remove-demo": "tsx prisma/seed.ts --remove",
     "db:reset": "prisma migrate reset --force",
     "postinstall": "prisma generate",
     "vercel-build": "prisma migrate deploy && next build"

@@ -1,10 +1,11 @@
-import { Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Alert, Linking, Text, TextInput, View } from "react-native";
 import { Badge, Button, Card, ErrorBox, Loading, Screen, SectionTitle, statusTone, styles } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { formatDateTime, formatDay, formatMoney, humanize } from "@/lib/format";
-import type { Message, Reservation, Task } from "@/lib/types";
+import type { Message, Reservation, StayTax, Task } from "@/lib/types";
+import { confirm, useMutation } from "@/lib/use-mutation";
 import { useQuery } from "@/lib/use-query";
 import { colors } from "@/theme";
 
@@ -12,6 +13,7 @@ interface Details {
   reservation: Reservation;
   tasks: Task[];
   messages: Message[];
+  tax: StayTax;
 }
 
 export default function ReservationScreen() {
@@ -21,6 +23,7 @@ export default function ReservationScreen() {
   const [sending, setSending] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [original, setOriginal] = useState<string | null>(null);
+  const action = useMutation();
 
   if (loading && !data) return <Loading />;
   if (!data) return <Screen>{error && <ErrorBox message={error} onRetry={reload} />}</Screen>;
@@ -63,17 +66,27 @@ export default function ReservationScreen() {
           <Badge label={humanize(r.status)} tone={statusTone[r.status]} />
         </View>
         <Text style={[styles.rowSub, { marginTop: 6 }]}>{formatDay(r.checkIn)} → {formatDay(r.checkOut)} · {r.nights} νύχτες · {r.guestsCount} άτομα</Text>
-        <Text style={{ fontSize: 22, fontWeight: "700", color: colors.text, marginTop: 10 }}>{formatMoney(r.totalAmount, r.currency)}</Text>
+        <Text style={{ fontSize: 22, fontWeight: "700", color: colors.text, marginTop: 10 }}>{r.complimentary ? "Δωρεάν φιλοξενία" : formatMoney(r.totalAmount, r.currency)}</Text>
         <Text style={styles.rowSub}>{r.confirmationCode ?? "Χωρίς κωδικό κράτησης"} · {humanize(r.source)}</Text>
         {r.notes && <Text style={{ marginTop: 10, backgroundColor: colors.muted, padding: 10, borderRadius: 10, color: colors.text }}>{r.notes}</Text>}
-        <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
           {r.guestPhone && <Button small variant="outline" title="Κλήση" onPress={() => Linking.openURL(`tel:${r.guestPhone}`)} />}
           {r.guestEmail && <Button small variant="outline" title="Email" onPress={() => Linking.openURL(`mailto:${r.guestEmail}`)} />}
+          <Button small variant="outline" title="Επισκέπτης" onPress={() => router.push(`/guest/${r.guestId}`)} />
+          <Button small variant="outline" title="Επεξεργασία" onPress={() => router.push(`/reservation/edit/${r.id}`)} />
+          {open && (
+            <Button small variant="danger" title="Ακύρωση κράτησης" loading={action.pending}
+              onPress={() => confirm("Ακύρωση κράτησης;", "Οι ανοιχτές εργασίες της διαμονής θα ακυρωθούν.", "Ακύρωση κράτησης", () =>
+                void action.run(() => api(`/api/reservations/${r.id}/cancel`, { method: "POST" }), { onSuccess: () => void reload() }))} />
+          )}
         </View>
       </Card>
 
+      <TaxCard tax={data.tax} reservationId={r.id} onChange={reload} />
+
       <Card>
-        <SectionTitle title="Εργασίες" count={data.tasks.length} />
+        <SectionTitle title="Εργασίες" count={data.tasks.length}
+          right={<Button small variant="ghost" title="+ Προσθήκη" onPress={() => router.push({ pathname: "/task/new", params: { propertyId: r.propertyId, reservationId: r.id } })} />} />
         {data.tasks.length === 0 && <Text style={styles.rowSub}>Δεν υπάρχουν εργασίες για τη διαμονή.</Text>}
         {data.tasks.map((t) => (
           <View key={t.id} style={styles.row}>
@@ -107,5 +120,62 @@ export default function ReservationScreen() {
         ))}
       </Card>
     </Screen>
+  );
+}
+
+function TaxCard({ tax, reservationId, onChange }: { tax: StayTax; reservationId: string; onChange: () => void }) {
+  const { run, pending } = useMutation();
+  const setStatus = (status: StayTax["declaration"]["status"]) =>
+    run(() => api(`/api/reservations/${reservationId}/declaration`, { body: { status } }), { onSuccess: onChange });
+  const row = (label: string, value: string) => (
+    <View style={[styles.row, { paddingVertical: 8 }]}>
+      <Text style={[styles.rowSub, { flex: 1, marginTop: 0 }]}>{label}</Text>
+      <Text style={{ color: colors.text, fontWeight: "600" }}>{value}</Text>
+    </View>
+  );
+  return (
+    <Card>
+      <SectionTitle title="Φορολογικά & ΑΑΔΕ" />
+      <Text style={styles.rowSub}>{tax.ama ? `ΑΜΑ ${tax.ama}` : "Το ακίνητο δεν έχει ΑΜΑ"}</Text>
+      {tax.complimentary ? (
+        <Text style={[styles.rowSub, { marginTop: 8 }]}>Δωρεάν φιλοξενία: δεν είναι μίσθωση — χωρίς έσοδο, ΤΑΚΚ και δήλωση διαμονής.</Text>
+      ) : (
+        <>
+          {row("ΤΑΚΚ (τέλος ανθεκτικότητας)", formatMoney(tax.climateFee))}
+          {tax.climateFeeMonths.length > 1 && tax.climateFeeMonths.map((m) => row(`  ${m.period} · ${m.nights} νύχτες`, formatMoney(m.amount)))}
+          {tax.regime === "BUSINESS" && (
+            <>
+              {row("Μίσθωμα χωρίς ΦΠΑ", formatMoney(tax.rent))}
+              {row("ΦΠΑ 13%", formatMoney(tax.vat))}
+              {row("Τέλος παρεπιδημούντων 0,5%", formatMoney(tax.presenceFee))}
+            </>
+          )}
+          {tax.longStay ? (
+            <Text style={[styles.rowSub, { marginTop: 8 }]}>60+ νύχτες: δεν είναι βραχυχρόνια μίσθωση — δηλώνεται ως κανονική μίσθωση.</Text>
+          ) : tax.declaration.required ? (
+            <View style={[styles.row, { flexWrap: "wrap" }]}>
+              <View style={{ flex: 1, minWidth: 140 }}>
+                <Text style={styles.rowSub}>Δήλωση διαμονής</Text>
+                {tax.declaration.status === "DECLARED" ? (
+                  <Badge label="Δηλώθηκε" tone="success" />
+                ) : (
+                  <Badge label={`${tax.declaration.overdue ? "Εκπρόθεσμη · " : "Έως "}${formatDay(tax.declaration.deadline, false)}`} tone={tax.declaration.overdue ? "danger" : "neutral"} />
+                )}
+              </View>
+              {tax.declaration.status === "DECLARED" ? (
+                <Button small variant="ghost" title="Αναίρεση" loading={pending} onPress={() => setStatus("PENDING")} />
+              ) : tax.declaration.due ? (
+                <View style={{ flexDirection: "row", gap: 6 }}>
+                  <Button small variant="ghost" title="Δεν απαιτείται" loading={pending} onPress={() => setStatus("NOT_REQUIRED")} />
+                  <Button small variant="outline" title="Δηλώθηκε" loading={pending} onPress={() => setStatus("DECLARED")} />
+                </View>
+              ) : null}
+            </View>
+          ) : (
+            <Text style={[styles.rowSub, { marginTop: 8 }]}>Δεν απαιτείται δήλωση διαμονής.</Text>
+          )}
+        </>
+      )}
+    </Card>
   );
 }

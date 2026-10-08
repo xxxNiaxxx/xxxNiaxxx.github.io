@@ -18,7 +18,8 @@ export async function syncBookingIncome(client: Tx, r: Reservation) {
   const existing = await client.transaction.findFirst({
     where: { reservationId: r.id, type: "INCOME", category: "BOOKING", organizationId: r.organizationId },
   });
-  const booked = (BOOKED as readonly string[]).includes(r.status);
+  // A free stay brings no income.
+  const booked = (BOOKED as readonly string[]).includes(r.status) && !r.complimentary;
   if (!booked) {
     if (existing) await client.transaction.delete({ where: { id: existing.id } });
     return;

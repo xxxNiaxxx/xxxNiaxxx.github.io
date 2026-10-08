@@ -29,12 +29,26 @@ is a decimal number in the record's `currency` (EUR by default).
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| POST | `/api/auth/register` | public · `{ name, email, password, organizationName }` → creates user, organization and OWNER membership |
+| POST | `/api/auth/register` | public · `{ name, email, password, organizationName }` → creates user, organization and OWNER membership · with `invite` (token) instead of `organizationName` the user joins that team |
 | GET/POST | `/api/auth/*` | Auth.js handlers (sign-in uses the Credentials provider) |
 | GET / PATCH | `/api/me` | current user · PATCH `{ name }` |
 | GET / PATCH | `/api/organization` | active organization · PATCH `{ name }` (ADMIN+) |
 | POST | `/api/organizations/active` | `{ organizationId }` — switch to another organization **you are a member of** |
 | GET | `/api/members` | members of the active organization |
+| PATCH | `/api/members/:userId` | `{ role: "ADMIN" \| "MEMBER" }` — OWNER only; the owner's role is fixed |
+| DELETE | `/api/members/:userId` | remove a member (ADMIN+; only the OWNER removes admins), or leave when it is yourself; their open tasks become unassigned |
+
+## Team invitations
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/api/invitations` | pending invitations (ADMIN+, empty list for members) |
+| POST | `/api/invitations` | `{ email, role }` (ADMIN+; only the OWNER invites admins) → `{ invitation, token, path }`. Share `origin + path`; the token is shown only once (only its hash is stored). Inviting the same email again replaces the old link. |
+| DELETE | `/api/invitations/:id` | revoke |
+| POST | `/api/invitations/accept` | `{ token }` — signed-in user joins the team; the account email must match the invited email. Links expire after 7 days. |
+
+The page `/invite/:token` is public: it shows who invited you and offers sign-up
+(`/register?invite=…`, joins the team without creating an organization) or sign-in.
 
 ## Mobile app session
 
@@ -92,14 +106,17 @@ Create body:
   "source": "MANUAL",                 // MANUAL | AIRBNB | BOOKING_COM | DIRECT | OTHER
   "confirmationCode": "DH-4100",
   "status": "CONFIRMED",              // CONFIRMED | PENDING (COMPLETED/CANCELLED via PATCH)
-  "notes": "…"
+  "notes": "…",
+  "complimentary": false              // free stay: totalAmount must be 0
 }
 ```
 
 Rules: no two `CONFIRMED` stays may share a night at the same property
 (same-day turnover is allowed) → `409`. Checked in a serializable transaction.
 Confirmed/completed reservations automatically keep one `BOOKING` income
-transaction in sync.
+transaction in sync. A free stay (`complimentary: true`, relatives/friends with
+no payment) has no income, no ΤΑΚΚ and no AADE stay declaration; it is rejected
+with `422` if `totalAmount` is above 0. PATCH only changes the fields it is given.
 
 ## Calendar
 

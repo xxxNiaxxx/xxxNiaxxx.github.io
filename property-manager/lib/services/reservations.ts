@@ -7,6 +7,7 @@ import {
   reservationCreateSchema,
   reservationListQuery,
   reservationUpdateSchema,
+  freeStayHasNoRent,
   type ReservationListQuery,
 } from "@/lib/validation/reservation";
 import { syncBookingIncome } from "./financials";
@@ -146,6 +147,9 @@ export async function createReservation(ctx: OrgContext, input: unknown) {
         currency: data.currency,
         status: data.status,
         notes: data.notes,
+        complimentary: data.complimentary,
+        // A free stay is not a rental, so it needs no AADE stay declaration.
+        ...(data.complimentary ? { declarationStatus: "NOT_REQUIRED" as const } : {}),
       },
       include,
     });
@@ -165,7 +169,12 @@ export async function updateReservation(ctx: OrgContext, id: string, input: unkn
       checkOut: data.checkOut ?? dateToISO(current.checkOut),
       status: data.status ?? current.status,
       guestsCount: data.guestsCount ?? current.guestsCount,
+      complimentary: data.complimentary ?? current.complimentary,
+      totalAmount: data.totalAmount ?? Number(current.totalAmount),
     };
+    if (next.complimentary && next.totalAmount > 0) {
+      throw new AppError("VALIDATION", freeStayHasNoRent.message, [{ path: "totalAmount", message: freeStayHasNoRent.message }]);
+    }
     if (next.checkOut <= next.checkIn) {
       throw new AppError("VALIDATION", "Η αναχώρηση πρέπει να είναι μετά την άφιξη", [
         { path: "checkOut", message: "Η αναχώρηση πρέπει να είναι μετά την άφιξη" },
@@ -182,11 +191,20 @@ export async function updateReservation(ctx: OrgContext, id: string, input: unkn
       data.status && data.status !== current.status
         ? { cancelledAt: data.status === "CANCELLED" ? new Date() : null }
         : {};
+    const complimentaryChange =
+      next.complimentary !== current.complimentary
+        ? next.complimentary
+          ? { declarationStatus: "NOT_REQUIRED" as const, declaredAt: null }
+          : current.declarationStatus === "NOT_REQUIRED"
+            ? { declarationStatus: "PENDING" as const }
+            : {}
+        : {};
     const updated = await tx.reservation.update({
       where: { id },
       data: {
         ...data,
         ...statusChange,
+        ...complimentaryChange,
         checkIn: data.checkIn ? isoToDate(data.checkIn) : undefined,
         checkOut: data.checkOut ? isoToDate(data.checkOut) : undefined,
       },

@@ -2,7 +2,11 @@
  * Demo data for "Demo Hospitality". Idempotent: removes the demo organization
  * and demo users, then recreates everything with dates around today.
  *
- * Sign in with demo@demo-hospitality.test / demo1234
+ * Sign in with demo@demo-hospitality.test / demo1234 (or DEMO_PASSWORD when set —
+ * use a private one on a public server).
+ *
+ * `tsx prisma/seed.ts --remove` (npm run db:remove-demo) only deletes the demo
+ * organization and demo users — run it on a production database.
  */
 import { PrismaClient, type PropertyKind, type ReservationStatus, type TaskType } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -61,7 +65,8 @@ async function reset() {
 async function main() {
   await reset();
   const today = todayISO();
-  const passwordHash = await bcrypt.hash("demo1234", 10);
+  const password = process.env.DEMO_PASSWORD || "demo1234";
+  const passwordHash = await bcrypt.hash(password, 10);
 
   const org = await db.organization.create({ data: { name: "Demo Hospitality" } });
   const users = [];
@@ -164,6 +169,15 @@ async function main() {
     reservations.push(r);
   }
 
+  // One free stay for relatives: no rent, no ΤΑΚΚ, no AADE declaration.
+  const freeIndex = reservations.findIndex((r, i) => !forced.includes(selected[i]) && r.status === "CONFIRMED" && r.checkIn > isoToDate(addDaysISO(today, 7)));
+  if (freeIndex >= 0) {
+    reservations[freeIndex] = await db.reservation.update({
+      where: { id: reservations[freeIndex].id },
+      data: { complimentary: true, totalAmount: 0, source: "DIRECT", declarationStatus: "NOT_REQUIRED", notes: "Δωρεάν φιλοξενία — συγγενείς του ιδιοκτήτη." },
+    });
+  }
+
   // AADE stay declarations: everything that left before this month is declared; recent departures are pending.
   const monthStart = `${today.slice(0, 7)}-01`;
   for (const r of reservations) {
@@ -206,7 +220,7 @@ async function main() {
 
   // Income for booked stays + expenses.
   for (const r of reservations) {
-    if (r.status !== "CONFIRMED" && r.status !== "COMPLETED") continue;
+    if ((r.status !== "CONFIRMED" && r.status !== "COMPLETED") || r.complimentary) continue;
     await db.transaction.create({
       data: {
         organizationId: org.id, propertyId: r.propertyId, reservationId: r.id, type: "INCOME", category: "BOOKING",
@@ -299,10 +313,14 @@ async function main() {
   console.log(
     `Seeded Demo Hospitality: ${properties.length} properties, ${guests.length} guests, ${reservations.length} reservations, ${taskCount} tasks.`,
   );
-  console.log("Σύνδεση: demo@demo-hospitality.test / demo1234");
+  console.log(`Σύνδεση: demo@demo-hospitality.test / ${process.env.DEMO_PASSWORD ? "(ο κωδικός DEMO_PASSWORD)" : password}`);
 }
 
-main()
+const run = process.argv.includes("--remove")
+  ? reset().then(() => console.log("Τα δοκιμαστικά δεδομένα (Demo Hospitality) διαγράφηκαν."))
+  : main();
+
+run
   .catch((e) => {
     console.error(e);
     process.exit(1);

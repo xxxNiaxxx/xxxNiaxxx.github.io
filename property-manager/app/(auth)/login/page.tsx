@@ -4,6 +4,9 @@ import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Σύνδεση" };
 
+/** The demo credentials are shown in development, or online only when SHOW_DEMO_LOGIN=1. */
+const showDemoLogin = process.env.NODE_ENV !== "production" || process.env.SHOW_DEMO_LOGIN === "1";
+
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
   return (
@@ -17,12 +20,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           Δημιουργία λογαριασμού
         </Link>
       </p>
-      <div className="mt-8 rounded-xl border border-dashed border-border-strong bg-surface p-4 text-[13px] text-muted-foreground">
-        <p className="font-medium text-foreground">Δοκιμαστικός λογαριασμός</p>
-        <p className="mt-1">
-          demo@demo-hospitality.test · <span className="font-mono">demo1234</span>
-        </p>
-      </div>
+      {showDemoLogin && (
+        <div className="mt-8 rounded-xl border border-dashed border-border-strong bg-surface p-4 text-[13px] text-muted-foreground">
+          <p className="font-medium text-foreground">Δοκιμαστικός λογαριασμός</p>
+          <p className="mt-1">
+            demo@demo-hospitality.test · <span className="font-mono">demo1234</span>
+          </p>
+        </div>
+      )}
     </>
   );
 }

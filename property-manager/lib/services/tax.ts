@@ -64,13 +64,15 @@ export function stayTaxInfo(r: StayRow, regime: TaxRegime, today: string) {
   const booked = r.status === "CONFIRMED" || r.status === "COMPLETED";
   const cancelledPaid = r.status === "CANCELLED" && total > 0;
   const longStay = nights >= SHORT_TERM_MAX_NIGHTS_EXCLUSIVE;
+  // Free stay (no rent) is not a short-term rental: no ΤΑΚΚ, VAT, presence fee or declaration.
+  const free = r.complimentary;
   const trigger = r.status === "CANCELLED" ? (r.cancelledAt ? dateToISO(r.cancelledAt) : checkOut) : checkOut;
-  const requiresDeclaration = (booked || cancelledPaid) && !longStay && r.declarationStatus !== "NOT_REQUIRED";
+  const requiresDeclaration = (booked || cancelledPaid) && !longStay && !free && r.declarationStatus !== "NOT_REQUIRED";
   const deadline = stayDeclarationDeadline(trigger);
   const due = requiresDeclaration && r.declarationStatus === "PENDING" && trigger <= today;
-  const climateFeeMonths = booked ? climateFeeByMonth({ checkIn, checkOut, totalAmount: total }, { kind: r.property.kind as PropertyKind, areaSqm: r.property.areaSqm }) : [];
+  const climateFeeMonths = booked && !free ? climateFeeByMonth({ checkIn, checkOut, totalAmount: total }, { kind: r.property.kind as PropertyKind, areaSqm: r.property.areaSqm }) : [];
   const climateFee = round2(climateFeeMonths.reduce((a, m) => a + m.amount, 0));
-  const business = regime === "BUSINESS" ? businessBreakdown(total) : null;
+  const business = regime === "BUSINESS" && !free ? businessBreakdown(total) : null;
   return {
     reservationId: r.id,
     propertyId: r.propertyId,
@@ -80,6 +82,7 @@ export function stayTaxInfo(r: StayRow, regime: TaxRegime, today: string) {
     confirmationCode: r.confirmationCode,
     source: r.source,
     status: r.status,
+    complimentary: free,
     checkIn,
     checkOut,
     nights,
@@ -247,7 +250,7 @@ export async function getTaxOverview(ctx: OrgContext, now = new Date()) {
   if (tax.setting === "AUTO" && tax.propertiesWithAma === 2) {
     warnings.push({ level: "medium", title: "Με έναν ακόμη ΑΜΑ γίνεστε επιχείρηση", detail: "Από το 3ο ακίνητο με ΑΜΑ απαιτείται έναρξη εργασιών εντός 30 ημερών: ΦΠΑ 13%, τέλος παρεπιδημούντων 0,5%, myDATA." });
   }
-  for (const s of stays.filter((x) => x.longStay && (x.status === "CONFIRMED" || x.status === "COMPLETED") && x.checkOut >= from)) {
+  for (const s of stays.filter((x) => x.longStay && !x.complimentary && (x.status === "CONFIRMED" || x.status === "COMPLETED") && x.checkOut >= from)) {
     warnings.push({ level: "low", title: `${s.guestName}: διαμονή ${s.nights} νυχτών`, detail: "Διαμονές 60+ ημερών δεν είναι βραχυχρόνια μίσθωση — υποβάλλεται Δήλωση Πληροφοριακών Στοιχείων Μίσθωσης." });
   }
 
