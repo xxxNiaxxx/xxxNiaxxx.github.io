@@ -13,6 +13,7 @@ import { useMutation } from "@/lib/client/use-mutation";
 import { formatDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { WaitlistEntryDTO } from "@/lib/services/waitlist";
+import { WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
 
 type Status = WaitlistEntryDTO["status"];
 
@@ -22,7 +23,6 @@ const STATUS: Record<Status, { label: string; tone: BadgeTone }> = {
   REJECTED: { label: "Απορρίφθηκε", tone: "neutral" },
   REGISTERED: { label: "Έφτιαξε λογαριασμό", tone: "success" },
 };
-const PLATFORMS: Record<string, string> = { BOOKING_COM: "Booking.com", AIRBNB: "Airbnb", DIRECT: "Απευθείας", OTHER: "Άλλη" };
 const DEVICES: Record<string, string> = { ANDROID: "Android", IPHONE: "iPhone", NONE: "Μόνο υπολογιστής" };
 const REGIMES: Record<string, string> = { INDIVIDUAL: "Ιδιώτης", BUSINESS: "Επιχείρηση" };
 
@@ -167,7 +167,7 @@ export function WaitlistAdmin({
                     <span>Αίτηση {formatDay(e.createdAt.slice(0, 10), { day: "numeric", month: "short", year: "numeric" })}</span>
                     {e.city && <span>{e.city}</span>}
                     {e.propertiesCount && <span>{e.propertiesCount} {e.propertiesCount === 1 ? "ακίνητο" : "ακίνητα"}</span>}
-                    {e.platforms.length > 0 && <span>{e.platforms.map((p) => PLATFORMS[p] ?? p).join(", ")}</span>}
+                    {e.platforms.length > 0 && <span>{e.platforms.map((p) => WAITLIST_PLATFORMS[p] ?? p).join(", ")}</span>}
                     {e.regime && <span>{REGIMES[e.regime] ?? e.regime}</span>}
                     {e.device && <span>{DEVICES[e.device] ?? e.device}{e.playEmail && e.playEmail !== e.email ? ` · Play: ${e.playEmail}` : ""}</span>}
                     {e.status === "APPROVED" && e.approvedAt && (

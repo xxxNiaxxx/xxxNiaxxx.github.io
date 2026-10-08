@@ -4,14 +4,9 @@ import { CheckCircle2 } from "lucide-react";
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/input";
+import { WAITLIST_PLATFORM_GROUPS } from "@/lib/waitlist-options";
 import { waitlistAction, type AuthFormState } from "../actions";
 
-const PLATFORMS = [
-  ["BOOKING_COM", "Booking.com"],
-  ["AIRBNB", "Airbnb"],
-  ["DIRECT", "Απευθείας"],
-  ["OTHER", "Άλλη"],
-] as const;
 
 export function WaitlistForm() {
   const [state, action, pending] = useActionState<AuthFormState, FormData>(waitlistAction, {});
@@ -64,16 +59,21 @@ export function WaitlistForm() {
           </Select>
         </Field>
       </div>
-      <fieldset className="grid gap-1.5">
-        <legend className="mb-1.5 text-[13px] font-medium">Πού έχετε τις κρατήσεις σας;</legend>
-        <div className="flex flex-wrap gap-2">
-          {PLATFORMS.map(([value, label]) => (
-            <label key={value} className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
-              <input type="checkbox" name="platforms" value={value} defaultChecked={v.platforms?.split(",").includes(value)} className="size-4 accent-[var(--color-accent)]" />
-              {label}
-            </label>
-          ))}
-        </div>
+      <fieldset className="grid gap-2">
+        <legend className="mb-1.5 text-[13px] font-medium">Πού έχετε τις κρατήσεις σας; <span className="font-normal text-muted-foreground">(όσα ισχύουν)</span></legend>
+        {WAITLIST_PLATFORM_GROUPS.map((group) => (
+          <div key={group.label} className="grid gap-1.5">
+            <span className="text-xs text-muted-foreground">{group.label}</span>
+            <div className="flex flex-wrap gap-2">
+              {group.options.map(([value, label]) => (
+                <label key={value} className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
+                  <input type="checkbox" name="platforms" value={value} defaultChecked={v.platforms?.split(",").includes(value)} className="size-4 accent-[var(--color-accent)]" />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
       </fieldset>
       <Field label="Τι κινητό έχετε;" htmlFor="device" error={err.device} hint={device === "IPHONE" ? "Η εφαρμογή για iPhone έρχεται αργότερα· μέχρι τότε δουλεύει κανονικά από τον browser του κινητού." : undefined}>
         <Select id="device" name="device" value={device} onChange={(e) => setDevice(e.target.value)}>
@@ -94,7 +94,7 @@ export function WaitlistForm() {
         </Field>
       )}
       <Field label="Κάτι που θέλετε να μας πείτε; (προαιρετικό)" htmlFor="message" error={err.message}>
-        <Textarea id="message" name="message" rows={3} maxLength={1000} defaultValue={v.message} placeholder="π.χ. τι σας δυσκολεύει σήμερα στη διαχείριση" />
+        <Textarea id="message" name="message" rows={3} maxLength={1000} defaultValue={v.message} placeholder="π.χ. άλλη πλατφόρμα ή channel manager που χρησιμοποιείτε, τι σας δυσκολεύει σήμερα στη διαχείριση" />
       </Field>
       <div className="grid gap-1.5">
         <label className="flex items-start gap-2.5 text-sm">

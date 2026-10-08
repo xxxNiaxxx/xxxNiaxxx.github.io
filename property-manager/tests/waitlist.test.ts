@@ -25,7 +25,7 @@ const form = (over: Record<string, unknown> = {}) => ({
   phone: "",
   city: "Χανιά",
   propertiesCount: "2",
-  platforms: ["BOOKING_COM", "AIRBNB"],
+  platforms: ["BOOKING_COM", "AIRBNB", "VRBO"],
   regime: "INDIVIDUAL",
   device: "ANDROID",
   playEmail: "",
@@ -59,10 +59,11 @@ describe("waitlist", () => {
 
   it("joining needs consent and emails the applicant and the admins", async () => {
     await expect(joinWaitlist(form({ consent: false }), ORIGIN)).rejects.toMatchObject({ name: "ZodError" });
+    await expect(joinWaitlist(form({ platforms: ["MYSPACE"] }), ORIGIN)).rejects.toMatchObject({ name: "ZodError" });
     const data = form();
     await joinWaitlist(data, ORIGIN);
     const entry = await db.waitlistEntry.findUniqueOrThrow({ where: { email: data.email } });
-    expect(entry).toMatchObject({ status: "PENDING", propertiesCount: 2, platforms: ["BOOKING_COM", "AIRBNB"], device: "ANDROID", playEmail: data.email });
+    expect(entry).toMatchObject({ status: "PENDING", propertiesCount: 2, platforms: ["BOOKING_COM", "AIRBNB", "VRBO"], device: "ANDROID", playEmail: data.email });
     expect(sent.map((m) => m.to)).toEqual([data.email, ["owner@test.local"]]);
     expect(sent[0].text).toContain("δωρεάν μέχρι το τέλος του 2026");
     expect(sent[1].action?.url).toBe(`${ORIGIN}/admin/waitlist`);
@@ -119,6 +120,7 @@ describe("waitlist", () => {
     expect(csv.startsWith("﻿Ημερομηνία,Όνομα,Email")).toBe(true);
     expect(csv).toContain(`"'=HYPERLINK(""x"")"`);
     expect(csv).toContain(`"Γεια, σας"`);
+    expect(csv).toContain(`"Booking.com, Airbnb, Vrbo"`);
     const entry = await db.waitlistEntry.findUniqueOrThrow({ where: { email: data.email } });
     await deleteEntry(entry.id);
     expect(await db.waitlistEntry.findUnique({ where: { id: entry.id } })).toBeNull();
