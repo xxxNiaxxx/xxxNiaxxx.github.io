@@ -26,6 +26,8 @@ const rowSchema = z.object({
   commissionPercent: z.number().min(0).max(100).nullish(),
   status: z.enum(["CONFIRMED", "PENDING", "CANCELLED", "COMPLETED"]),
   notes: z.string().trim().max(4000).nullish(),
+  /** Every column of the export row (header → text). */
+  details: z.record(z.string().max(120), z.string().max(2000)).refine((d) => Object.keys(d).length <= 80).optional(),
 });
 
 export const importSchema = z.object({
@@ -63,6 +65,22 @@ async function findOrCreateGuest(ctx: OrgContext, row: z.infer<typeof rowSchema>
     data: { organizationId: ctx.organizationId, firstName, lastName, email, phone: row.phone || null, country: row.country || null },
   });
   return guest.id;
+}
+
+/** Keeps the whole export row on the reservation and completes the guest's missing contact details. */
+async function saveDetails(reservationId: string, source: string, row: z.infer<typeof rowSchema>) {
+  const r = await db.reservation.update({
+    where: { id: reservationId },
+    data: row.details && Object.keys(row.details).length ? { platformDetails: { source, importedAt: new Date().toISOString(), fields: Object.entries(row.details) } } : {},
+    include: { guest: true },
+  });
+  const email = row.email?.includes("@") ? row.email.toLowerCase() : null;
+  const missing = {
+    ...(!r.guest.phone && row.phone ? { phone: row.phone.slice(0, 40) } : {}),
+    ...(!r.guest.email && email ? { email } : {}),
+    ...(!r.guest.country && row.country ? { country: row.country } : {}),
+  };
+  if (Object.keys(missing).length) await db.guest.update({ where: { id: r.guestId }, data: missing });
 }
 
 /**
@@ -118,10 +136,12 @@ export async function importReservations(ctx: OrgContext, input: unknown) {
         const guest = existing.calendarFeedId ? { guestId: await findOrCreateGuest(ctx, row) } : {};
         const updated = await updateReservation(ctx, existing.id, { ...fields, ...guest });
         if (row.externalId && !existing.externalId) await db.reservation.update({ where: { id: existing.id }, data: { externalId: row.externalId } });
+        await saveDetails(existing.id, data.source, row);
         results.push({ line: row.line, outcome: "updated", reservationId: updated.id });
       } else {
         const guestId = await findOrCreateGuest(ctx, row);
         const created = await createReservation(ctx, { ...fields, guestId, externalId: row.externalId ?? undefined });
+        await saveDetails(created.id, data.source, row);
         results.push({ line: row.line, outcome: "created", reservationId: created.id });
       }
     } catch (e) {

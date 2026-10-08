@@ -206,6 +206,8 @@ model Reservation {
   calendarFeedId    String?
   /// UID of the iCal event, to recognise it on the next sync.
   icalUid           String?
+  /// Every column of the platform's export row (Booking/Airbnb), shown as is on the reservation.
+  platformDetails   Json?
   /// Platform commission charged on this stay (e.g. Booking.com 15%).
   commission        Decimal               @default(0) @db.Decimal(12, 2)
   currency          String                @default("EUR") @db.Char(3)

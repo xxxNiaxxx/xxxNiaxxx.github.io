@@ -80,7 +80,7 @@ export function ImportWizard({ properties, pricing }: { properties: Property[]; 
     }
   }
 
-  const rows = useMemo(() => buildRows(data, mapping, dateOrder, today()), [data, mapping, dateOrder]);
+  const rows = useMemo(() => buildRows(data, mapping, dateOrder, today(), headers), [data, mapping, dateOrder, headers]);
   const propertyFor = (listing: string) => properties.find((p) => p.id === (mapping.listing !== undefined ? listingMap[listing] : singleProperty));
   const rate = pricing.commissionRates[source] ?? 0;
   const withFee = rows.map((r) => {
@@ -108,7 +108,7 @@ export function ImportWizard({ properties, pricing }: { properties: Property[]; 
           amountMode: mode,
           rows: ready.map((r) => ({
             line: r.line, externalId: r.externalId, propertyId: r.property!.id, guestName: r.guestName, email: r.email, phone: r.phone, country: r.country,
-            checkIn: r.checkIn, checkOut: r.checkOut, guestsCount: r.guestsCount, amount: r.amount, commission: r.commission, commissionPercent: r.commissionPercent, status: r.status, notes: r.notes,
+            checkIn: r.checkIn, checkOut: r.checkOut, guestsCount: r.guestsCount, amount: r.amount, commission: r.commission, commissionPercent: r.commissionPercent, status: r.status, notes: r.notes, details: r.details,
           })),
         },
       });

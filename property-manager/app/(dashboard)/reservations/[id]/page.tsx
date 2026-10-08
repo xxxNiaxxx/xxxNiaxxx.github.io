@@ -26,7 +26,7 @@ export const metadata: Metadata = { title: "Κράτηση" };
 export default async function ReservationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { ctx } = await getPageContext();
-  const [{ reservation: r, tasks, messages }, options, tax] = await Promise.all([
+  const [{ reservation: r, tasks, messages, platform }, options, tax] = await Promise.all([
     orNotFound(getReservationDetails(ctx, id)),
     getFormOptions(ctx),
     orNotFound(getStayTax(ctx, id)),
@@ -67,6 +67,17 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
               {r.notes && <p className="mt-4 rounded-lg bg-muted/60 p-3 text-sm">{r.notes}</p>}
             </CardContent>
           </Card>
+          {platform && (
+            <Card>
+              <CardHeader
+                title={`Στοιχεία από ${SOURCE_LABELS[platform.source ?? r.source] ?? "την πλατφόρμα"}`}
+                description={platform.importedAt ? `Από το αρχείο κρατήσεων · εισαγωγή ${formatDay(platform.importedAt.slice(0, 10), { day: "numeric", month: "short", year: "numeric" })}` : undefined}
+              />
+              <CardContent>
+                <DefinitionList items={platform.fields.map((f) => ({ label: f.label, value: <span className="whitespace-pre-line break-words">{f.value}</span> }))} />
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardHeader title="Μηνύματα επισκέπτη" description="Οδηγίες άφιξης και άλλη επικοινωνία" />
             <CardContent className="grid gap-4">

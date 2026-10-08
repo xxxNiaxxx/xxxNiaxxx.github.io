@@ -14,6 +14,7 @@ interface Details {
   tasks: Task[];
   messages: Message[];
   tax: StayTax;
+  platform: { source: string | null; importedAt: string | null; fields: { label: string; value: string }[] } | null;
 }
 
 export default function ReservationScreen() {
@@ -81,6 +82,18 @@ export default function ReservationScreen() {
           )}
         </View>
       </Card>
+
+      {data.platform && (
+        <Card>
+          <SectionTitle title={`Στοιχεία από ${humanize(data.platform.source ?? r.source)}`} />
+          {data.platform.fields.map((f, i) => (
+            <View key={`${f.label}-${i}`} style={[styles.row, { paddingVertical: 8, alignItems: "flex-start" }]}>
+              <Text style={[styles.rowSub, { width: 130, marginTop: 0 }]}>{f.label}</Text>
+              <Text style={{ flex: 1, color: colors.text }} selectable>{f.value}</Text>
+            </View>
+          ))}
+        </Card>
+      )}
 
       <TaxCard tax={data.tax} reservationId={r.id} onChange={reload} />
 
