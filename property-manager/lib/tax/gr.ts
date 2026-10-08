@@ -176,6 +176,71 @@ export function businessBreakdown(total: number) {
   return { rent: round2(rent), presenceFee: round2(presenceFee), vat: round2(vat) };
 }
 
+/**
+ * Business income tax scale for individuals (ν. 4172/2013 άρθρο 29 · ν. 5246/2025 from 2026).
+ * Estimate only: excludes ΕΦΚΑ contributions and the presumptive-income rules.
+ */
+const BUSINESS_SCALE_BY_YEAR: { from: number; brackets: { upTo: number; rate: number }[] }[] = [
+  {
+    from: 2020,
+    brackets: [
+      { upTo: 10_000, rate: 0.09 },
+      { upTo: 20_000, rate: 0.22 },
+      { upTo: 30_000, rate: 0.28 },
+      { upTo: 40_000, rate: 0.36 },
+      { upTo: Infinity, rate: 0.44 },
+    ],
+  },
+  {
+    from: 2026,
+    brackets: [
+      { upTo: 10_000, rate: 0.09 },
+      { upTo: 20_000, rate: 0.2 },
+      { upTo: 30_000, rate: 0.26 },
+      { upTo: 40_000, rate: 0.34 },
+      { upTo: 60_000, rate: 0.39 },
+      { upTo: Infinity, rate: 0.44 },
+    ],
+  },
+];
+
+export function businessScale(year: number) {
+  return (BUSINESS_SCALE_BY_YEAR.filter((s) => s.from <= year).at(-1) ?? BUSINESS_SCALE_BY_YEAR[0]).brackets;
+}
+
+/** Progressive tax on a yearly business profit. */
+export function businessIncomeTax(year: number, profit: number) {
+  let remaining = Math.max(0, profit);
+  let lower = 0;
+  let total = 0;
+  for (const b of businessScale(year)) {
+    const slice = Math.min(remaining, b.upTo - lower);
+    if (slice <= 0) break;
+    total += slice * b.rate;
+    remaining -= slice;
+    lower = b.upTo;
+  }
+  return round2(total);
+}
+
+// ─── Platform commission ─────────────────────────────────────────────
+
+/** Default commission rates (%) by booking source; editable per organization. */
+export const DEFAULT_COMMISSION_RATES: Record<string, number> = { BOOKING_COM: 15, AIRBNB: 15 };
+
+/**
+ * Amount the platform charges commission on: the room price (VAT included)
+ * without the presence fee. Matches Booking.com's "Ποσό στο οποίο υπολογίζεται
+ * προμήθεια" (e.g. 369,53 € → 367,90 €). The climate fee is never commissioned.
+ */
+export function commissionBase(roomPrice: number, regime: TaxRegime) {
+  return regime === "BUSINESS" ? round2(roomPrice - businessBreakdown(roomPrice).presenceFee) : roomPrice;
+}
+
+export function commissionFor(roomPrice: number, ratePercent: number, regime: TaxRegime) {
+  return round2((commissionBase(roomPrice, regime) * ratePercent) / 100);
+}
+
 // ─── Property compliance (Υπουργείο Τουρισμού, από 1.10.2025) ────────
 
 export const COMPLIANCE_ITEMS = [

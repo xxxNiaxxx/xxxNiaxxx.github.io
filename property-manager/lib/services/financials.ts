@@ -11,31 +11,32 @@ const BOOKED = ["CONFIRMED", "COMPLETED"] as const;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
- * Keeps the BOOKING income transaction of a reservation in line with it:
- * booked reservations have exactly one, pending/cancelled ones have none.
+ * Keeps the transactions of a reservation in line with it: booked stays have
+ * one BOOKING income and, when a platform commission is set, one PLATFORM_FEE
+ * expense; pending/cancelled stays and free stays have none.
  */
 export async function syncBookingIncome(client: Tx, r: Reservation) {
-  const existing = await client.transaction.findFirst({
-    where: { reservationId: r.id, type: "INCOME", category: "BOOKING", organizationId: r.organizationId },
-  });
-  // A free stay brings no income.
   const booked = (BOOKED as readonly string[]).includes(r.status) && !r.complimentary;
-  if (!booked) {
+  const label = r.confirmationCode ?? "";
+  await syncLinked(client, r, { type: "INCOME", category: "BOOKING", amount: booked ? toNumber(r.totalAmount) : 0, description: `Κράτηση ${label}`.trim() });
+  await syncLinked(client, r, { type: "EXPENSE", category: "PLATFORM_FEE", amount: booked ? toNumber(r.commission) : 0, description: `Προμήθεια κράτησης ${label}`.trim() });
+}
+
+async function syncLinked(
+  client: Tx,
+  r: Reservation,
+  t: { type: "INCOME" | "EXPENSE"; category: TransactionCategory; amount: number; description: string },
+) {
+  const existing = await client.transaction.findFirst({
+    where: { reservationId: r.id, type: t.type, category: t.category, organizationId: r.organizationId },
+  });
+  if (t.amount <= 0) {
     if (existing) await client.transaction.delete({ where: { id: existing.id } });
     return;
   }
-  const data = {
-    propertyId: r.propertyId,
-    amount: r.totalAmount,
-    currency: r.currency,
-    transactionDate: r.checkIn,
-    description: `Κράτηση ${r.confirmationCode ?? ""}`.trim(),
-  };
+  const data = { propertyId: r.propertyId, amount: t.amount, currency: r.currency, transactionDate: r.checkIn, description: t.description };
   if (existing) await client.transaction.update({ where: { id: existing.id }, data });
-  else
-    await client.transaction.create({
-      data: { ...data, organizationId: r.organizationId, reservationId: r.id, type: "INCOME", category: "BOOKING" },
-    });
+  else await client.transaction.create({ data: { ...data, organizationId: r.organizationId, reservationId: r.id, type: t.type, category: t.category } });
 }
 
 /** Booked nights / available nights of active properties in [from, to). */
