@@ -2,6 +2,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
 import { CalendarSyncCard } from "@/components/calendar-sync";
 import { CheckRow, DateField, LinkRow } from "@/components/form";
+import { GuestPagesCard, PriceIdeasCard } from "@/components/guest-pages";
 import { Badge, Button, Card, ErrorBox, Loading, Screen, SectionTitle, Stat, statusTone, styles } from "@/components/ui";
 import { api } from "@/lib/api";
 import { COMPLIANCE_ITEMS } from "@/lib/constants";
@@ -84,6 +85,8 @@ export default function PropertyScreen() {
         ))}
       </Card>
 
+      <PriceIdeasCard propertyId={p.id} />
+      <GuestPagesCard property={p} admin={admin} onChanged={() => void reload()} />
       <CalendarSyncCard propertyId={p.id} onSynced={reload} />
 
       <Card style={{ gap: 4 }}>

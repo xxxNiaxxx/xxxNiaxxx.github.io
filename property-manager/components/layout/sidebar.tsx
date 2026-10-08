@@ -44,7 +44,7 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-muted/60 px-3 py-4 lg:flex">
+    <aside className="sticky top-0 hidden h-dvh print:!hidden w-64 shrink-0 flex-col border-r border-border bg-muted/60 px-3 py-4 lg:flex">
       <Link href="/dashboard" className="mb-6 flex items-center gap-2.5 px-2 font-semibold tracking-tight">
         <Logo />
         <span className="truncate">{appName}</span>

@@ -76,8 +76,17 @@ export function PropertyFormDialog({ property, trigger }: { property?: PropertyD
           <Field label="Εμβαδόν (m²)" htmlFor="areaSqm" error={err.areaSqm} className="sm:col-span-2">
             <Input id="areaSqm" name="areaSqm" type="number" min={5} defaultValue={property?.areaSqm ?? ""} />
           </Field>
-          <Field label="Περιγραφή" htmlFor="description" error={err.description} className="sm:col-span-6">
+          <Field label="Περιγραφή" htmlFor="description" error={err.description} className="sm:col-span-6" hint="Εμφανίζεται και στη σελίδα απευθείας κρατήσεων">
             <Textarea id="description" name="description" defaultValue={property?.description ?? ""} />
+          </Field>
+          <Field label="Check-in από" htmlFor="checkInTime" error={err.checkInTime} className="sm:col-span-3">
+            <Input id="checkInTime" name="checkInTime" type="time" defaultValue={property?.checkInTime ?? "15:00"} />
+          </Field>
+          <Field label="Check-out έως" htmlFor="checkOutTime" error={err.checkOutTime} className="sm:col-span-3">
+            <Input id="checkOutTime" name="checkOutTime" type="time" defaultValue={property?.checkOutTime ?? "11:00"} />
+          </Field>
+          <Field label="Κανόνες του σπιτιού" htmlFor="houseRules" error={err.houseRules} className="sm:col-span-6" hint="Τους αποδέχεται ο επισκέπτης στο online check-in και εμφανίζονται στον οδηγό">
+            <Textarea id="houseRules" name="houseRules" defaultValue={property?.houseRules ?? ""} placeholder="π.χ. Όχι κάπνισμα μέσα στο σπίτι · Ησυχία 23:00–08:00 · Όχι πάρτι" />
           </Field>
           <DialogFooter className="sm:col-span-6">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

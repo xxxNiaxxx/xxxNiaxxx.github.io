@@ -7,6 +7,7 @@ import { Badge, Button, Card, ErrorBox, Loading, Screen, SectionTitle, statusTon
 import { AADE_PORTAL_URL } from "@/lib/aade";
 import { api, ApiError } from "@/lib/api";
 import { formatDateTime, formatDay, formatMoney, humanize } from "@/lib/format";
+import { useSession } from "@/lib/session";
 import type { Message, Reservation, StayTax, Task } from "@/lib/types";
 import { confirm, notify, useMutation } from "@/lib/use-mutation";
 import { useQuery } from "@/lib/use-query";
@@ -95,6 +96,10 @@ export default function ReservationScreen() {
           {r.guestEmail && <Button small variant="outline" title="Email" onPress={() => Linking.openURL(`mailto:${r.guestEmail}`)} />}
           <Button small variant="outline" title="Επισκέπτης" onPress={() => router.push(`/guest/${r.guestId}`)} />
           <Button small variant="outline" title="Επεξεργασία" onPress={() => router.push(`/reservation/edit/${r.id}`)} />
+          {r.status === "PENDING" && (
+            <Button small title="Επιβεβαίωση" loading={action.pending}
+              onPress={() => void action.run(() => api(`/api/reservations/${r.id}`, { method: "PATCH", body: { status: "CONFIRMED" } }), { onSuccess: () => void reload() })} />
+          )}
           {open && (
             <Button small variant="danger" title="Ακύρωση κράτησης" loading={action.pending}
               onPress={() => confirm("Ακύρωση κράτησης;", "Οι ανοιχτές εργασίες της διαμονής θα ακυρωθούν.", "Ακύρωση κράτησης", () =>
@@ -135,6 +140,7 @@ export default function ReservationScreen() {
         ))}
       </Card>
 
+      {(open || r.status === "COMPLETED") && !r.complimentary && <CheckinCard reservation={r} />}
       <ReplyCard reservationId={r.id} guestId={r.guestId} onSaved={reload} />
 
       <Card>
@@ -309,6 +315,50 @@ function ReplyCard({ reservationId, guestId, onSaved }: { reservationId: string;
                 onSuccess: () => { setDraft(null); setMessage(""); setReply(""); onSaved(); },
               })} />
           </View>
+        </>
+      )}
+    </Card>
+  );
+}
+
+const INVITE: Record<string, (name: string, url: string) => string> = {
+  el: (n, u) => `Γεια σας ${n}! Για να είναι όλα έτοιμα για την άφιξή σας, ολοκληρώστε το online check-in (1 λεπτό): ${u}`,
+  en: (n, u) => `Hi ${n}! To have everything ready for your arrival, please complete your online check-in (1 minute): ${u}`,
+  de: (n, u) => `Hallo ${n}! Damit bei Ihrer Ankunft alles bereit ist, schließen Sie bitte den Online-Check-in ab (1 Minute): ${u}`,
+  fr: (n, u) => `Bonjour ${n} ! Pour que tout soit prêt à votre arrivée, merci de compléter votre check-in en ligne (1 minute) : ${u}`,
+  it: (n, u) => `Ciao ${n}! Per avere tutto pronto al tuo arrivo, completa il check-in online (1 minuto): ${u}`,
+  es: (n, u) => `¡Hola ${n}! Para tenerlo todo listo a tu llegada, completa el check-in online (1 minuto): ${u}`,
+};
+
+/** Online check-in: the guest fills in ΑΦΜ/passport, phone, arrival time and accepts the house rules. */
+function CheckinCard({ reservation: r }: { reservation: Reservation }) {
+  const { serverUrl } = useSession();
+  const guest = useQuery<{ guest: { firstName: string; language: string } }>(`/api/guests/${r.guestId}`);
+  const [path, setPath] = useState(r.checkinPath);
+  const { run, pending } = useMutation();
+  const url = path ? `${serverUrl}${path}` : null;
+  const firstName = guest.data?.guest.firstName ?? "";
+  const lang = guest.data?.guest.language ?? "en";
+  return (
+    <Card style={{ gap: 8 }}>
+      <SectionTitle title="Online check-in" />
+      {r.checkinCompletedAt ? (
+        <Text style={{ color: colors.success }}>
+          Ολοκληρώθηκε {formatDateTime(r.checkinCompletedAt)}{r.arrivalTime ? ` · άφιξη ${r.arrivalTime}` : ""}{r.rulesAccepted ? " · αποδέχτηκε τους κανόνες" : ""}
+        </Text>
+      ) : url ? (
+        <>
+          <Text style={styles.rowSub} numberOfLines={1}>{url}</Text>
+          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+            <Button small title="Αντιγραφή μηνύματος" onPress={async () => { await Clipboard.setStringAsync((INVITE[lang] ?? INVITE.en)(firstName, url)); notify("Αντιγράφηκε"); }} />
+            <Button small variant="outline" title="Μόνο ο σύνδεσμος" onPress={async () => { await Clipboard.setStringAsync(url); notify("Αντιγράφηκε"); }} />
+          </View>
+        </>
+      ) : (
+        <>
+          <Text style={styles.rowSub}>Ο επισκέπτης συμπληρώνει μόνος του ΑΦΜ ή διαβατήριο, τηλέφωνο και ώρα άφιξης, στη γλώσσα του.</Text>
+          <Button small title="Δημιουργία συνδέσμου" loading={pending} style={{ alignSelf: "flex-start" }}
+            onPress={() => void run(() => api<{ path: string }>(`/api/reservations/${r.id}/checkin-link`, { method: "POST" }), { onSuccess: (x) => setPath(x.path) })} />
         </>
       )}
     </Card>

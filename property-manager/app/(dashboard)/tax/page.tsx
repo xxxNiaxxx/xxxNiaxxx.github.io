@@ -1,4 +1,4 @@
-import { AlertTriangle, Download, Info } from "lucide-react";
+import { AlertTriangle, Download, FolderOpen, Info } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DeclareButton, FilingButton, NotRequiredButton, OtherIncomeInput, PricingSettings, RegimeSelect } from "@/components/tax/actions";
@@ -37,6 +37,7 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
         description={<>Υποχρεώσεις βραχυχρόνιας μίσθωσης: δηλώσεις διαμονής, ΤΑΚΚ, φόρος εισοδήματος και συμμόρφωση · <Link href="/help#foros" className="text-accent underline-offset-4 hover:underline">Πώς υπολογίζονται;</Link></>}
         actions={
           <>
+            <Button asChild><Link href={`/tax/accountant?year=${year}`}><FolderOpen /> Φάκελος λογιστή</Link></Button>
             <Button asChild variant="outline"><a href={`/api/tax/export?type=stays&year=${year}`}><Download /> Διαμονές CSV {year}</a></Button>
             <Button asChild variant="outline"><a href={`/api/tax/export?type=annual&year=${year}`}><Download /> Ετήσια CSV {year}</a></Button>
           </>

@@ -7,8 +7,11 @@ import { getTaxOverview } from "./tax";
 import { serializeReservation, serializeTask, toNumber } from "./serializers";
 import { OPEN_STATUSES } from "./tasks";
 import { conflictDetail, conflictTitle, listOpenConflicts } from "./calendar-conflicts";
+import { BOOKING_REQUEST_NOTE } from "./guest-pages";
+import { priceSuggestions } from "./price-suggestions";
+import { savingsReport } from "./savings";
 
-export type AttentionKind = "DOUBLE_BOOKING" | "OVERDUE_TASK" | "MISSING_CLEANING" | "MISSING_INFO" | "NO_CHECKIN_MESSAGE" | "AI_ACTION" | "TAX_DEADLINE" | "COMPLIANCE" | "MISSING_AMOUNT";
+export type AttentionKind = "DOUBLE_BOOKING" | "BOOKING_REQUEST" | "OVERDUE_TASK" | "MISSING_CLEANING" | "MISSING_INFO" | "NO_CHECKIN_MESSAGE" | "AI_ACTION" | "TAX_DEADLINE" | "COMPLIANCE" | "MISSING_AMOUNT";
 
 export interface AttentionItem {
   kind: AttentionKind;
@@ -109,6 +112,21 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
   });
 
   const attention: AttentionItem[] = [];
+  const requests = await db.reservation.findMany({
+    where: { organizationId: org, status: "PENDING", source: "DIRECT", notes: { startsWith: BOOKING_REQUEST_NOTE }, checkOut: { gt: todayDate } },
+    include: reservationInclude,
+    orderBy: { createdAt: "asc" },
+  });
+  for (const r of requests) {
+    const s = serializeReservation(r);
+    attention.push({
+      kind: "BOOKING_REQUEST",
+      severity: "high",
+      title: `Νέο αίτημα κράτησης: ${s.guestName ?? ""}`.trim(),
+      detail: `${s.propertyName} · ${formatDay(s.checkIn)} → ${formatDay(s.checkOut)} · επιβεβαιώστε ή απορρίψτε`,
+      href: `/reservations/${r.id}`,
+    });
+  }
   for (const c of await listOpenConflicts(ctx)) {
     attention.push({
       kind: "DOUBLE_BOOKING",
@@ -222,6 +240,10 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
     },
     overdueTasks: overdueTasks.map((t) => serializeTask(t, now)),
     pendingActionCount: pendingActions.length,
+    /** What the app saved this year (fines, commission, hours). */
+    savings: await savingsReport(ctx, now),
+    /** The most useful price ideas across properties. */
+    priceIdeas: (await priceSuggestions(ctx, {}, now)).filter((s) => s.kind !== "ACHIEVED_RATE").slice(0, 3),
   };
 }
 export type DashboardData = Awaited<ReturnType<typeof getDashboard>>;

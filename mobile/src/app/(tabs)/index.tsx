@@ -4,6 +4,7 @@ import { Pressable, Text, View } from "react-native";
 import { Badge, Card, Empty, ErrorBox, Loading, Screen, SectionTitle, Stat, statusTone, styles } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDay, formatMoney, formatPercent, formatTime, humanize } from "@/lib/format";
+import { PriceIdeasList } from "@/components/guest-pages";
 import type { Dashboard, Reservation, Task } from "@/lib/types";
 import { useQuery } from "@/lib/use-query";
 import { colors } from "@/theme";
@@ -75,6 +76,26 @@ export default function Today() {
               })
             )}
           </Card>
+
+          {data.priceIdeas && data.priceIdeas.length > 0 && (
+            <Card>
+              <SectionTitle title="Προτάσεις τιμών" />
+              <PriceIdeasList items={data.priceIdeas} showProperty />
+            </Card>
+          )}
+
+          {data.savings && (
+            <Card style={{ gap: 6 }}>
+              <SectionTitle title={`Τι σας γλίτωσε η εφαρμογή το ${data.savings.year}`} />
+              <Text style={styles.rowTitle}>{data.savings.finesAvoided} € πρόστιμα που αποφύγατε</Text>
+              <Text style={styles.rowSub}>{data.savings.declarationsOnTime} δηλώσεις διαμονής εμπρόθεσμα</Text>
+              <Text style={styles.rowTitle}>{data.savings.commissionSaved} € προμήθειες που γλιτώσατε</Text>
+              <Text style={styles.rowSub}>{data.savings.directBookings} απευθείας κρατήσεις</Text>
+              <Text style={styles.rowTitle}>{data.savings.doubleBookingsCaught} πιθανές διπλοκρατήσεις εντοπίστηκαν</Text>
+              <Text style={styles.rowTitle}>{data.savings.hoursSaved} {data.savings.hoursSaved === 1 ? "ώρα" : "ώρες"} δουλειάς λιγότερη</Text>
+              <Text style={styles.rowSub}>{data.savings.automatedStays} κρατήσεις αυτόματα · {data.savings.checkinsCompleted} online check-in · {data.savings.aiReplies} απαντήσεις AI</Text>
+            </Card>
+          )}
 
           <Card>
             <SectionTitle title="Ρωτήστε τον βοηθό AI" />

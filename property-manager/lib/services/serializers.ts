@@ -25,6 +25,12 @@ export function serializeProperty(p: Property) {
     kind: p.kind,
     areaSqm: p.areaSqm,
     compliance: (p.compliance ?? {}) as Record<string, boolean | string | null>,
+    checkInTime: p.checkInTime,
+    checkOutTime: p.checkOutTime,
+    houseRules: p.houseRules,
+    directBooking: p.directBooking,
+    /** Token of the public guest guide and booking pages (null until created). */
+    publicToken: p.publicToken,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   };
@@ -86,6 +92,11 @@ export function serializeReservation(r: ReservationRow) {
     declarationStatus: r.declarationStatus,
     /** For the AADE declaration; null = the platform default. */
     paymentMethod: r.paymentMethod,
+    /** Online check-in: link (once created), when the guest completed it and the arrival time given. */
+    checkinPath: r.checkinToken ? `/checkin/${r.checkinToken}` : null,
+    checkinCompletedAt: r.checkinCompletedAt?.toISOString() ?? null,
+    arrivalTime: r.arrivalTime,
+    rulesAccepted: !!r.rulesAcceptedAt,
     cancelledAt: r.cancelledAt?.toISOString() ?? null,
     createdAt: r.createdAt.toISOString(),
   };

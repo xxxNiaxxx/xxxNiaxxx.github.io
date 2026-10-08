@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AIPreview } from "@/components/dashboard/ai-preview";
 import { AttentionList } from "@/components/dashboard/attention-list";
+import { SavingsCard } from "@/components/dashboard/savings-card";
+import { PriceSuggestionList } from "@/components/properties/price-suggestions";
 import { TodayAgenda } from "@/components/dashboard/today-agenda";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -58,6 +60,20 @@ export default async function DashboardPage() {
             />
             <CardContent>
               <AttentionList items={d.attention} />
+            </CardContent>
+          </Card>
+          {d.priceIdeas.length > 0 && (
+            <Card>
+              <CardHeader title="Προτάσεις τιμών" description="Από τα κενά και την πληρότητα των επόμενων εβδομάδων" />
+              <CardContent>
+                <PriceSuggestionList items={d.priceIdeas} showProperty />
+              </CardContent>
+            </Card>
+          )}
+          <Card>
+            <CardHeader title={`Τι σας γλίτωσε η εφαρμογή το ${d.savings.year}`} description="Από τα δικά σας δεδομένα· οι ώρες είναι συντηρητική εκτίμηση" />
+            <CardContent>
+              <SavingsCard s={d.savings} />
             </CardContent>
           </Card>
           <AIPreview />

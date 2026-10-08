@@ -24,6 +24,9 @@ export function PropertyForm({ property }: { property?: Property }) {
     kind: property?.kind ?? "APARTMENT",
     areaSqm: property?.areaSqm ? String(property.areaSqm) : "",
     description: property?.description ?? "",
+    checkInTime: property?.checkInTime ?? "15:00",
+    checkOutTime: property?.checkOutTime ?? "11:00",
+    houseRules: property?.houseRules ?? "",
   });
   const set = (k: keyof typeof f) => (v: string) => setF((x) => ({ ...x, [k]: v }));
 
@@ -61,7 +64,13 @@ export function PropertyForm({ property }: { property?: Property }) {
           options={[{ value: "APARTMENT", label: "Διαμέρισμα" }, { value: "DETACHED_HOUSE", label: "Μονοκατοικία" }]}
           hint="Μονοκατοικίες άνω των 80 m² έχουν υψηλότερο ΤΑΚΚ" />
         <NumberField label="Εμβαδόν (m²)" value={f.areaSqm} onChange={set("areaSqm")} keyboardType="number-pad" error={err.areaSqm} />
-        <TextField label="Περιγραφή" value={f.description} onChangeText={set("description")} multiline />
+        <TextField label="Περιγραφή" value={f.description} onChangeText={set("description")} multiline hint="Εμφανίζεται και στη σελίδα απευθείας κρατήσεων" />
+      </Card>
+      <Card style={{ gap: 14 }}>
+        <TextField label="Check-in από (ΩΩ:ΛΛ)" value={f.checkInTime} onChangeText={set("checkInTime")} error={err.checkInTime} placeholder="15:00" keyboardType="numbers-and-punctuation" />
+        <TextField label="Check-out έως (ΩΩ:ΛΛ)" value={f.checkOutTime} onChangeText={set("checkOutTime")} error={err.checkOutTime} placeholder="11:00" keyboardType="numbers-and-punctuation" />
+        <TextField label="Κανόνες του σπιτιού" value={f.houseRules} onChangeText={set("houseRules")} multiline error={err.houseRules}
+          hint="Τους αποδέχεται ο επισκέπτης στο online check-in και εμφανίζονται στον οδηγό" />
       </Card>
       <Button title={editing ? "Αποθήκευση" : "Δημιουργία ακινήτου"} loading={pending} onPress={save} />
     </Screen>

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { MessageComposer } from "@/components/guests/message-composer";
 import { MessageList } from "@/components/guests/message-list";
 import { CancelReservationButton } from "@/components/reservations/cancel-button";
+import { CheckinCard } from "@/components/reservations/checkin-card";
+import { ConfirmReservationButton } from "@/components/reservations/confirm-button";
 import { ConflictBanner } from "@/components/reservations/conflict-banner";
 import { GuestReply } from "@/components/reservations/guest-reply";
 import { PriceBreakdown } from "@/components/reservations/price-breakdown";
@@ -46,6 +48,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
         description={`${r.propertyName} · ${formatDay(r.checkIn)} → ${formatDay(r.checkOut)} · ${r.nights} νύχτες`}
         actions={
           <>
+            {r.status === "PENDING" && <ConfirmReservationButton id={r.id} />}
             {open && <CancelReservationButton id={r.id} />}
             <ReservationFormDialog properties={options.properties} guests={options.guests} pricing={options.pricing} reservation={r} trigger={<Button variant="outline"><Pencil /> Επεξεργασία</Button>} />
           </>
@@ -80,6 +83,22 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
               />
               <CardContent>
                 <DefinitionList items={platform.fields.map((f) => ({ label: f.label, value: <span className="whitespace-pre-line break-words">{f.value}</span> }))} />
+              </CardContent>
+            </Card>
+          )}
+          {(open || r.status === "COMPLETED") && !r.complimentary && (
+            <Card>
+              <CardHeader title="Online check-in" description="Στοιχεία επισκέπτη για την ΑΑΔΕ, χωρίς να τα κυνηγάτε" />
+              <CardContent>
+                <CheckinCard
+                  reservationId={r.id}
+                  guestFirstName={guest.firstName}
+                  guestLanguage={guest.language}
+                  checkinPath={r.checkinPath}
+                  completedAt={r.checkinCompletedAt}
+                  arrivalTime={r.arrivalTime}
+                  rulesAccepted={r.rulesAccepted}
+                />
               </CardContent>
             </Card>
           )}
