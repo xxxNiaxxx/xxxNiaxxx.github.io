@@ -4,6 +4,7 @@ import { detectAmountMode, roomAndCommission } from "@/lib/import/amounts";
 import { autoMap, buildRows, detectDateOrder, parseAmount, parseDate } from "@/lib/import/parse";
 import type { OrgContext } from "@/lib/permissions";
 import { importReservations } from "@/lib/services/reservation-import";
+import { getReservationDetails } from "@/lib/services/reservations";
 import { updateTaxSettings } from "@/lib/services/tax";
 import { createTenant, resetDatabase } from "./helpers";
 
@@ -55,6 +56,13 @@ describe("parsing exports", () => {
     expect(rows[0]).toMatchObject({ line: 2, externalId: "4100", amount: 425.53, commission: 55.19, status: "CONFIRMED", problems: [] });
     expect(rows[1]).toMatchObject({ status: "CANCELLED" });
     expect(rows[2].problems.length).toBeGreaterThan(1);
+  });
+
+  it("counts children only on top of an adults column", () => {
+    const people = buildRows([["3", "1"]], { guests: 0, children: 1 }, "DMY", "2026-10-08", ["People", "Children"]);
+    const adults = buildRows([["2", "1"]], { guests: 0, children: 1 }, "DMY", "2026-10-08", ["# of adults", "# of children"]);
+    expect(people[0].guestsCount).toBe(3);
+    expect(adults[0].guestsCount).toBe(3);
   });
 
   it("works out what the amount means from the commission", () => {
@@ -122,5 +130,24 @@ describe("importing reservations", () => {
     expect(res).toMatchObject({ created: 1, failed: 2 });
     expect(res.results.find((r) => r.line === 3)?.message).toMatch(/συμπίπτουν/);
     expect(res.results.find((r) => r.line === 4)?.message).toBe("Το ακίνητο δεν βρέθηκε");
+  });
+
+  it("keeps every column of the export and completes the guest's contact details", async () => {
+    const details = { "Book number": "7001", "Booked on": "2026-09-01", "Payment status": "Paid online", "Travel purpose": "Leisure", "Phone number": "+30 690 000 0000", "Children's ages": "4, 7" };
+    const res = await importReservations(ctx, {
+      source: "BOOKING_COM", amountMode: "GUEST_TOTAL",
+      rows: [row({ line: 9, externalId: "7001", guestName: "Eva Novak", checkIn: "2026-12-01", checkOut: "2026-12-03", amount: 104, commission: null, phone: "+30 690 000 0000", details })],
+    });
+    expect(res.created).toBe(1);
+    const r = await db.reservation.findFirstOrThrow({ where: { externalId: "7001" }, include: { guest: true } });
+    expect(r.guest.phone).toBe("+30 690 000 0000");
+    const d = await getReservationDetails(ctx, r.id);
+    expect(d.platform?.source).toBe("BOOKING_COM");
+    expect(d.platform?.fields).toEqual(expect.arrayContaining([
+      { label: "Ημερομηνία κράτησης", value: "2026-09-01" },
+      { label: "Κατάσταση πληρωμής", value: "Paid online" },
+      { label: "Σκοπός ταξιδιού", value: "Leisure" },
+      { label: "Ηλικίες παιδιών", value: "4, 7" },
+    ]));
   });
 });

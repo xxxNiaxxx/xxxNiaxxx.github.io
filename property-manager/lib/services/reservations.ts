@@ -11,6 +11,7 @@ import {
   type ReservationListQuery,
 } from "@/lib/validation/reservation";
 import { climateFeeForStay, commissionFor, type PropertyKind } from "@/lib/tax/gr";
+import { platformFieldLabel } from "@/lib/import/labels";
 import { syncBookingIncome } from "./financials";
 import { getTaxContext } from "./tax";
 import { assertGuest, assertProperty, assertReservation, type Tx } from "./scope";
@@ -120,8 +121,21 @@ export async function getReservation(ctx: OrgContext, id: string) {
   return serializeReservation(row);
 }
 
+/** The platform export row kept on the reservation, with Greek field names. */
+function platformInfo(value: unknown) {
+  // Fields are stored as [header, value] pairs: JSONB objects would lose the file's column order.
+  const v = value as { source?: string; importedAt?: string; fields?: [string, string][] } | null;
+  if (!Array.isArray(v?.fields)) return null;
+  return {
+    source: v.source ?? null,
+    importedAt: v.importedAt ?? null,
+    fields: v.fields.map(([key, val]) => ({ label: platformFieldLabel(key), value: val })),
+  };
+}
+
 export async function getReservationDetails(ctx: OrgContext, id: string) {
   const reservation = await getReservation(ctx, id);
+  const raw = await db.reservation.findUniqueOrThrow({ where: { id }, select: { platformDetails: true } });
   const [tasks, messages] = await Promise.all([
     db.task.findMany({
       where: { organizationId: ctx.organizationId, reservationId: id },
@@ -133,7 +147,7 @@ export async function getReservationDetails(ctx: OrgContext, id: string) {
       orderBy: { createdAt: "desc" },
     }),
   ]);
-  return { reservation, tasks: tasks.map((t) => serializeTask(t)), messages: messages.map(serializeMessage) };
+  return { reservation, tasks: tasks.map((t) => serializeTask(t)), messages: messages.map(serializeMessage), platform: platformInfo(raw.platformDetails) };
 }
 
 export async function createReservation(ctx: OrgContext, input: unknown) {

@@ -187,11 +187,19 @@ export interface ImportRow {
   email: string | null;
   country: string | null;
   notes: string | null;
+  /** Every non-empty column of the row, by header — kept on the reservation as is. */
+  details: Record<string, string>;
   problems: string[];
 }
 
+/** Cell → text for the details list (dates as YYYY-MM-DD). */
+function cellText(v: unknown): string {
+  if (v instanceof Date && !Number.isNaN(v.getTime())) return `${v.getFullYear()}-${pad(v.getMonth() + 1)}-${pad(v.getDate())}`;
+  return String(v ?? "").trim();
+}
+
 /** Applies the mapping to the data rows (header row excluded). */
-export function buildRows(rows: unknown[][], mapping: ColumnMapping, order: DateOrder, today: string): ImportRow[] {
+export function buildRows(rows: unknown[][], mapping: ColumnMapping, order: DateOrder, today: string, headers: string[] = []): ImportRow[] {
   const cell = (r: unknown[], f: ImportField) => (mapping[f] === undefined ? "" : r[mapping[f]!]);
   const text = (r: unknown[], f: ImportField) => {
     const v = cell(r, f);
@@ -208,7 +216,9 @@ export function buildRows(rows: unknown[][], mapping: ColumnMapping, order: Date
       const commission = mapping.commission === undefined ? NaN : parseAmount(cell(r, "commission"));
       const percent = mapping.commissionPercent === undefined ? NaN : parseAmount(cell(r, "commissionPercent"));
       const adults = parseAmount(cell(r, "guests"));
-      const children = mapping.children === undefined ? 0 : parseAmount(cell(r, "children")) || 0;
+      // Children are added only to an adults column; "People"/"Άτομα" already counts everyone.
+      const adultsOnly = mapping.guests !== undefined && /adult|ενηλικ/.test(normalizeHeader(headers[mapping.guests] ?? "adults"));
+      const children = mapping.children === undefined || !adultsOnly ? 0 : parseAmount(cell(r, "children")) || 0;
       const problems: string[] = [];
       const guestName = text(r, "guestName") ?? "";
       if (!guestName) problems.push("Λείπει το όνομα επισκέπτη");
@@ -233,6 +243,12 @@ export function buildRows(rows: unknown[][], mapping: ColumnMapping, order: Date
         email: text(r, "email")?.includes("@") ? text(r, "email") : null,
         country: text(r, "country"),
         notes: text(r, "notes"),
+        details: Object.fromEntries(
+          headers
+            .map((h, i) => [h.trim().slice(0, 120), cellText(r[i]).slice(0, 2000)] as const)
+            .filter(([h, v]) => h && v)
+            .slice(0, 80),
+        ),
         problems,
       };
     });
