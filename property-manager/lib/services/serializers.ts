@@ -42,6 +42,9 @@ export function serializeGuest(g: Guest) {
     country: g.country,
     /** Explicit preference, or null when derived from the country. */
     languagePreference: g.language,
+    /** Identity for the AADE stay declaration. */
+    idType: g.idType,
+    idNumber: g.idNumber,
     /** Language used for messages to this guest. */
     language: guestLanguage(g),
     notes: g.notes,
@@ -81,6 +84,8 @@ export function serializeReservation(r: ReservationRow) {
     status: r.status,
     notes: r.notes,
     declarationStatus: r.declarationStatus,
+    /** For the AADE declaration; null = the platform default. */
+    paymentMethod: r.paymentMethod,
     cancelledAt: r.cancelledAt?.toISOString() ?? null,
     createdAt: r.createdAt.toISOString(),
   };

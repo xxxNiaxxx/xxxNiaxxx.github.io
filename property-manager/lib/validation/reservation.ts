@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PAYMENT_METHOD_KEYS } from "@/lib/aade";
 import { RESERVATION_SOURCES } from "@/lib/reservation-sources";
 import { currency, id, isoDate, money, optionalQuery, optionalText } from "./common";
 import { guestCreateSchema } from "./guest";
@@ -29,6 +30,8 @@ const fields = z.object({
   commission: money,
   /** The amount is the guest's total including ΤΑΚΚ (Booking's "Συνολική τιμή κράτησης"); the ΤΑΚΚ is subtracted. */
   amountIncludesClimateFee: z.boolean(),
+  /** For the AADE stay declaration; "" or null = the platform default. */
+  paymentMethod: z.preprocess((v) => (v === "" ? null : v), z.enum(PAYMENT_METHOD_KEYS).nullable()),
 });
 
 const base = fields.extend({
@@ -38,6 +41,7 @@ const base = fields.extend({
   complimentary: z.boolean().default(false),
   commission: money.optional(),
   amountIncludesClimateFee: z.boolean().default(false),
+  paymentMethod: fields.shape.paymentMethod.optional(),
 });
 
 export const freeStayHasNoRent = {

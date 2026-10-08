@@ -1,11 +1,14 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Alert, Linking, Text, TextInput, View } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import * as Clipboard from "expo-clipboard";
+import { Alert, Linking, Pressable, Text, TextInput, View } from "react-native";
 import { Badge, Button, Card, ErrorBox, Loading, Screen, SectionTitle, statusTone, styles } from "@/components/ui";
+import { AADE_PORTAL_URL } from "@/lib/aade";
 import { api, ApiError } from "@/lib/api";
 import { formatDateTime, formatDay, formatMoney, humanize } from "@/lib/format";
 import type { Message, Reservation, StayTax, Task } from "@/lib/types";
-import { confirm, useMutation } from "@/lib/use-mutation";
+import { confirm, notify, useMutation } from "@/lib/use-mutation";
 import { useQuery } from "@/lib/use-query";
 import { colors } from "@/theme";
 
@@ -15,6 +18,11 @@ interface Details {
   messages: Message[];
   tax: StayTax;
   platform: { source: string | null; importedAt: string | null; fields: { label: string; value: string }[] } | null;
+  /** Possible double bookings: a platform calendar shows another stay on these dates. */
+  conflicts?: {
+    id: string; sourceLabel: string; code: string | null; startLabel: string; endLabel: string;
+    overlaps: { id: string; guestName: string; sourceLabel: string; checkInLabel: string; checkOutLabel: string }[];
+  }[];
 }
 
 export default function ReservationScreen() {
@@ -61,6 +69,18 @@ export default function ReservationScreen() {
   return (
     <Screen refreshing={refreshing} onRefresh={reload}>
       <Stack.Screen options={{ title: r.guestName ?? "Κράτηση" }} />
+      {(data.conflicts ?? []).map((c) => (
+        <Card key={c.id} style={{ borderColor: colors.danger, backgroundColor: colors.dangerSoft, gap: 6 }}>
+          <Text style={{ color: colors.danger, fontWeight: "700" }}>Πιθανή διπλοκράτηση</Text>
+          <Text style={{ color: colors.text }}>
+            Το ημερολόγιο {c.sourceLabel} δείχνει κράτηση {c.startLabel} – {c.endLabel}{c.code ? ` (${c.code})` : ""} πάνω σε:{" "}
+            {c.overlaps.map((o) => `${o.guestName} (${o.sourceLabel} ${o.checkInLabel}–${o.checkOutLabel})`).join(", ")}.
+          </Text>
+          <Text style={styles.rowSub}>Ελέγξτε τις κρατήσεις στις πλατφόρμες· αν είναι διπλοκράτηση, επικοινωνήστε άμεσα με τον έναν επισκέπτη.</Text>
+          <Button small variant="outline" title="Δεν είναι διπλοκράτηση" loading={action.pending} style={{ alignSelf: "flex-start" }}
+            onPress={() => void action.run(() => api(`/api/calendar-conflicts/${c.id}/dismiss`, { method: "POST" }), { onSuccess: () => void reload() })} />
+        </Card>
+      ))}
       <Card>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <Text style={styles.sectionTitle}>{r.propertyName}</Text>
@@ -96,6 +116,9 @@ export default function ReservationScreen() {
       )}
 
       <TaxCard tax={data.tax} reservationId={r.id} onChange={reload} />
+      {!data.tax.complimentary && !data.tax.longStay && data.tax.declaration.required && (
+        <DeclarationCard tax={data.tax} reservationId={r.id} guestId={r.guestId} onChange={reload} />
+      )}
 
       <Card>
         <SectionTitle title="Εργασίες" count={data.tasks.length}
@@ -111,6 +134,8 @@ export default function ReservationScreen() {
           </View>
         ))}
       </Card>
+
+      <ReplyCard reservationId={r.id} guestId={r.guestId} onSaved={reload} />
 
       <Card>
         <SectionTitle title="Μηνύματα" count={data.messages.length} />
@@ -170,27 +195,116 @@ function TaxCard({ tax, reservationId, onChange }: { tax: StayTax; reservationId
           {tax.longStay ? (
             <Text style={[styles.rowSub, { marginTop: 8 }]}>60+ νύχτες: δεν είναι βραχυχρόνια μίσθωση — δηλώνεται ως κανονική μίσθωση.</Text>
           ) : tax.declaration.required ? (
-            <View style={[styles.row, { flexWrap: "wrap" }]}>
-              <View style={{ flex: 1, minWidth: 140 }}>
-                <Text style={styles.rowSub}>Δήλωση διαμονής</Text>
-                {tax.declaration.status === "DECLARED" ? (
-                  <Badge label="Δηλώθηκε" tone="success" />
-                ) : (
-                  <Badge label={`${tax.declaration.overdue ? "Εκπρόθεσμη · " : "Έως "}${formatDay(tax.declaration.deadline, false)}`} tone={tax.declaration.overdue ? "danger" : "neutral"} />
-                )}
-              </View>
-              {tax.declaration.status === "DECLARED" ? (
-                <Button small variant="ghost" title="Αναίρεση" loading={pending} onPress={() => setStatus("PENDING")} />
-              ) : tax.declaration.due ? (
-                <View style={{ flexDirection: "row", gap: 6 }}>
-                  <Button small variant="ghost" title="Δεν απαιτείται" loading={pending} onPress={() => setStatus("NOT_REQUIRED")} />
-                  <Button small variant="outline" title="Δηλώθηκε" loading={pending} onPress={() => setStatus("DECLARED")} />
-                </View>
-              ) : null}
-            </View>
+            <Text style={[styles.rowSub, { marginTop: 8 }]}>Τα στοιχεία της δήλωσης διαμονής είναι στην κάρτα «Δήλωση στο Μητρώο ΑΑΔΕ».</Text>
           ) : (
             <Text style={[styles.rowSub, { marginTop: 8 }]}>Δεν απαιτείται δήλωση διαμονής.</Text>
           )}
+        </>
+      )}
+    </Card>
+  );
+}
+
+/** The AADE stay declaration ready to copy, field by field, into myAADE. */
+function DeclarationCard({ tax, reservationId, guestId, onChange }: { tax: StayTax; reservationId: string; guestId: string; onChange: () => void }) {
+  const { run, pending } = useMutation();
+  const setStatus = (status: StayTax["declaration"]["status"]) =>
+    run(() => api(`/api/reservations/${reservationId}/declaration`, { body: { status } }), { onSuccess: onChange });
+  const copy = async (text: string, what: string) => {
+    await Clipboard.setStringAsync(text);
+    notify(`Αντιγράφηκε: ${what}`);
+  };
+  const form = tax.declarationForm;
+  const declared = tax.declaration.status === "DECLARED";
+  return (
+    <Card>
+      <SectionTitle title="Δήλωση στο Μητρώο ΑΑΔΕ" />
+      <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+        {declared ? (
+          <Badge label="Δηλώθηκε" tone="success" />
+        ) : (
+          <Badge label={`${tax.declaration.overdue ? "Εκπρόθεσμη · " : "Προθεσμία "}${formatDay(tax.declaration.deadline, false)}`} tone={tax.declaration.overdue ? "danger" : "neutral"} />
+        )}
+        {form.cancelled && <Badge label="Ακύρωση με χρέωση" tone="warning" />}
+      </View>
+      {form.fields.map((f, i) => (
+        <Pressable key={f.key} disabled={!f.value} onPress={() => f.value && void copy(f.value, f.label)}
+          style={({ pressed }) => [styles.row, i === 0 && { borderTopWidth: 0 }, pressed && { opacity: 0.6 }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.rowSub}>{f.label}</Text>
+            {f.value ? (
+              <Text style={styles.rowTitle}>{f.value}{f.key === "paymentMethod" && form.paymentMethodIsDefault ? " (προεπιλογή)" : ""}</Text>
+            ) : (
+              <Text style={{ color: colors.warning }}>Λείπει{["guestName", "idType", "idNumber"].includes(f.key) ? " · συμπληρώστε στον επισκέπτη" : ""}</Text>
+            )}
+          </View>
+          {f.value ? <Ionicons name="copy-outline" size={18} color={colors.accent} /> : null}
+        </Pressable>
+      ))}
+      <Text style={[styles.rowSub, { marginTop: 4 }]}>Πατήστε ένα στοιχείο για αντιγραφή.</Text>
+      <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+        {form.missing.some((m) => m.includes("αναγνωριστικού")) && (
+          <Button small variant="outline" title="Στοιχεία επισκέπτη" onPress={() => router.push(`/guest/edit/${guestId}`)} />
+        )}
+        <Button small variant="outline" title="Άνοιγμα myAADE" onPress={() => Linking.openURL(AADE_PORTAL_URL)} />
+        {declared ? (
+          <Button small variant="ghost" title="Αναίρεση" loading={pending} onPress={() => setStatus("PENDING")} />
+        ) : tax.declaration.due ? (
+          <>
+            <Button small variant="ghost" title="Δεν απαιτείται" loading={pending} onPress={() => setStatus("NOT_REQUIRED")} />
+            <Button small title="Το υπέβαλα" loading={pending} onPress={() => setStatus("DECLARED")} />
+          </>
+        ) : null}
+      </View>
+    </Card>
+  );
+}
+
+/** Paste a guest's message from Airbnb/Booking/email; the assistant drafts the reply to copy back. */
+function ReplyCard({ reservationId, guestId, onSaved }: { reservationId: string; guestId: string; onSaved: () => void }) {
+  const [message, setMessage] = useState("");
+  const [draft, setDraft] = useState<{ reply: string; offline: boolean; usedInfo: number; conversationUrl: string | null } | null>(null);
+  const [reply, setReply] = useState("");
+  const [busy, setBusy] = useState(false);
+  const save = useMutation();
+
+  async function generate() {
+    setBusy(true);
+    try {
+      const d = await api<NonNullable<typeof draft>>("/api/ai/reply", { body: { reservationId, guestMessage: message } });
+      setDraft(d);
+      setReply(d.reply);
+    } catch (e) {
+      Alert.alert("Δεν ετοιμάστηκε απάντηση", e instanceof ApiError ? e.message : "Δοκιμάστε ξανά.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card style={{ gap: 8 }}>
+      <SectionTitle title="Απάντηση σε μήνυμα επισκέπτη" />
+      <TextInput value={message} onChangeText={setMessage} multiline placeholder="Επικολλήστε το μήνυμα του επισκέπτη από Airbnb, Booking ή email…"
+        placeholderTextColor={colors.subtleText} style={[styles.input, { height: 80, paddingTop: 10, textAlignVertical: "top" }]} />
+      <Button small title="Γράψε απάντηση" loading={busy} disabled={message.trim().length < 2} onPress={generate} style={{ alignSelf: "flex-start" }} />
+      {draft && (
+        <>
+          <TextInput value={reply} onChangeText={setReply} multiline
+            style={[styles.input, { height: 180, paddingTop: 10, textAlignVertical: "top" }]} />
+          <Text style={styles.rowSub}>
+            {draft.offline
+              ? draft.usedInfo ? "Από τις σημειώσεις του καταλύματος. Ελέγξτε την πριν τη στείλετε." : "Δεν βρέθηκε σημείωση για το θέμα — η απάντηση λέει ότι θα το ελέγξετε."
+              : "Από τον βοηθό AI. Ελέγξτε την πριν τη στείλετε."}{" "}
+            Τα στοιχεία του καταλύματος (Wi-Fi, πάρκινγκ…) τα μαθαίνει από τις Γνώσεις.
+          </Text>
+          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+            <Button small title="Αντιγραφή" onPress={async () => { await Clipboard.setStringAsync(reply); notify("Αντιγράφηκε"); }} />
+            {draft.conversationUrl && <Button small variant="outline" title="Άνοιγμα συνομιλίας" onPress={() => Linking.openURL(draft.conversationUrl!)} />}
+            <Button small variant="ghost" title="Καταγραφή ως σταλμένο" loading={save.pending}
+              onPress={() => void save.run(() => api("/api/messages", { body: { guestId, reservationId, content: reply, send: true } }), {
+                onSuccess: () => { setDraft(null); setMessage(""); setReply(""); onSaved(); },
+              })} />
+          </View>
         </>
       )}
     </Card>

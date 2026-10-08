@@ -11,6 +11,7 @@ import { DefinitionList, EmptyState, PageHeader, Stat } from "@/components/ui/mi
 import { getPageContext, orNotFound } from "@/lib/auth/page";
 import { formatDay, formatMoney } from "@/lib/format";
 import { languageName } from "@/lib/i18n/guest-language";
+import { GUEST_ID_TYPES } from "@/lib/aade";
 import { getGuestDetails } from "@/lib/services/guests";
 
 export const metadata: Metadata = { title: "Επισκέπτης" };
@@ -57,7 +58,7 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
             <CardHeader title="Επικοινωνία" />
             <CardContent>
               <DefinitionList items={[{ label: "Email", value: g.email }, { label: "Τηλέφωνο", value: g.phone }, { label: "Χώρα", value: g.country },
-                { label: "Γλώσσα μηνυμάτων", value: `${languageName(g.language)}${g.languagePreference ? "" : " (από τη χώρα)"}` }, { label: "Επισκέπτης από", value: formatDay(g.createdAt.slice(0, 10), { day: "numeric", month: "long", year: "numeric" }) }]} />
+                { label: "Γλώσσα μηνυμάτων", value: `${languageName(g.language)}${g.languagePreference ? "" : " (από τη χώρα)"}` }, { label: "Ταυτοποίηση (ΑΑΔΕ)", value: g.idNumber ? `${g.idType ? GUEST_ID_TYPES[g.idType as keyof typeof GUEST_ID_TYPES] : ""} ${g.idNumber}`.trim() : null }, { label: "Επισκέπτης από", value: formatDay(g.createdAt.slice(0, 10), { day: "numeric", month: "long", year: "numeric" }) }]} />
             </CardContent>
           </Card>
           <Card>

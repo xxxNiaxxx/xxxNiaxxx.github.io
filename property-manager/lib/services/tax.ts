@@ -1,5 +1,6 @@
 import type { Prisma, TaxFilingKind } from "@prisma/client";
 import { z } from "zod";
+import { defaultPaymentMethod, GUEST_ID_TYPES, PAYMENT_METHODS } from "@/lib/aade";
 import { RESERVATION_SOURCES } from "@/lib/reservation-sources";
 import { db } from "@/lib/db";
 import { addDaysISO, dateToISO, diffDaysISO, isoToDate, todayISO } from "@/lib/dates";
@@ -78,7 +79,7 @@ export async function updateTaxSettings(ctx: OrgContext, input: unknown) {
 
 const stayInclude = {
   property: { select: { id: true, name: true, ama: true, kind: true, areaSqm: true } },
-  guest: { select: { firstName: true, lastName: true } },
+  guest: { select: { firstName: true, lastName: true, idType: true, idNumber: true } },
 } as const;
 type StayRow = Prisma.ReservationGetPayload<{ include: typeof stayInclude }>;
 
@@ -155,6 +156,35 @@ export function stayTaxInfo(r: StayRow, regime: TaxRegime, today: string, income
   };
 }
 export type StayTaxInfo = ReturnType<typeof stayTaxInfo>;
+
+const dmy = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+
+/**
+ * The values to type into the AADE stay declaration, in the form's order.
+ * The amount is the agreed rent: without ΤΑΚΚ, and for a business also
+ * without VAT and the 0,5% fee.
+ */
+export function declarationForm(r: StayRow, info: StayTaxInfo) {
+  const method = (r.paymentMethod ?? defaultPaymentMethod(r.source)) as keyof typeof PAYMENT_METHODS | null;
+  const name = [r.guest.firstName, r.guest.lastName === "—" ? "" : r.guest.lastName].join(" ").trim();
+  const fields = [
+    { key: "ama", label: "ΑΜΑ ακινήτου", value: r.property.ama },
+    { key: "guestName", label: "Ονοματεπώνυμο μισθωτή", value: name || null },
+    { key: "idType", label: "Τύπος αναγνωριστικού", value: r.guest.idType ? (GUEST_ID_TYPES[r.guest.idType as keyof typeof GUEST_ID_TYPES] ?? r.guest.idType) : null },
+    { key: "idNumber", label: "Αριθμός αναγνωριστικού", value: r.guest.idNumber },
+    { key: "checkIn", label: "Ημερομηνία άφιξης", value: dmy(info.checkIn) },
+    { key: "checkOut", label: "Ημερομηνία αναχώρησης", value: dmy(info.checkOut) },
+    { key: "paymentMethod", label: "Τρόπος πληρωμής", value: method ? PAYMENT_METHODS[method] : null },
+    { key: "amount", label: "Συνολικό συμφωνηθέν μίσθωμα (€)", value: info.rent > 0 ? info.rent.toFixed(2).replace(".", ",") : null },
+  ];
+  return {
+    fields,
+    /** Labels of the values still missing (fill them in on the guest or the reservation). */
+    missing: fields.filter((f) => !f.value).map((f) => f.label),
+    paymentMethodIsDefault: !r.paymentMethod && !!method,
+    cancelled: r.status === "CANCELLED",
+  };
+}
 
 export async function listStays(ctx: OrgContext, range: { from: string; to: string }, now = new Date(), incomeTaxRate?: number) {
   const { regime } = await getTaxContext(ctx);
@@ -436,5 +466,6 @@ export async function getStayTax(ctx: OrgContext, reservationId: string, now = n
   if (!r) throw notFound("Reservation");
   const year = Number(dateToISO(r.checkOut).slice(0, 4));
   const { effectiveTaxRate } = await getAnnualReport(ctx, year, 0, now);
-  return { regime, commissionRate: commissionRates[r.source] ?? 0, ...stayTaxInfo(r, regime, todayISO(now), effectiveTaxRate) };
+  const info = stayTaxInfo(r, regime, todayISO(now), effectiveTaxRate);
+  return { regime, commissionRate: commissionRates[r.source] ?? 0, ...info, declarationForm: declarationForm(r, info) };
 }

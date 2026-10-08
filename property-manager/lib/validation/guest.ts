@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GUEST_ID_TYPE_KEYS } from "@/lib/aade";
 import { GUEST_LANGUAGE_CODES } from "@/lib/i18n/guest-language";
 import { optionalEmail, optionalQuery, optionalText, requiredText } from "./common";
 
@@ -11,6 +12,9 @@ export const guestCreateSchema = z.object({
   /** "" = automatic (from the country) */
   language: z.preprocess((v) => (v === "" ? null : v), z.enum(GUEST_LANGUAGE_CODES).nullish()),
   notes: optionalText(4000),
+  /** Identity for the AADE stay declaration. */
+  idType: z.preprocess((v) => (v === "" ? null : v), z.enum(GUEST_ID_TYPE_KEYS).nullish()),
+  idNumber: optionalText(40),
 });
 
 export const guestUpdateSchema = guestCreateSchema.partial();

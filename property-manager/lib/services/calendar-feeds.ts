@@ -8,6 +8,7 @@ import { AppError, conflict, notFound } from "@/lib/errors";
 import { buildIcs, classifyEvent, parseIcs, type IcsEvent } from "@/lib/ical/ics";
 import { label } from "@/lib/labels";
 import { hasRole, type OrgContext } from "@/lib/permissions";
+import { isMirror, recordConflict, resolveGoneConflicts } from "./calendar-conflicts";
 import { cancelReservation, createReservation, updateReservation } from "./reservations";
 import { assertProperty } from "./scope";
 
@@ -139,9 +140,11 @@ export async function syncFeed(feed: CalendarFeed, now = new Date(), fetchText: 
       // Past stays come from the platform's export file, not the calendar.
       .filter(({ stay, e }) => stay && e.end >= addDaysISO(today, -3));
     const seen = new Set<string>();
+    const eventKeys: { uid: string; start: string; end: string }[] = [];
 
     for (const { e, code, phoneLast4 } of events) {
       seen.add(e.uid);
+      eventKeys.push({ uid: e.uid, start: e.start, end: e.end });
       try {
         await syncEvent(ctx, feed, e, code, phoneLast4, result);
       } catch {
@@ -158,6 +161,7 @@ export async function syncFeed(feed: CalendarFeed, now = new Date(), fetchText: 
       await cancelReservation(ctx, r.id);
       result.cancelled++;
     }
+    await resolveGoneConflicts(feed.id, eventKeys);
     await db.calendarFeed.update({ where: { id: feed.id }, data: { lastSyncedAt: now, lastError: null } });
   } catch (e) {
     result.error = e instanceof FeedError ? e.message : "Δεν ήταν δυνατή η σύνδεση με το ημερολόγιο. Ελέγξτε τον σύνδεσμο ή δοκιμάστε αργότερα.";
@@ -181,10 +185,13 @@ async function syncEvent(ctx: OrgContext, feed: CalendarFeed, e: IcsEvent, code:
     }
     return;
   }
-  const taken = await db.reservation.findFirst({
+  const taken = await db.reservation.findMany({
     where: { propertyId: feed.propertyId, status: { in: ["CONFIRMED", "PENDING"] }, checkIn: { lt: isoToDate(e.end) }, checkOut: { gt: isoToDate(e.start) } },
+    select: { id: true, checkIn: true, checkOut: true },
   });
-  if (taken) {
+  if (taken.length) {
+    // Dates already taken: the same stay entered by hand, our own dates mirrored back, or a double booking.
+    if (!isMirror(e, taken)) await recordConflict(feed, e, code, taken);
     result.skipped++;
     return;
   }
@@ -202,6 +209,8 @@ async function syncEvent(ctx: OrgContext, feed: CalendarFeed, e: IcsEvent, code:
     notes: [`Από το ημερολόγιο ${label(feed.source)} — συμπληρώστε ποσό και επισκέπτη (ή κάντε εισαγωγή του αρχείου κρατήσεων).`, phoneLast4 ? `Τηλέφωνο: …${phoneLast4}` : null].filter(Boolean).join("\n"),
   });
   await db.reservation.update({ where: { id: created.id }, data: { calendarFeedId: feed.id, icalUid: e.uid } });
+  // The dates were freed (the other stay was cancelled): no longer a double booking.
+  await db.calendarConflict.updateMany({ where: { feedId: feed.id, icalUid: e.uid, resolvedAt: null }, data: { resolvedAt: new Date() } });
   result.created++;
 }
 

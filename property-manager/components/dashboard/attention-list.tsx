@@ -1,9 +1,10 @@
-import { AlertCircle, CalendarClock, CheckCircle2, ClipboardX, Euro, FileWarning, Landmark, MessageSquareWarning, ShieldAlert, Sparkles } from "lucide-react";
+import { AlertCircle, CalendarClock, CalendarX2, CheckCircle2, ClipboardX, Euro, FileWarning, Landmark, MessageSquareWarning, ShieldAlert, Sparkles } from "lucide-react";
 import Link from "next/link";
 import type { AttentionItem, AttentionKind } from "@/lib/services/dashboard";
 import { cn } from "@/lib/utils";
 
 const icons: Record<AttentionKind, typeof AlertCircle> = {
+  DOUBLE_BOOKING: CalendarX2,
   OVERDUE_TASK: ClipboardX,
   MISSING_CLEANING: CalendarClock,
   MISSING_INFO: FileWarning,

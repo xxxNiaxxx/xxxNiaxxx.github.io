@@ -6,8 +6,9 @@ import { getOccupancy } from "./financials";
 import { getTaxOverview } from "./tax";
 import { serializeReservation, serializeTask, toNumber } from "./serializers";
 import { OPEN_STATUSES } from "./tasks";
+import { conflictDetail, conflictTitle, listOpenConflicts } from "./calendar-conflicts";
 
-export type AttentionKind = "OVERDUE_TASK" | "MISSING_CLEANING" | "MISSING_INFO" | "NO_CHECKIN_MESSAGE" | "AI_ACTION" | "TAX_DEADLINE" | "COMPLIANCE" | "MISSING_AMOUNT";
+export type AttentionKind = "DOUBLE_BOOKING" | "OVERDUE_TASK" | "MISSING_CLEANING" | "MISSING_INFO" | "NO_CHECKIN_MESSAGE" | "AI_ACTION" | "TAX_DEADLINE" | "COMPLIANCE" | "MISSING_AMOUNT";
 
 export interface AttentionItem {
   kind: AttentionKind;
@@ -108,6 +109,15 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
   });
 
   const attention: AttentionItem[] = [];
+  for (const c of await listOpenConflicts(ctx)) {
+    attention.push({
+      kind: "DOUBLE_BOOKING",
+      severity: "high",
+      title: conflictTitle(c),
+      detail: conflictDetail(c),
+      href: `/reservations/${c.overlaps[0].id}`,
+    });
+  }
   for (const t of overdueTasks) {
     attention.push({
       kind: "OVERDUE_TASK",
