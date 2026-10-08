@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { NumberField, SelectField, TextField } from "@/components/form";
+import { NumberField, SelectField, TextField, CheckRow } from "@/components/form";
 import { Button, Card, Screen, SectionTitle, styles } from "@/components/ui";
 import { api } from "@/lib/api";
 import { COMMISSION_SOURCES } from "@/lib/constants";
@@ -14,6 +14,7 @@ import { useQuery } from "@/lib/use-query";
 export default function Settings() {
   const { session, serverUrl, refresh, switchOrganization } = useSession();
   const tax = useQuery<TaxSettings>("/api/tax/settings");
+  const orgInfo = useQuery<{ emailReminders: boolean }>("/api/organization");
   const profile = useMutation();
   const org = useMutation();
   const regime = useMutation();
@@ -41,6 +42,10 @@ export default function Settings() {
         {admin && (
           <Button small title="Αποθήκευση" loading={org.pending} disabled={orgName.trim() === session.organization.name} style={{ alignSelf: "flex-start" }}
             onPress={() => void org.run(() => api("/api/organization", { method: "PATCH", body: { name: orgName } }), { onSuccess: () => void refresh() })} />
+        )}
+        {orgInfo.data && (
+          <CheckRow label="Υπενθυμίσεις με email (προθεσμίες, διπλοκρατήσεις, αιτήματα) και μηνιαία αναφορά" value={orgInfo.data.emailReminders}
+            onChange={(v) => admin && void org.run(() => api("/api/organization", { method: "PATCH", body: { emailReminders: v } }), { onSuccess: () => void orgInfo.reload() })} />
         )}
         {session.organizations.length > 1 && (
           <SelectField label="Ενεργός οργανισμός" value={session.organization.id}

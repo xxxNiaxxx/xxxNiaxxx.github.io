@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DeleteAccount } from "@/components/settings/delete-account";
 import { NameForm } from "@/components/settings/name-form";
 import { OrgSwitcher } from "@/components/settings/org-switcher";
+import { RemindersToggle } from "@/components/settings/reminders-toggle";
 import { TeamPanel } from "@/components/settings/team";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DefinitionList, PageHeader } from "@/components/ui/misc";
@@ -44,7 +45,8 @@ export default async function SettingsPage() {
                 <OrgSwitcher current={organization.id} organizations={memberships.map((m) => m.organization)} />
               </div>
             )}
-            <DefinitionList items={[{ label: "Βοηθός AI", value: ai }, { label: "Κανάλια", value: "Χειροκίνητες κρατήσεις (συγχρονισμός Airbnb / Booking.com σε επόμενη φάση)" }]} />
+            <RemindersToggle initial={organization.emailReminders} disabled={!hasRole(ctx, "ADMIN")} />
+            <DefinitionList items={[{ label: "Βοηθός AI", value: ai }, { label: "Κανάλια", value: "Ημερολόγια iCal ανά ακίνητο και εισαγωγή αρχείων κρατήσεων" }]} />
           </CardContent>
         </Card>
         <Card id="team">

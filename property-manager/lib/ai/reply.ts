@@ -141,7 +141,10 @@ export async function draftGuestReply(ctx: OrgContext, raw: unknown, provider: C
       ],
     });
     const reply = out.content?.trim();
-    if (reply) return { reply, offline: false, usedInfo: info.length, conversationUrl };
+    if (reply) {
+      await countReply(ctx);
+      return { reply, offline: false, usedInfo: info.length, conversationUrl };
+    }
   }
 
   // Offline: greeting + the saved notes on the topics the guest asks about.
@@ -158,5 +161,11 @@ export async function draftGuestReply(ctx: OrgContext, raw: unknown, provider: C
     answer.length ? answer.join("\n\n") : willCheck,
     `${bye}\n${r.property.name} (${dates})`,
   ].join("\n\n");
+  await countReply(ctx);
   return { reply, offline: true, usedInfo: answer.length, conversationUrl };
+}
+
+/** For "what the app saved you". */
+async function countReply(ctx: OrgContext) {
+  await db.organization.update({ where: { id: ctx.organizationId }, data: { aiRepliesDrafted: { increment: 1 } } });
 }

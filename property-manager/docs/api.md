@@ -259,3 +259,19 @@ declaration field by field: `fields[{ key, label, value }]`, `missing`) and
 stay on dates already taken that is not just our own dates mirrored back).
 Guests have `idType` (`ID_CARD` | `PASSPORT` | `TAX_ID`) and `idNumber`;
 reservations have `paymentMethod` (see `lib/aade.ts`, null = platform default).
+
+## Guest pages, reminders, accountant pack, prices
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| POST | `/api/reservations/:id/checkin-link` | → `{ path }` the guest's online check-in page (`/checkin/:token`) |
+| POST | `/api/public/checkin/:token` | **public** · `{ idNumber, phone?, email?, country?, arrivalTime?, acceptRules?, consent: true }` |
+| POST / PATCH | `/api/properties/:id/public-pages` | → `{ guidePath, bookingPath }` · PATCH `{ directBooking }` |
+| GET / POST | `/api/public/book/:token` | **public** · GET `?checkIn&checkOut` → quote; POST a booking request (PENDING, source DIRECT) |
+| GET | `/api/properties/:id/price-suggestions` | price ideas from the next 60 days |
+| GET | `/api/tax/accountant?year=` | Excel for the accountant (page: `/tax/accountant`) |
+| PATCH | `/api/organization` | `{ name?, emailReminders? }` |
+
+The nightly cron (`/api/cron/ical`) also sends the reminder emails (at most one
+a day per organization) and, on days 1–3 of a month, the monthly report.
+`GET /api/dashboard` includes `savings` and `priceIdeas`.

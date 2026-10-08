@@ -19,6 +19,11 @@ const fields = z.object({
   ama: optionalText(20).refine((v) => !v || /^\d{6,15}$/.test(v), "Ο ΑΜΑ είναι ο αριθμητικός κωδικός από το Μητρώο της ΑΑΔΕ"),
   kind: z.enum(["APARTMENT", "DETACHED_HOUSE"]),
   areaSqm: z.preprocess((v) => (v === "" || v == null ? null : v), z.coerce.number().int().min(5).max(5000).nullable()).optional(),
+  checkInTime: optionalText(5).refine((v) => !v || /^([01]\d|2[0-3]):[0-5]\d$/.test(v), "Ώρα σε μορφή ΩΩ:ΛΛ, π.χ. 15:00"),
+  checkOutTime: optionalText(5).refine((v) => !v || /^([01]\d|2[0-3]):[0-5]\d$/.test(v), "Ώρα σε μορφή ΩΩ:ΛΛ, π.χ. 11:00"),
+  houseRules: optionalText(4000),
+  /** The public direct booking page takes booking requests. */
+  directBooking: z.boolean(),
   compliance: z
     .object({
       fireExtinguisher: z.boolean().optional(),
@@ -39,6 +44,7 @@ export const propertyCreateSchema = fields.extend({
   status: propertyStatus.default("ACTIVE"),
   currency,
   kind: fields.shape.kind.default("APARTMENT"),
+  directBooking: fields.shape.directBooking.default(false),
 });
 
 export const propertyUpdateSchema = fields.partial();

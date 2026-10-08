@@ -18,7 +18,7 @@ import { adminNav, helpNav, isActive, mainNav, mobileNav, settingsNav } from "./
 
 export function MobileTopBar({ appName, orgName }: { appName: string; orgName: string }) {
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/85 px-4 backdrop-blur lg:hidden">
+    <header className="sticky top-0 z-30 flex h-14 print:hidden items-center justify-between border-b border-border bg-background/85 px-4 backdrop-blur lg:hidden">
       <Link href="/dashboard" className="flex min-w-0 items-center gap-2 font-semibold tracking-tight">
         <Logo className="size-6" />
         <span className="truncate">{appName}</span>
@@ -34,7 +34,7 @@ export function MobileBottomNav({ pendingActions, waitlistAdmin = false }: { pen
   return (
     <nav
       aria-label="Μενού κινητού"
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid print:hidden grid-cols-5 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
       {mobileNav.map((item) => {
         const active = isActive(pathname, item.href);

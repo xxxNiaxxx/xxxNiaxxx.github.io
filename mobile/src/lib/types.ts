@@ -21,6 +21,10 @@ export interface Reservation {
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
   notes: string | null;
   paymentMethod: string | null;
+  checkinPath: string | null;
+  checkinCompletedAt: string | null;
+  arrivalTime: string | null;
+  rulesAccepted: boolean;
 }
 
 export interface Task {
@@ -62,6 +66,8 @@ export interface Dashboard {
   };
   attention: AttentionItem[];
   todayAgenda: { checkIns: Reservation[]; checkOuts: Reservation[]; cleaning: Task[]; maintenance: Task[]; other: Task[] };
+  savings?: Savings;
+  priceIdeas?: PriceSuggestion[];
 }
 
 export interface Message {
@@ -133,6 +139,33 @@ export interface Property {
   kind: "APARTMENT" | "DETACHED_HOUSE";
   areaSqm: number | null;
   compliance: Record<string, boolean | string | null>;
+  checkInTime: string | null;
+  checkOutTime: string | null;
+  houseRules: string | null;
+  directBooking: boolean;
+  publicToken: string | null;
+}
+
+export interface PriceSuggestion {
+  propertyId: string;
+  propertyName: string;
+  kind: "GAP" | "LAST_MINUTE" | "HIGH_DEMAND" | "LOW_DEMAND" | "ACHIEVED_RATE";
+  title: string;
+  detail: string;
+  price?: number;
+}
+
+export interface Savings {
+  year: number;
+  declarationsOnTime: number;
+  finesAvoided: number;
+  doubleBookingsCaught: number;
+  directBookings: number;
+  commissionSaved: number;
+  checkinsCompleted: number;
+  aiReplies: number;
+  automatedStays: number;
+  hoursSaved: number;
 }
 
 export interface PropertyDetails {

@@ -16,6 +16,9 @@ import { ComplianceChecklist } from "@/components/tax/compliance-card";
 import { AddMemoryForm, MemoryItem } from "@/components/ai/knowledge";
 import { listMemories } from "@/lib/ai/memory";
 import { CalendarSync } from "@/components/properties/calendar-sync";
+import { GuestPagesCard } from "@/components/properties/guest-pages-card";
+import { PriceSuggestionList } from "@/components/properties/price-suggestions";
+import { priceSuggestions } from "@/lib/services/price-suggestions";
 import { getPropertyCalendars } from "@/lib/services/calendar-feeds";
 import { hasRole } from "@/lib/permissions";
 
@@ -25,7 +28,11 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const { ctx } = await getPageContext();
   const d = await orNotFound(getPropertyDetails(ctx, id));
-  const [guestInfo, calendars] = await Promise.all([listMemories(ctx, { kind: "GUEST_INFO", propertyId: id }), getPropertyCalendars(ctx, id)]);
+  const [guestInfo, calendars, suggestions] = await Promise.all([
+    listMemories(ctx, { kind: "GUEST_INFO", propertyId: id }),
+    getPropertyCalendars(ctx, id),
+    priceSuggestions(ctx, { propertyId: id }),
+  ]);
   const p = d.property;
   const cur = d.currentReservation;
 
@@ -99,6 +106,18 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
                 ]}
               />
               {p.description && <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{p.description}</p>}
+            </CardContent>
+          </Card>
+          <Card id="prices">
+            <CardHeader title="Προτάσεις τιμών" description={`Από το ημερολόγιο των επόμενων 60 ημερών · βασική τιμή ${formatMoney(p.basePrice, p.currency)}. Την τιμή την αλλάζετε σε κάθε πλατφόρμα.`} />
+            <CardContent>
+              <PriceSuggestionList items={suggestions} />
+            </CardContent>
+          </Card>
+          <Card id="guest-pages">
+            <CardHeader title="Σελίδες για επισκέπτες" description="Οδηγός επισκέπτη και απευθείας κρατήσεις" />
+            <CardContent>
+              <GuestPagesCard propertyId={p.id} publicToken={p.publicToken} directBooking={p.directBooking} canEdit={hasRole(ctx, "ADMIN")} />
             </CardContent>
           </Card>
           <Card id="calendars">
