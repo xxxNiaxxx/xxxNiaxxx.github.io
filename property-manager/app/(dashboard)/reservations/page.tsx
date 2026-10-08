@@ -36,7 +36,7 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
         description={`${reservations.length} ${reservations.length === 1 ? "κράτηση" : "κρατήσεις"}${filtered ? " με τα φίλτρα" : ""}`}
         actions={
           <>
-          <Button asChild variant="outline"><Link href="/reservations/import"><Upload /> Εισαγωγή από Booking/Airbnb</Link></Button>
+          <Button asChild variant="outline"><Link href="/reservations/import"><Upload /> Εισαγωγή αρχείου</Link></Button>
           <ReservationFormDialog
             key={sp.new ? `new-${sp.propertyId}-${sp.checkIn}` : "new"}
             properties={options.properties}

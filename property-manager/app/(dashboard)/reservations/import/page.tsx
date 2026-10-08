@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { ImportWizard } from "@/components/reservations/import-wizard";
 import { PageHeader } from "@/components/ui/misc";
@@ -22,7 +23,7 @@ export default async function ImportPage() {
       <PageHeader
         back={{ href: "/reservations", label: "Κρατήσεις" }}
         title="Εισαγωγή κρατήσεων"
-        description="Από το αρχείο εξαγωγής του Booking.com ή του Airbnb — με τιμές, προμήθειες και ΤΑΚΚ."
+        description={<>Από το αρχείο εξαγωγής του Booking.com, του Airbnb ή άλλης πλατφόρμας — με τιμές, προμήθειες και ΤΑΚΚ · <Link href="/help#booking-arxeio" className="text-accent underline-offset-4 hover:underline">Τα νούμερα του Booking</Link></>}
       />
       <div className="max-w-5xl">
         <ImportWizard properties={properties} pricing={{ regime: tax.regime, commissionRates: tax.commissionRates }} />

@@ -34,7 +34,7 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
     <>
       <PageHeader
         title="Φορολογικά & ΑΑΔΕ"
-        description="Υποχρεώσεις βραχυχρόνιας μίσθωσης: δηλώσεις διαμονής, ΤΑΚΚ, φόρος εισοδήματος και συμμόρφωση"
+        description={<>Υποχρεώσεις βραχυχρόνιας μίσθωσης: δηλώσεις διαμονής, ΤΑΚΚ, φόρος εισοδήματος και συμμόρφωση · <Link href="/help#foros" className="text-accent underline-offset-4 hover:underline">Πώς υπολογίζονται;</Link></>}
         actions={
           <>
             <Button asChild variant="outline"><a href={`/api/tax/export?type=stays&year=${year}`}><Download /> Διαμονές CSV {year}</a></Button>

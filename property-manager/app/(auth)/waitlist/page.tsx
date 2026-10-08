@@ -13,6 +13,9 @@ export default function WaitlistPage() {
         Ανοίγουμε την εφαρμογή σταδιακά. Αφήστε τα στοιχεία σας και θα σας στείλουμε email με τον προσωπικό σας σύνδεσμο εγγραφής.
       </p>
       <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent">{FREE_UNTIL_NOTE}</p>
+      <p className="mt-3 text-sm text-muted-foreground">
+        <Link href="/help" className="font-medium text-foreground underline-offset-4 hover:underline">Δείτε πώς λειτουργεί</Link>: ποσά, προμήθειες, φόροι, πολλά καταλύματα.
+      </p>
       <WaitlistForm />
       <p className="mt-6 text-sm text-muted-foreground">
         Έχετε ήδη λογαριασμό;{" "}

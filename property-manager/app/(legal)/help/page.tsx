@@ -1,0 +1,248 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { APP_NAME } from "@/lib/brand";
+import { todayISO } from "@/lib/dates";
+import { formatMoney } from "@/lib/format";
+import {
+  BUSINESS_THRESHOLD_PROPERTIES,
+  DETACHED_AREA_THRESHOLD_SQM,
+  FLAT_DEDUCTION_RATE,
+  LAST_REVIEWED,
+  VAT_RATE_ACCOMMODATION,
+  bookingMunicipalFee,
+  businessScale,
+  climateFeePerNight,
+  commissionFor,
+  rentalScale,
+} from "@/lib/tax/gr";
+
+export const metadata: Metadata = { title: "Βοήθεια · Πώς λειτουργεί" };
+
+const pct = (rate: number) => `${(rate * 100).toLocaleString("el-GR", { maximumFractionDigits: 1 })}%`;
+const eur = (n: number) => formatMoney(n);
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+function Scale({ brackets }: { brackets: { upTo: number; rate: number }[] }) {
+  return (
+    <table className="w-full max-w-md text-sm">
+      <tbody>
+        {brackets.map((b, i) => {
+          const from = i === 0 ? 0 : brackets[i - 1].upTo;
+          return (
+            <tr key={b.upTo} className="border-b border-border">
+              <td className="py-1.5 text-muted-foreground">
+                {b.upTo === Infinity ? `πάνω από ${eur(from)}` : `${i === 0 ? "έως" : `${eur(from + 1)} –`} ${eur(b.upTo)}`}
+              </td>
+              <td className="py-1.5 text-right font-medium tabular-nums">{pct(b.rate)}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+function Contents() {
+  const items = [
+    ["polla-katalymata", "Πολλά καταλύματα"],
+    ["poso-kratisis", "Τι περιλαμβάνει το ποσό μιας κράτησης"],
+    ["promithies", "Προμήθειες πλατφορμών"],
+    ["booking-arxeio", "Τα νούμερα του αρχείου Booking"],
+    ["foros", "Φόρος εισοδήματος"],
+    ["idiotis-epixeirisi", "Ιδιώτης ή επιχείρηση"],
+    ["fpa-booking", "Ο ΦΠΑ που δείχνει το Booking"],
+    ["takk", "Περιβαλλοντικό τέλος (ΤΑΚΚ)"],
+    ["eisagogi", "Εισαγωγή αρχείων και ημερολόγια iCal"],
+  ];
+  return (
+    <nav aria-label="Περιεχόμενα" className="rounded-xl border border-border bg-surface p-4">
+      <ul className="grid gap-1 text-sm">
+        {items.map(([id, label]) => (
+          <li key={id}><a className="text-accent underline-offset-4 hover:underline" href={`#${id}`}>{label}</a></li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+export default function HelpPage() {
+  const year = Number(todayISO().slice(0, 4));
+  const rental = rentalScale(year);
+  const rentalPrev = rentalScale(year - 1);
+  const scaleChanged = JSON.stringify(rental) !== JSON.stringify(rentalPrev);
+  const flat = { kind: "APARTMENT" as const, areaSqm: 60 };
+  const house = { kind: "DETACHED_HOUSE" as const, areaSqm: DETACHED_AREA_THRESHOLD_SQM + 20 };
+  const summer = `${year}-07-15`;
+  const winter = `${year}-01-15`;
+
+  // Worked example: a real Booking.com stay of 5 nights.
+  const room = 210.03;
+  const nights = 5;
+  const takk = round2(climateFeePerNight(summer, flat) * nights);
+  const fee = bookingMunicipalFee(room);
+  const base = round2(room - fee);
+  const commission = commissionFor(room, 15, "BOOKING_COM");
+  const taxable = round2(room * (1 - FLAT_DEDUCTION_RATE));
+  const tax = round2(taxable * rental[0].rate);
+  const net = round2(room - commission - tax);
+
+  return (
+    <>
+      <h1>Πώς λειτουργεί το {APP_NAME}</h1>
+      <p>
+        Εδώ εξηγούμε πώς υπολογίζει η εφαρμογή ποσά, προμήθειες και φόρους. Οι φόροι είναι <strong>εκτίμηση</strong> για να
+        ξέρετε περίπου τι σας μένει· τον ακριβή φόρο τον βγάζει η δήλωση. Επιβεβαιώνετε πάντα με τον λογιστή σας.
+      </p>
+      <Contents />
+
+      <h2 id="polla-katalymata">Πολλά καταλύματα</h2>
+      <p>Μπορείτε να έχετε όσα καταλύματα θέλετε στον ίδιο λογαριασμό. <strong>Ξεχωριστά για κάθε κατάλυμα</strong>:</p>
+      <ul>
+        <li>ΑΜΑ, είδος (διαμέρισμα ή μονοκατοικία), τετραγωνικά, τιμή, μέγιστος αριθμός ατόμων και υποχρεώσεις ΑΑΔΕ.</li>
+        <li>Κρατήσεις: ο έλεγχος για διπλοκρατήσεις γίνεται ανά κατάλυμα — δύο κρατήσεις τις ίδιες μέρες σε διαφορετικά καταλύματα είναι κανονικές.</li>
+        <li>Ημερολόγια iCal από Airbnb, Booking κ.λπ., και ο δικός του σύνδεσμος ημερολογίου για τις πλατφόρμες.</li>
+        <li>Περιβαλλοντικό τέλος, ανάλογα με το είδος και τα τετραγωνικά του.</li>
+        <li>Δηλώσεις διαμονής, με το ΑΜΑ του καταλύματος.</li>
+        <li>Οικονομικά και ημερολόγιο: βλέπετε όλα μαζί ή φιλτράρετε ανά κατάλυμα.</li>
+        <li>Εργασίες (καθαρισμός, συντήρηση) με ανάθεση σε μέλη της ομάδας.</li>
+      </ul>
+      <p><strong>Για όλα μαζί</strong> υπολογίζονται:</p>
+      <ul>
+        <li>Ο φόρος εισοδήματος: τα ενοίκια όλων των καταλυμάτων αθροίζονται και η κλίμακα εφαρμόζεται στο σύνολο, όπως στη δήλωση του ιδιοκτήτη.</li>
+        <li>Το αν είστε ιδιώτης ή επιχείρηση (δείτε <a className="text-accent underline" href="#idiotis-epixeirisi">παρακάτω</a>).</li>
+      </ul>
+      <p>
+        <strong>Προσοχή:</strong> η εφαρμογή θεωρεί ότι όλα τα καταλύματα ενός λογαριασμού (οργανισμού) ανήκουν στον ίδιο
+        ιδιοκτήτη. Αν ανήκουν σε διαφορετικά πρόσωπα — π.χ. ένα δικό σας κι ένα του/της συζύγου, ή διαχειρίζεστε καταλύματα
+        τρίτων — φτιάξτε <strong>ξεχωριστό οργανισμό για κάθε ιδιοκτήτη</strong>, για να βγαίνει σωστά ο φόρος του καθενός.
+        Μπορείτε να είστε μέλος σε πολλούς οργανισμούς και να αλλάζετε από <em>Ρυθμίσεις → Ενεργός οργανισμός</em>.
+      </p>
+
+      <h2 id="poso-kratisis">Τι περιλαμβάνει το ποσό μιας κράτησης</h2>
+      <ul>
+        <li><strong>Τιμή δωματίου</strong>: η τιμή της διαμονής. Αν στην πλατφόρμα σας εμφανίζεται «με ΦΠΑ 13% και 0,5% δημοτικό φόρο», αυτά είναι μέσα στην τιμή.</li>
+        <li><strong>Περιβαλλοντικό τέλος (ΤΑΚΚ)</strong>: χρεώνεται <em>επιπλέον</em> στον επισκέπτη και το αποδίδετε στο κράτος. Δεν είναι εισόδημά σας.</li>
+        <li><strong>Πληρωμή επισκέπτη</strong> = τιμή δωματίου + ΤΑΚΚ.</li>
+        <li><strong>Προμήθεια</strong> της πλατφόρμας, <strong>φόρος εισοδήματος</strong> (εκτίμηση) και τελικά τα <strong>καθαρά</strong> που σας μένουν.</li>
+      </ul>
+      <p>Παράδειγμα (κράτηση Booking.com, {nights} νύχτες τον Ιούλιο, ιδιώτης):</p>
+      <table className="w-full max-w-md text-sm">
+        <tbody>
+          {[
+            ["Τιμή δωματίου", eur(room)],
+            [`ΤΑΚΚ (${nights} × ${eur(takk / nights)})`, eur(takk)],
+            ["Πληρωμή επισκέπτη", eur(room + takk)],
+            [`Τέλος 0,5% του Booking (μέσα στην τιμή)`, eur(fee)],
+            ["Ποσό προμήθειας (τιμή − 0,5%)", eur(base)],
+            ["Προμήθεια 15%", `− ${eur(commission)}`],
+            [`Φόρος εισοδήματος (${pct(rental[0].rate)} στο ${eur(taxable)})`, `− ${eur(tax)}`],
+            ["Καθαρά για εσάς", eur(net)],
+          ].map(([k, v], i, all) => (
+            <tr key={k} className={i === all.length - 1 ? "font-semibold" : "border-b border-border"}>
+              <td className="py-1.5 text-muted-foreground">{k}</td>
+              <td className="py-1.5 text-right tabular-nums">{v}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h2 id="promithies">Προμήθειες πλατφορμών</h2>
+      <ul>
+        <li>Ορίζετε το ποσοστό του συμβολαίου σας για κάθε πλατφόρμα στα <em>Φορολογικά → Προμήθειες</em>. Οι Booking.com και Airbnb ξεκινούν από 15%, οι υπόλοιπες από 0% μέχρι να το ορίσετε.</li>
+        <li>Η προμήθεια υπολογίζεται αυτόματα σε κάθε νέα κράτηση· μπορείτε να τη διορθώσετε με το χέρι.</li>
+        <li><strong>Booking.com</strong>: χρεώνει προμήθεια στην τιμή δωματίου <em>χωρίς</em> το τέλος 0,5%, που υπολογίζεται ως τιμή × 0,005 / 1,135. Ποτέ στο ΤΑΚΚ.</li>
+        <li><strong>Οι άλλες πλατφόρμες</strong>: στην τιμή δωματίου.</li>
+      </ul>
+
+      <h2 id="booking-arxeio">Τα νούμερα του αρχείου Booking</h2>
+      <p>
+        Στο αρχείο κρατήσεων του Booking (Excel), η στήλη <strong>«Τιμή» (Price)</strong> δεν είναι η τιμή δωματίου: είναι το
+        ποσό πάνω στο οποίο υπολογίζεται η προμήθεια, δηλαδή η τιμή <em>χωρίς</em> το τέλος 0,5%. Η εισαγωγή το αναγνωρίζει
+        μόνη της από τη στήλη της προμήθειας και βρίσκει την τιμή δωματίου (π.χ. {eur(base)} → {eur(room)}). Στην προεπισκόπηση
+        της εισαγωγής βλέπετε τι κατάλαβε και μπορείτε να το αλλάξετε.
+      </p>
+      <p>Η επανεισαγωγή του ίδιου αρχείου <strong>ενημερώνει</strong> τις κρατήσεις (όχι διπλές), και αναγνωρίζει και όσες είχατε περάσει με το χέρι γράφοντας τον αριθμό κράτησης.</p>
+
+      <h2 id="foros">Φόρος εισοδήματος</h2>
+      <p><strong>Ιδιώτες (έντυπο Ε2)</strong>:</p>
+      <ul>
+        <li>Φορολογείται το ενοίκιο μείον {pct(FLAT_DEDUCTION_RATE)} (έκπτωση για έξοδα). Η προμήθεια της πλατφόρμας <em>δεν</em> αφαιρείται.</li>
+        <li>Το ΤΑΚΚ δεν είναι εισόδημα — το αποδίδετε στο κράτος.</li>
+        <li>Η κλίμακα εφαρμόζεται στο <strong>σύνολο</strong> των ενοικίων της χρονιάς (όλων των καταλυμάτων)· κάθε κράτηση παίρνει το κομμάτι της με τον μέσο συντελεστή.</li>
+      </ul>
+      <p>Κλίμακα εισοδήματος από ακίνητα για το {year}:</p>
+      <Scale brackets={rental} />
+      {scaleChanged && (
+        <>
+          <p>Για τα εισοδήματα του {year - 1} (δήλωση του {year}) ίσχυε:</p>
+          <Scale brackets={rentalPrev} />
+        </>
+      )}
+      <p>
+        Αν έχετε και άλλα εισοδήματα από ακίνητα (π.χ. μακροχρόνια μίσθωση), βάλτε τα στα <em>Φορολογικά</em> στο «Άλλα
+        εισοδήματα από ακίνητα», για να υπολογιστεί σωστά ο συντελεστής.
+      </p>
+      <p><strong>Επιχείρηση (με έναρξη)</strong>:</p>
+      <ul>
+        <li>Η τιμή δωματίου περιλαμβάνει ΦΠΑ {pct(VAT_RATE_ACCOMMODATION)} και τέλος διαμονής παρεπιδημούντων 0,5%, που αποδίδετε κάθε μήνα.</li>
+        <li>Φορολογείται το ενοίκιο μείον την προμήθεια, με την κλίμακα επιχειρήσεων — ή με τον δικό σας συντελεστή, αν τον ορίσετε στα Φορολογικά.</li>
+        <li>Η εκτίμηση δεν περιλαμβάνει εισφορές ΕΦΚΑ.</li>
+      </ul>
+      <p>Κλίμακα επιχειρήσεων για το {year}:</p>
+      <Scale brackets={businessScale(year)} />
+
+      <h2 id="idiotis-epixeirisi">Ιδιώτης ή επιχείρηση</h2>
+      <p>
+        Με έως {BUSINESS_THRESHOLD_PROPERTIES - 1} ακίνητα με ΑΜΑ είστε συνήθως ιδιώτης (Ε2, χωρίς ΦΠΑ). Από το{" "}
+        {BUSINESS_THRESHOLD_PROPERTIES}ο ακίνητο ο νόμος θεωρεί τη δραστηριότητα επιχειρηματική: χρειάζεται έναρξη εργασιών,
+        ΦΠΑ 13% και τέλος 0,5%. Στο «Αυτόματο» η εφαρμογή διαλέγει μόνη της από τον αριθμό των ΑΜΑ· αν έχετε ήδη έναρξη (ή
+        δεν έχετε), ορίστε το καθεστώς με το χέρι στα <em>Φορολογικά</em>.
+      </p>
+
+      <h2 id="fpa-booking">Ο ΦΠΑ που δείχνει το Booking</h2>
+      <p>
+        Η ανάλυση τιμής του Booking μπορεί να γράφει «περιλαμβάνεται ΦΠΑ 13% και 0,5% δημοτικός φόρος». Αυτό είναι ρύθμιση
+        της αγγελίας σας στο Booking. Αν είστε ιδιώτης χωρίς έναρξη, δεν αποδίδετε ΦΠΑ ούτε τέλος 0,5%: η εφαρμογή θεωρεί
+        όλη την τιμή δωματίου ενοίκιο και υπολογίζει φόρο εισοδήματος (Ε2) πάνω της. Για το αν πρέπει να αλλάξετε τις ρυθμίσεις
+        φόρων της αγγελίας, ρωτήστε τον λογιστή σας.
+      </p>
+
+      <h2 id="takk">Περιβαλλοντικό τέλος (ΤΑΚΚ)</h2>
+      <p>Ανά διανυκτέρευση και ανά κατάλυμα, για το {year}:</p>
+      <table className="w-full max-w-md text-sm">
+        <thead>
+          <tr className="border-b border-border text-left text-muted-foreground">
+            <th className="py-1.5 font-normal" />
+            <th className="py-1.5 text-right font-normal">Απρίλιος–Οκτώβριος</th>
+            <th className="py-1.5 text-right font-normal">Νοέμβριος–Μάρτιος</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="border-b border-border">
+            <td className="py-1.5 text-muted-foreground">Διαμέρισμα / κατάλυμα</td>
+            <td className="py-1.5 text-right tabular-nums">{eur(climateFeePerNight(summer, flat))}</td>
+            <td className="py-1.5 text-right tabular-nums">{eur(climateFeePerNight(winter, flat))}</td>
+          </tr>
+          <tr>
+            <td className="py-1.5 text-muted-foreground">Μονοκατοικία άνω των {DETACHED_AREA_THRESHOLD_SQM} m²</td>
+            <td className="py-1.5 text-right tabular-nums">{eur(climateFeePerNight(summer, house))}</td>
+            <td className="py-1.5 text-right tabular-nums">{eur(climateFeePerNight(winter, house))}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Οι δωρεάν φιλοξενίες δεν έχουν ΤΑΚΚ ούτε δήλωση διαμονής. Όταν μια διαμονή περνά από Οκτώβριο σε Νοέμβριο, κάθε νύχτα χρεώνεται με το δικό της ποσό.</p>
+
+      <h2 id="eisagogi">Εισαγωγή αρχείων και ημερολόγια iCal</h2>
+      <ul>
+        <li><strong>Εισαγωγή αρχείου</strong> (Κρατήσεις → «Εισαγωγή αρχείου»): το Excel/CSV του Booking, του Airbnb ή οποιασδήποτε πλατφόρμας. Αν το αρχείο έχει πολλά καταλύματα, αντιστοιχίζετε κάθε όνομα αγγελίας με το κατάλυμά σας. Κρατιούνται όλες οι στήλες του αρχείου και φαίνονται στην κράτηση.</li>
+        <li><strong>Ημερολόγια iCal</strong> (σελίδα του καταλύματος → «Ημερολόγια πλατφορμών»): οι νέες κρατήσεις έρχονται μόνες τους, όταν ανοίγετε την εφαρμογή και μία φορά τη νύχτα. Το iCal δεν έχει ποσά ούτε ονόματα· συμπληρώστε τα ή κάντε εισαγωγή του αρχείου, που ενημερώνει τις ίδιες κρατήσεις.</li>
+        <li><strong>Σύνδεσμος ημερολογίου του καταλύματος</strong>: τον δίνετε στις πλατφόρμες για να κλείνουν οι ημερομηνίες που κλείσατε αλλού.</li>
+      </ul>
+
+      <p className="pt-6 text-xs">
+        Οι κανόνες ελέγχθηκαν στις {LAST_REVIEWED}. Είναι βοήθημα και όχι φορολογική συμβουλή. ·{" "}
+        <Link className="text-accent underline" href="/dashboard">Επιστροφή στην εφαρμογή</Link>
+      </p>
+    </>
+  );
+}
