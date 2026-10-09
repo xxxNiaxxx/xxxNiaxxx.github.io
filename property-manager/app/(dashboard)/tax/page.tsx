@@ -52,7 +52,7 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
         </div>
         <RegimeSelect value={o.regimeSetting} disabled={!hasRole(ctx, "ADMIN")} />
         <div className="w-full border-t border-border pt-3 sm:basis-full">
-          <PricingSettings commissionRates={taxContext.commissionRates} businessTaxRate={taxContext.businessTaxRate} business={business} disabled={!hasRole(ctx, "ADMIN")} />
+          <PricingSettings commissionRates={taxContext.commissionRates} paymentFeeRates={taxContext.paymentFeeRates} businessTaxRate={taxContext.businessTaxRate} business={business} disabled={!hasRole(ctx, "ADMIN")} />
         </div>
       </div>
 

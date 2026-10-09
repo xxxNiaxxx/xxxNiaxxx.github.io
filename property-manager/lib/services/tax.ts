@@ -10,6 +10,7 @@ import {
   businessBreakdown,
   businessIncomeTax,
   DEFAULT_COMMISSION_RATES,
+  DEFAULT_PAYMENT_FEE_RATES,
   climateFeeDeadline,
   climateFeeByMonth,
   COMPLIANCE_ITEMS,
@@ -33,7 +34,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export async function getTaxContext(ctx: OrgContext) {
   const [org, properties] = await Promise.all([
-    db.organization.findUniqueOrThrow({ where: { id: ctx.organizationId }, select: { taxRegime: true, commissionRates: true, businessTaxRate: true } }),
+    db.organization.findUniqueOrThrow({ where: { id: ctx.organizationId }, select: { taxRegime: true, commissionRates: true, paymentFeeRates: true, businessTaxRate: true } }),
     db.property.findMany({
       where: { organizationId: ctx.organizationId },
       select: { id: true, name: true, ama: true, kind: true, areaSqm: true, status: true, compliance: true },
@@ -48,6 +49,8 @@ export async function getTaxContext(ctx: OrgContext) {
     properties,
     /** Commission % by booking source (organization overrides on top of the defaults). */
     commissionRates: { ...DEFAULT_COMMISSION_RATES, ...((org.commissionRates as Record<string, number> | null) ?? {}) },
+    /** Payment service charge % of the guest's total, by source (e.g. Booking.com payments). */
+    paymentFeeRates: { ...DEFAULT_PAYMENT_FEE_RATES, ...((org.paymentFeeRates as Record<string, number> | null) ?? {}) } as Record<string, number>,
     /** Own business income tax rate in %, or null to estimate from the scale. */
     businessTaxRate: org.businessTaxRate == null ? null : toNumber(org.businessTaxRate),
   };
@@ -57,6 +60,7 @@ const settingsSchema = z.object({
   taxRegime: z.enum(["AUTO", "INDIVIDUAL", "BUSINESS"]).optional(),
   // Partial: the settings save one platform at a time.
   commissionRates: z.partialRecord(z.enum(RESERVATION_SOURCES), z.coerce.number().min(0).max(50)).optional(),
+  paymentFeeRates: z.partialRecord(z.enum(RESERVATION_SOURCES), z.coerce.number().min(0).max(10)).optional(),
   businessTaxRate: z.preprocess((v) => (v === "" ? null : v), z.coerce.number().min(0).max(60).nullable()).optional(),
 });
 
@@ -69,6 +73,7 @@ export async function updateTaxSettings(ctx: OrgContext, input: unknown) {
     data: {
       ...(data.taxRegime ? { taxRegime: data.taxRegime } : {}),
       ...(data.commissionRates ? { commissionRates: { ...current.commissionRates, ...data.commissionRates } } : {}),
+      ...(data.paymentFeeRates ? { paymentFeeRates: { ...current.paymentFeeRates, ...data.paymentFeeRates } } : {}),
       ...(data.businessTaxRate !== undefined ? { businessTaxRate: data.businessTaxRate } : {}),
     },
   });
@@ -88,7 +93,7 @@ type StayRow = Prisma.ReservationGetPayload<{ include: typeof stayInclude }>;
  * year's effective rate, see incomeTaxRates) it also estimates the income tax
  * of the stay and what is left for the owner.
  */
-export function stayTaxInfo(r: StayRow, regime: TaxRegime, today: string, incomeTaxRate?: number) {
+export function stayTaxInfo(r: StayRow, regime: TaxRegime, today: string, incomeTaxRate?: number, paymentFeeRates: Record<string, number> = {}) {
   const checkIn = dateToISO(r.checkIn);
   const checkOut = dateToISO(r.checkOut);
   const nights = diffDaysISO(checkIn, checkOut);
@@ -110,8 +115,12 @@ export function stayTaxInfo(r: StayRow, regime: TaxRegime, today: string, income
   const vat = business?.vat ?? 0;
   const presenceFee = business?.presenceFee ?? 0;
   const earns = booked || cancelledPaid;
-  // Individuals: Ε2 on rent − 5% (commission not deductible). Business: on rent − commission.
-  const taxableIncome = !earns || free || longStay ? 0 : business ? rent - commission : total * (1 - FLAT_DEDUCTION_RATE);
+  const guestTotal = round2(total + climateFee);
+  // The platform's payment charge, on what the guest paid (only when there is a commission, i.e. the platform took the payment).
+  const paymentFeeRate = earns && !free && commission > 0 ? (paymentFeeRates[r.source] ?? 0) : 0;
+  const paymentFee = round2((guestTotal * paymentFeeRate) / 100);
+  // Individuals: Ε2 on rent − 5% (platform charges not deductible). Business: on rent − commission − payment charge.
+  const taxableIncome = !earns || free || longStay ? 0 : business ? rent - commission - paymentFee : total * (1 - FLAT_DEDUCTION_RATE);
   const incomeTax = incomeTaxRate === undefined ? null : round2(Math.max(0, taxableIncome) * incomeTaxRate);
   return {
     reservationId: r.id,
@@ -134,13 +143,16 @@ export function stayTaxInfo(r: StayRow, regime: TaxRegime, today: string, income
     vat,
     presenceFee,
     /** What the guest pays in total: room price + ΤΑΚΚ (Booking's "Συνολική τιμή κράτησης"). */
-    guestTotal: round2(total + climateFee),
+    guestTotal,
     commission,
+    paymentFeeRate,
+    /** The platform's payment service charge (e.g. "Χρέωση υπηρεσίας Πληρωμών" of Booking.com). */
+    paymentFee,
     incomeTaxRate: incomeTaxRate ?? null,
     /** Estimated income tax of this stay at the year's effective rate. */
     incomeTax,
-    /** Left for the owner after ΦΠΑ, τέλος, commission and income tax (ΤΑΚΚ is passed on). */
-    net: incomeTax === null ? null : round2(total - vat - presenceFee - commission - incomeTax),
+    /** Left for the owner after ΦΠΑ, τέλος, commission, payment charge and income tax (ΤΑΚΚ is passed on). */
+    net: incomeTax === null ? null : round2(total - vat - presenceFee - commission - paymentFee - incomeTax),
     longStay,
     declaration: {
       required: requiresDeclaration,
@@ -189,14 +201,14 @@ export function declarationForm(r: StayRow, info: StayTaxInfo) {
 }
 
 export async function listStays(ctx: OrgContext, range: { from: string; to: string }, now = new Date(), incomeTaxRate?: number) {
-  const { regime } = await getTaxContext(ctx);
+  const { regime, paymentFeeRates } = await getTaxContext(ctx);
   const rows = await db.reservation.findMany({
     where: { organizationId: ctx.organizationId, checkOut: { gte: isoToDate(range.from), lt: isoToDate(range.to) } },
     include: stayInclude,
     orderBy: { checkOut: "asc" },
   });
   const today = todayISO(now);
-  return rows.map((r) => stayTaxInfo(r, regime, today, incomeTaxRate)).filter((s) => s.status !== "PENDING");
+  return rows.map((r) => stayTaxInfo(r, regime, today, incomeTaxRate, paymentFeeRates)).filter((s) => s.status !== "PENDING");
 }
 
 export async function setStayDeclaration(ctx: OrgContext, reservationId: string, input: unknown) {
@@ -264,7 +276,7 @@ export async function getTaxOverview(ctx: OrgContext, now = new Date()) {
     }),
     db.taxFiling.findMany({ where: { organizationId: ctx.organizationId, period: { gte: months.at(-1)! } } }),
   ]);
-  const stays = rows.map((r) => stayTaxInfo(r, tax.regime, today));
+  const stays = rows.map((r) => stayTaxInfo(r, tax.regime, today, undefined, tax.paymentFeeRates));
 
   const pendingDeclarations = stays.filter((s) => s.declaration.due).sort((a, b) => a.declaration.deadline.localeCompare(b.declaration.deadline));
 
@@ -465,11 +477,11 @@ export async function exportAnnualCsv(ctx: OrgContext, year: number) {
 
 /** Tax view of one reservation (reservation page). */
 export async function getStayTax(ctx: OrgContext, reservationId: string, now = new Date()) {
-  const { regime, commissionRates } = await getTaxContext(ctx);
+  const { regime, commissionRates, paymentFeeRates } = await getTaxContext(ctx);
   const r = await db.reservation.findFirst({ where: { id: reservationId, organizationId: ctx.organizationId }, include: stayInclude });
   if (!r) throw notFound("Reservation");
   const year = Number(dateToISO(r.checkOut).slice(0, 4));
   const { effectiveTaxRate } = await getAnnualReport(ctx, year, 0, now);
-  const info = stayTaxInfo(r, regime, todayISO(now), effectiveTaxRate);
+  const info = stayTaxInfo(r, regime, todayISO(now), effectiveTaxRate, paymentFeeRates);
   return { regime, commissionRate: commissionRates[r.source] ?? 0, ...info, declarationForm: declarationForm(r, info) };
 }

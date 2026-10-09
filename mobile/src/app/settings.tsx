@@ -98,6 +98,7 @@ function PricingCard({ settings, onSaved }: { settings: TaxSettings; onSaved: ()
     Object.fromEntries(COMMISSION_SOURCES.map((s) => [s, String(settings.commissionRates[s] ?? 0)])),
   );
   const [ownRate, setOwnRate] = useState(settings.businessTaxRate == null ? "" : String(settings.businessTaxRate));
+  const [bookingFee, setBookingFee] = useState(String(settings.paymentFeeRates?.BOOKING_COM ?? 0));
   return (
     <Card style={{ gap: 12 }}>
       <SectionTitle title="Προμήθειες & φόρος" />
@@ -105,6 +106,8 @@ function PricingCard({ settings, onSaved }: { settings: TaxSettings; onSaved: ()
         <NumberField key={s} label={`Προμήθεια ${humanize(s)} (%)`} value={rates[s]} onChange={(v) => setRates((r) => ({ ...r, [s]: v }))}
           hint={s === "BOOKING_COM" ? "Υπολογίζεται στην τιμή δωματίου χωρίς το τέλος 0,5% — όχι στο ΤΑΚΚ" : undefined} />
       ))}
+      <NumberField label="Χρέωση υπηρεσίας πληρωμών Booking.com (%)" value={bookingFee} onChange={setBookingFee}
+        hint="Όταν το Booking εισπράττει από τον επισκέπτη (συνήθως 1,1–1,6% της πληρωμής). 0 αν πληρώνεστε απευθείας." />
       {settings.regime === "BUSINESS" && (
         <NumberField label="Δικός σας συντελεστής φόρου εισοδήματος (%)" value={ownRate} onChange={setOwnRate} placeholder="κλίμακα"
           hint="Κενό = εκτίμηση από την κλίμακα επιχειρήσεων (χωρίς εισφορές ΕΦΚΑ)" />
@@ -112,7 +115,10 @@ function PricingCard({ settings, onSaved }: { settings: TaxSettings; onSaved: ()
       <Button small title="Αποθήκευση" loading={pending} style={{ alignSelf: "flex-start" }}
         onPress={() => void run(() => api("/api/tax/settings", {
           method: "PATCH",
-          body: { commissionRates: Object.fromEntries(COMMISSION_SOURCES.map((s) => [s, Number(rates[s]) || 0])), ...(settings.regime === "BUSINESS" ? { businessTaxRate: ownRate === "" ? null : Number(ownRate) } : {}) },
+          body: {
+            commissionRates: Object.fromEntries(COMMISSION_SOURCES.map((s) => [s, Number(rates[s]) || 0])),
+            paymentFeeRates: { BOOKING_COM: Number(bookingFee.replace(",", ".")) || 0 },
+            ...(settings.regime === "BUSINESS" ? { businessTaxRate: ownRate === "" ? null : Number(ownRate) } : {}) },
         }), { onSuccess: onSaved })} />
     </Card>
   );

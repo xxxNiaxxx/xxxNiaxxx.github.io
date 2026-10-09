@@ -196,6 +196,7 @@ function TaxCard({ tax, reservationId, onChange }: { tax: StayTax; reservationId
             </>
           )}
           {row(`− Προμήθεια${tax.commissionRate ? ` (${tax.commissionRate}%)` : ""}`, formatMoney(tax.commission))}
+          {tax.paymentFee > 0 && row(`− Χρέωση πληρωμών (${tax.paymentFeeRate}%)`, formatMoney(tax.paymentFee))}
           {row(`− Φόρος εισοδήματος (εκτίμηση${tax.incomeTaxRate !== null ? ` ${Math.round(tax.incomeTaxRate * 1000) / 10}%` : ""})`, tax.incomeTax === null ? "—" : formatMoney(tax.incomeTax))}
           {row("Καθαρά στον ιδιοκτήτη", tax.net === null ? "—" : formatMoney(tax.net), true)}
           {tax.longStay ? (

@@ -121,6 +121,7 @@ export interface TaxSettings {
   regime: "INDIVIDUAL" | "BUSINESS";
   propertiesWithAma: number;
   commissionRates: Record<string, number>;
+  paymentFeeRates: Record<string, number>;
   businessTaxRate: number | null;
 }
 
@@ -207,6 +208,8 @@ export interface StayTax {
   guestTotal: number;
   commission: number;
   commissionRate: number;
+  paymentFee: number;
+  paymentFeeRate: number;
   incomeTax: number | null;
   incomeTaxRate: number | null;
   net: number | null;

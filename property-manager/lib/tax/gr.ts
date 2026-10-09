@@ -227,6 +227,12 @@ export function businessIncomeTax(year: number, profit: number) {
 
 /** Default commission rates (%) by booking source; editable per organization. */
 export const DEFAULT_COMMISSION_RATES: Record<string, number> = { BOOKING_COM: 15, AIRBNB: 15 };
+/**
+ * Payment service charge (%) of the guest's total, when the platform takes the
+ * guest's payment and pays out the rest ("Πληρωμές από το Booking.com": about
+ * 1.1–1.6%, e.g. 4,00 € on 250,03 €). Airbnb includes it in its host fee.
+ */
+export const DEFAULT_PAYMENT_FEE_RATES: Record<string, number> = { BOOKING_COM: 1.6 };
 
 /**
  * Booking.com's 0,5% municipal fee inside a Greek room price. Booking splits the

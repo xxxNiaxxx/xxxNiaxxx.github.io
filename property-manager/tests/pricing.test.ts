@@ -41,7 +41,8 @@ describe("per-stay tax and net", () => {
       data: { organizationId: ctx.organizationId, name: "Διαμέρισμα 1 Υπνοδωματίου", city: "Χανιά", country: "Ελλάδα", basePrice: 60, ama: "00001111111", kind: "APARTMENT", areaSqm: 45 },
     })).id;
     guestId = (await createGuest(ctx)).id;
-    await updateTaxSettings(ctx, { taxRegime: "BUSINESS", businessTaxRate: 20 });
+    // Payment charges are covered in payment-fee.test.ts.
+    await updateTaxSettings(ctx, { taxRegime: "BUSINESS", businessTaxRate: 20, paymentFeeRates: { BOOKING_COM: 0 } });
   });
 
   it("takes Booking's total with ΤΑΚΚ, removes the ΤΑΚΚ and adds the 15% commission", async () => {
