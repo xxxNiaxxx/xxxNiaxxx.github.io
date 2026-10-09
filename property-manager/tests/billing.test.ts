@@ -100,6 +100,9 @@ describe("subscriptions", () => {
     expect(session.client_reference_id).toBe(owner.organizationId);
     expect(session.success_url).toBe("https://app.test/billing?done=1");
     expect((await db.organization.findUniqueOrThrow({ where: { id: owner.organizationId } })).stripeCustomerId).toBe("cus_1");
+    // Too close to 1 January for a trial: no trial end.
+    await startCheckout(owner, { email: "o@test.local" }, "https://app.test", new Date("2026-12-30T12:00:00+02:00"));
+    expect((fake.calls.sessions[1] as { subscription_data: { trial_end?: number } }).subscription_data.trial_end).toBeUndefined();
   });
 
   it("webhooks keep the organization's subscription up to date", async () => {

@@ -113,8 +113,9 @@ export async function startCheckout(ctx: OrgContext, user: { email: string; name
     line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: Math.max(1, await activeProperties(org.id)) }],
     subscription_data: {
       metadata: { organizationId: org.id },
-      // During the free period the first charge is on 1 January.
-      ...(now < FREE_UNTIL ? { trial_end: Math.floor(FREE_UNTIL.getTime() / 1000) } : {}),
+      // During the free period the first charge is on 1 January (Stripe needs a trial end at least 48 hours ahead;
+      // in the last two days of December the subscription simply starts now).
+      ...(FREE_UNTIL.getTime() - now.getTime() > 50 * 3_600_000 ? { trial_end: Math.floor(FREE_UNTIL.getTime() / 1000) } : {}),
     },
     customer_update: { name: "auto", address: "auto" },
     billing_address_collection: "required",
