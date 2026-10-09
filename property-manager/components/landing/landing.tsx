@@ -2,6 +2,7 @@ import {
   Bot, CalendarCheck2, CalendarX2, Check, ClipboardList, FileSpreadsheet, Globe, Landmark, Minus, Smartphone, UserCheck, BellRing,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { Logo } from "@/components/layout/logo";
 import { APP_NAME, FREE_UNTIL_NOTE } from "@/lib/brand";
 
@@ -58,7 +59,8 @@ export function Landing() {
       </header>
 
       <main>
-        <section className="mx-auto max-w-4xl px-4 pt-10 pb-14 text-center sm:px-6 sm:pt-16">
+        <section className="mx-auto max-w-4xl px-4 pt-6 pb-14 text-center sm:px-6 sm:pt-10">
+          <Image src="/logo-full.png" alt={APP_NAME} width={631} height={695} priority className="mx-auto mb-6 h-40 w-auto sm:h-52" />
           <p className="mx-auto inline-block rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">{FREE_UNTIL_NOTE}</p>
           <h1 className="mt-5 text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
             Οι βραχυχρόνιες μισθώσεις σας, οργανωμένες — και πάντα εντάξει με την ΑΑΔΕ.

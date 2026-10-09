@@ -12,7 +12,7 @@
     "android": {
       "package": "ai.brachychronia.app",
       "adaptiveIcon": {
-        "backgroundColor": "#1C1917",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -35,9 +35,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "imageWidth": 160,
+          "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#1C1917"
+          "backgroundColor": "#FFFFFF"
         }
       ]
     ],
