@@ -1,5 +1,6 @@
 import { Brain } from "lucide-react";
 import type { Metadata } from "next";
+import { InterviewPrompt } from "@/components/ai/interview-prompt";
 import { AddMemoryForm, MemoryItem } from "@/components/ai/knowledge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
@@ -28,6 +29,7 @@ export default async function KnowledgePage() {
       />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="grid min-w-0 grid-cols-1 content-start gap-6">
+          <InterviewPrompt />
           {SECTIONS.map((s) => {
             const items = memories.filter((m) => m.kind === s.kind);
             return (

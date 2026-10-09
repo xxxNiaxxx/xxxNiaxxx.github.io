@@ -25,7 +25,10 @@ const SECTIONS: { title: string; items: { label: string; icon: IconName; href: H
   },
   {
     title: "Βοηθός AI",
-    items: [{ label: "Γνώσεις του βοηθού", icon: "bulb-outline", href: "/knowledge", detail: "Τι έχει μάθει από την ομάδα" }],
+    items: [
+      { label: "Ο βοηθός σάς ρωτά", icon: "help-circle-outline", href: "/interview", detail: "Ερωτήσεις ή ανάγνωση από Booking.com" },
+      { label: "Γνώσεις του βοηθού", icon: "bulb-outline", href: "/knowledge", detail: "Τι έχει μάθει από την ομάδα" },
+    ],
   },
   {
     title: "Οργανισμός",

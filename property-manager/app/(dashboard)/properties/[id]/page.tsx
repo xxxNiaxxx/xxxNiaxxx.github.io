@@ -15,6 +15,8 @@ import { getPropertyDetails } from "@/lib/services/properties";
 import { ComplianceChecklist } from "@/components/tax/compliance-card";
 import { AddMemoryForm, MemoryItem } from "@/components/ai/knowledge";
 import { listMemories } from "@/lib/ai/memory";
+import { interviewState } from "@/lib/ai/interview";
+import { InterviewPrompt } from "@/components/ai/interview-prompt";
 import { CalendarSync } from "@/components/properties/calendar-sync";
 import { GuestPagesCard } from "@/components/properties/guest-pages-card";
 import { PriceSuggestionList } from "@/components/properties/price-suggestions";
@@ -28,8 +30,9 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const { ctx } = await getPageContext();
   const d = await orNotFound(getPropertyDetails(ctx, id));
-  const [guestInfo, calendars, suggestions] = await Promise.all([
+  const [guestInfo, interview, calendars, suggestions] = await Promise.all([
     listMemories(ctx, { kind: "GUEST_INFO", propertyId: id }),
+    interviewState(ctx, id),
     getPropertyCalendars(ctx, id),
     priceSuggestions(ctx, { propertyId: id }),
   ]);
@@ -133,6 +136,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
               action={<Button asChild variant="ghost" size="sm"><Link href="/ai/knowledge">Γνώσεις AI →</Link></Button>}
             />
             <CardContent className="grid gap-4">
+              <InterviewPrompt propertyId={p.id} answered={interview.answered} total={interview.total} open={Boolean(interview.next)} />
               {guestInfo.length > 0 && <ul className="grid gap-3">{guestInfo.map((m) => <MemoryItem key={m.id} memory={m} />)}</ul>}
               <AddMemoryForm properties={[{ id: p.id, name: p.name }]} defaultPropertyId={p.id} />
             </CardContent>
