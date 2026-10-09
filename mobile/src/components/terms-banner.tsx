@@ -5,10 +5,18 @@ import { useSession } from "@/lib/session";
 import { useMutation } from "@/lib/use-mutation";
 import { colors } from "@/theme";
 
-/** Asks users who signed up before the current terms to accept them. */
+/** Asks users who signed up before the current terms to accept them; in the shared demo, says what it is. */
 export function TermsBanner() {
   const { session, serverUrl, refresh } = useSession();
   const { run, pending } = useMutation();
+  if (session?.organization.isDemo) {
+    return (
+      <Card style={{ gap: 6, borderColor: colors.accent }}>
+        <Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>Λογαριασμός επίδειξης</Text>
+        <Text style={styles.rowSub}>Δοκιμάστε ελεύθερα: τα δεδομένα επαναφέρονται κάθε βράδυ και τα βλέπουν και άλλοι επισκέπτες, γι' αυτό μη βάζετε πραγματικά στοιχεία.</Text>
+      </Card>
+    );
+  }
   if (!session || session.termsAccepted !== false) return null;
   return (
     <Card style={{ gap: 10, borderColor: colors.info }}>

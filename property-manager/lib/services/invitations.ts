@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { AppError, conflict, notFound } from "@/lib/errors";
 import { hasRole, type OrgContext } from "@/lib/permissions";
 import { email } from "@/lib/validation/common";
+import { assertNotDemo } from "@/lib/demo";
 
 export const INVITATION_DAYS = 7;
 
@@ -42,6 +43,7 @@ export type InvitationDTO = ReturnType<typeof serializeInvitation>;
 export async function createInvitation(ctx: OrgContext, input: unknown, now = new Date()) {
   const data = inviteSchema.parse(input);
   assertCanInvite(ctx, data.role);
+  assertNotDemo((await db.user.findUnique({ where: { id: ctx.userId }, select: { email: true } }))?.email);
   const member = await db.organizationMember.findFirst({
     where: { organizationId: ctx.organizationId, user: { email: data.email } },
   });

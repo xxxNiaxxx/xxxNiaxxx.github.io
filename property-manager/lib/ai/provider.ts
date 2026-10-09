@@ -60,3 +60,21 @@ export function getProvider(): ChatProvider | null {
     baseUrl: process.env.AI_BASE_URL || "https://api.openai.com/v1",
   });
 }
+
+/** Model calls per organization per day; the shared demo gets fewer. Past it, the offline assistant answers. */
+const DAILY_AI_CALLS = { normal: 400, demo: 30 };
+
+/**
+ * The provider for this organization's request, or null (offline assistant)
+ * when no key is set or the organization used its daily allowance, so a
+ * shared or abused account cannot run up the AI bill.
+ */
+export async function providerFor(ctx: { organizationId: string }): Promise<ChatProvider | null> {
+  const provider = getProvider();
+  if (!provider) return null;
+  const { db } = await import("@/lib/db");
+  const { rateLimited } = await import("@/lib/request");
+  const org = await db.organization.findUnique({ where: { id: ctx.organizationId }, select: { isDemo: true } });
+  const limit = org?.isDemo ? DAILY_AI_CALLS.demo : DAILY_AI_CALLS.normal;
+  return (await rateLimited(`ai:${ctx.organizationId}`, limit, 86_400_000)) ? null : provider;
+}
