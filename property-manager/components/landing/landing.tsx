@@ -104,11 +104,12 @@ export function Landing() {
                 ["ΤΑΚΚ (αποδίδεται στην ΑΑΔΕ)", "40,00 €"],
                 ["Πληρωμή επισκέπτη", "250,03 €"],
                 ["Προμήθεια Booking 15%", "− 31,37 €"],
+                ["Χρέωση πληρωμών Booking", "− 4,00 €"],
                 ["Φόρος εισοδήματος (εκτίμηση)", "− 29,93 €"],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between border-b border-border py-2"><span className="text-muted-foreground">{k}</span><span className="tabular-nums">{v}</span></div>
               ))}
-              <div className="flex justify-between pt-2 font-semibold"><span>Καθαρά για εσάς</span><span className="tabular-nums">148,73 €</span></div>
+              <div className="flex justify-between pt-2 font-semibold"><span>Καθαρά για εσάς</span><span className="tabular-nums">144,73 €</span></div>
             </div>
           </div>
         </section>
