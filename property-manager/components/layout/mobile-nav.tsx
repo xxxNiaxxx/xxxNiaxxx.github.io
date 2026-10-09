@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { FeedbackDialog } from "./feedback-dialog";
 import { Logo } from "./logo";
-import { adminFeedbackNav, adminNav, helpNav, isActive, mainNav, mobileNav, settingsNav } from "./nav";
+import { adminErrorsNav, adminFeedbackNav, adminNav, adminOrgsNav, billingNav, helpNav, isActive, mainNav, mobileNav, settingsNav } from "./nav";
 
 export function MobileTopBar({ appName, orgName }: { appName: string; orgName: string }) {
   return (
@@ -40,7 +40,7 @@ export function MobileTopBar({ appName, orgName }: { appName: string; orgName: s
 
 export function MobileBottomNav({ pendingActions, waitlistAdmin = false }: { pendingActions: number; waitlistAdmin?: boolean }) {
   const pathname = usePathname();
-  const more = [...mainNav.filter((n) => !mobileNav.some((m) => m.href === n.href)), ...(waitlistAdmin ? [adminNav, adminFeedbackNav] : []), settingsNav, helpNav];
+  const more = [...mainNav.filter((n) => !mobileNav.some((m) => m.href === n.href)), ...(waitlistAdmin ? [adminNav, adminFeedbackNav, adminErrorsNav, adminOrgsNav] : []), settingsNav, billingNav, helpNav];
   return (
     <nav
       aria-label="Μενού κινητού"

@@ -68,23 +68,36 @@ enum TaxRegimeSetting {
 }
 
 model Organization {
-  id                String           @id @default(cuid())
-  name              String
-  taxRegime         TaxRegimeSetting @default(AUTO)
+  id                   String           @id @default(cuid())
+  name                 String
+  taxRegime            TaxRegimeSetting @default(AUTO)
   /// Platform commission % by booking source, e.g. {"BOOKING_COM": 15, "AIRBNB": 15}. Null = defaults.
-  commissionRates   Json?
+  commissionRates      Json?
   /// Own income tax rate (%) for the business regime; null = estimate from the tax scale.
-  businessTaxRate   Decimal?         @db.Decimal(5, 2)
+  businessTaxRate      Decimal?         @db.Decimal(5, 2)
   /// Daily email of deadlines (declarations, ΤΑΚΚ, insurance) and the monthly report.
-  emailReminders    Boolean          @default(true)
+  emailReminders       Boolean          @default(true)
   /// Day (YYYY-MM-DD) the last reminder email went out, to send at most one a day.
-  lastReminderOn    String?
+  lastReminderOn       String?
   /// Month (YYYY-MM) of the last monthly report email.
-  lastMonthlyReport String?
+  lastMonthlyReport    String?
   /// Guest replies drafted by the assistant (shown in "what the app saved you").
-  aiRepliesDrafted  Int              @default(0)
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  aiRepliesDrafted     Int              @default(0)
+  /// Stripe customer and subscription (lib/services/billing.ts).
+  stripeCustomerId     String?          @unique
+  stripeSubscriptionId String?          @unique
+  /// Stripe subscription status: active, trialing, past_due, unpaid, canceled, incomplete…
+  subscriptionStatus   String?
+  /// Paid properties on the subscription.
+  subscriptionQuantity Int?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean          @default(false)
+  /// Free of charge (set by the app's administrators), e.g. partners and testers.
+  billingExempt        Boolean          @default(false)
+  /// Key of the last "the free period ends" email (e.g. 2026-12-01), sent once each.
+  billingReminderSent  String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
 
   members           OrganizationMember[]
   properties        Property[]
@@ -683,4 +696,22 @@ model RateLimit {
 
   @@id([key, window])
   @@index([createdAt])
+}
+
+/// An unexpected server error, grouped by signature; the app's administrators are emailed once per group.
+model ErrorEvent {
+  id          String    @id @default(cuid())
+  signature   String    @unique
+  /// api, page or cron
+  source      String
+  message     String
+  stack       String?
+  path        String?
+  count       Int       @default(1)
+  firstSeenAt DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  notifiedAt  DateTime?
+  resolvedAt  DateTime?
+
+  @@index([resolvedAt, lastSeenAt])
 }

@@ -17,7 +17,7 @@ import { listMembers } from "@/lib/services/members";
 export const metadata: Metadata = { title: "Ρυθμίσεις" };
 
 export default async function SettingsPage() {
-  const { ctx, user, organization, role } = await getPageContext();
+  const { ctx, user, organization, role } = await getPageContext({ withoutSubscription: true });
   const [members, invitations, memberships] = await Promise.all([
     listMembers(ctx),
     listInvitations(ctx),

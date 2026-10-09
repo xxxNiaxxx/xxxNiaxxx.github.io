@@ -7,7 +7,7 @@ import { logoutAction } from "@/app/(auth)/actions";
 import { cn } from "@/lib/utils";
 import { FeedbackDialog } from "./feedback-dialog";
 import { Logo } from "./logo";
-import { adminFeedbackNav, adminNav, helpNav, isActive, mainNav, settingsNav, type NavItem } from "./nav";
+import { adminErrorsNav, adminFeedbackNav, adminNav, adminOrgsNav, billingNav, helpNav, isActive, mainNav, settingsNav, type NavItem } from "./nav";
 
 function NavLink({ item, pathname, badge }: { item: NavItem; pathname: string; badge?: number }) {
   const active = isActive(pathname, item.href);
@@ -41,7 +41,7 @@ export function Sidebar({
   userName: string;
   userEmail: string;
   pendingActions: number;
-  waitlistAdmin?: { pending: number };
+  waitlistAdmin?: { pending: number; errors?: number };
 }) {
   const pathname = usePathname();
   return (
@@ -58,7 +58,10 @@ export function Sidebar({
       <div className="mt-4 flex flex-col gap-0.5 border-t border-border pt-4">
         {waitlistAdmin && <NavLink item={adminNav} pathname={pathname} badge={waitlistAdmin.pending} />}
         {waitlistAdmin && <NavLink item={adminFeedbackNav} pathname={pathname} />}
+        {waitlistAdmin && <NavLink item={adminErrorsNav} pathname={pathname} badge={waitlistAdmin.errors} />}
+        {waitlistAdmin && <NavLink item={adminOrgsNav} pathname={pathname} />}
         <NavLink item={settingsNav} pathname={pathname} />
+        <NavLink item={billingNav} pathname={pathname} />
         <NavLink item={helpNav} pathname={pathname} />
         <FeedbackDialog />
         <Link href="/settings#organization" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-surface/70 hover:text-foreground">

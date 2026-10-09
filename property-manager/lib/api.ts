@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import { AppError } from "@/lib/errors";
+import { reportError } from "@/lib/monitoring/errors";
 
 const statusByCode: Record<AppError["code"], number> = {
   UNAUTHORIZED: 401,
@@ -10,6 +11,7 @@ const statusByCode: Record<AppError["code"], number> = {
   CONFLICT: 409,
   VALIDATION: 422,
   BAD_REQUEST: 400,
+  PAYMENT_REQUIRED: 402,
 };
 
 export function errorResponse(error: unknown): NextResponse {
@@ -34,7 +36,6 @@ export function errorResponse(error: unknown): NextResponse {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
     return NextResponse.json({ error: { code: "NOT_FOUND", message: "Δεν βρέθηκε" } }, { status: 404 });
   }
-  console.error(error);
   return NextResponse.json(
     { error: { code: "INTERNAL", message: "Κάτι πήγε στραβά. Δοκιμάστε ξανά." } },
     { status: 500 },
@@ -51,7 +52,9 @@ export function route<P extends Record<string, string> = Record<string, never>>(
       if (result instanceof Response) return result;
       return NextResponse.json({ data: result ?? null });
     } catch (error) {
-      return errorResponse(error);
+      const response = errorResponse(error);
+      if (response.status === 500) await reportError(error, { source: "api", path: `${req.method} ${req.nextUrl.pathname}` });
+      return response;
     }
   };
 }

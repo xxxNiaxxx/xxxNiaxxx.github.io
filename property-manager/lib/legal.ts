@@ -13,5 +13,6 @@ export const SUBPROCESSORS = [
   { name: "Vercel Inc.", purpose: "Φιλοξενία της εφαρμογής (διακομιστές)", location: "ΕΕ — Φρανκφούρτη, Γερμανία· εταιρεία με έδρα τις ΗΠΑ" },
   { name: "Neon Inc.", purpose: "Βάση δεδομένων", location: "ΕΕ — Φρανκφούρτη, Γερμανία· εταιρεία με έδρα τις ΗΠΑ" },
   { name: "Πάροχος αποστολής email (SMTP)", purpose: "Αποστολή email (υπενθυμίσεις, αναφορές, λίστα αναμονής)", location: "ΕΕ / ΗΠΑ" },
+  { name: "Stripe Payments Europe Ltd.", purpose: "Πληρωμές συνδρομής (μόνο για τον λογαριασμό που πληρώνει)", location: "ΕΕ — Ιρλανδία" },
   { name: "OpenAI (μόνο αν είναι ενεργός ο βοηθός AI)", purpose: "Παραγωγή απαντήσεων του βοηθού AI", location: "ΗΠΑ" },
 ] as const;
