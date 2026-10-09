@@ -109,7 +109,7 @@ export type Role = "OWNER" | "ADMIN" | "MEMBER";
 
 export interface SessionInfo {
   user: { id: string; name: string | null; email: string };
-  organization: { id: string; name: string };
+  organization: { id: string; name: string; isDemo?: boolean };
   role: Role;
   organizations: { id: string; name: string; role: Role }[];
   /** Accepted the current terms of service and data processing agreement. */

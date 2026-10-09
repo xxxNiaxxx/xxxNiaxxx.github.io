@@ -2,6 +2,7 @@ import { z } from "zod";
 import { readJson, route } from "@/lib/api";
 import { requireOrganizationMember } from "@/lib/auth";
 import { sendChatMessage } from "@/lib/ai/chat";
+import { providerFor } from "@/lib/ai/provider";
 
 const body = z.object({
   conversationId: z.string().min(1).nullish(),
@@ -10,5 +11,5 @@ const body = z.object({
 
 export const POST = route(async (req) => {
   const ctx = await requireOrganizationMember();
-  return sendChatMessage(ctx, body.parse(await readJson(req)));
+  return sendChatMessage(ctx, body.parse(await readJson(req)), { provider: await providerFor(ctx) });
 });

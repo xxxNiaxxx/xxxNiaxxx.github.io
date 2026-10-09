@@ -2,6 +2,7 @@ import { z } from "zod";
 import { readJson, route, searchParamsObject } from "@/lib/api";
 import { requireOrganizationMember } from "@/lib/auth";
 import { answerTopic, applySuggestions, interviewState, resetSkipped, skipTopic, suggestFromListing } from "@/lib/ai/interview";
+import { providerFor } from "@/lib/ai/provider";
 
 /** ?propertyId= → where the knowledge interview stands and the next question. */
 export const GET = route(async (req) => {
@@ -22,7 +23,7 @@ export const POST = route(async (req) => {
   const body = action.parse(await readJson(req));
   switch (body.action) {
     case "answer":
-      return answerTopic(ctx, body);
+      return answerTopic(ctx, body, await providerFor(ctx));
     case "skip":
       await skipTopic(ctx, body);
       return { ok: true };
@@ -30,7 +31,7 @@ export const POST = route(async (req) => {
       await resetSkipped(ctx, body.propertyId);
       return { ok: true };
     case "import":
-      return suggestFromListing(ctx, body);
+      return suggestFromListing(ctx, body, await providerFor(ctx));
     case "apply":
       return applySuggestions(ctx, body);
   }

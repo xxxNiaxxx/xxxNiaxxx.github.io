@@ -94,6 +94,8 @@ model Organization {
   cancelAtPeriodEnd    Boolean          @default(false)
   /// Free of charge (set by the app's administrators), e.g. partners and testers.
   billingExempt        Boolean          @default(false)
+  /// The shared demo organization: reset every night, account actions locked.
+  isDemo               Boolean          @default(false)
   /// Key of the last "the free period ends" email (e.g. 2026-12-01), sent once each.
   billingReminderSent  String?
   createdAt            DateTime         @default(now())

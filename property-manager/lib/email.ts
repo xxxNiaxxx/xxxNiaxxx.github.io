@@ -1,6 +1,7 @@
 import "server-only";
 import nodemailer from "nodemailer";
 import { APP_NAME } from "@/lib/brand";
+import { DEMO_EMAIL_DOMAIN } from "@/lib/demo-domain";
 
 export interface EmailMessage {
   to: string | string[];
@@ -43,6 +44,10 @@ function toHtml({ text, action }: EmailMessage) {
 
 /** Sends an email. Returns false when email is not set up or sending failed (the caller falls back to sharing a link). */
 export async function sendEmail(message: EmailMessage): Promise<boolean> {
+  // The demo users' addresses do not exist: skip them (reminders, booking requests, invitations).
+  const to = (Array.isArray(message.to) ? message.to : [message.to]).filter((e) => !e.toLowerCase().endsWith(`@${DEMO_EMAIL_DOMAIN}`));
+  if (!to.length) return false;
+  message = { ...message, to: Array.isArray(message.to) ? to : to[0] };
   if (override) {
     await override(message);
     return true;

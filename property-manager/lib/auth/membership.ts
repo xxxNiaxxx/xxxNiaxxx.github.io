@@ -8,7 +8,7 @@ export async function resolveMembership(userId: string, preferredOrgId?: string 
   const memberships = await db.organizationMember.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
-    include: { organization: { select: { id: true, name: true, emailReminders: true } } },
+    include: { organization: { select: { id: true, name: true, emailReminders: true, isDemo: true } } },
   });
   if (memberships.length === 0) return null;
   return memberships.find((m) => m.organizationId === preferredOrgId) ?? memberships[0];

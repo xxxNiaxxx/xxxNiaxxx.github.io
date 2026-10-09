@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { isPlatformAdmin, sendEmail } from "@/lib/email";
 import { AppError } from "@/lib/errors";
 import { hasRole, type OrgContext } from "@/lib/permissions";
+import { assertNotDemo } from "@/lib/demo";
 
 /**
  * Subscriptions: a monthly price per active property, paid by card through
@@ -98,6 +99,7 @@ function requireManager(ctx: OrgContext) {
 /** Stripe Checkout for a new subscription: one unit per active property (at least one). */
 export async function startCheckout(ctx: OrgContext, user: { email: string; name?: string | null }, origin: string, now = new Date()) {
   requireManager(ctx);
+  assertNotDemo(user.email);
   if (!billingConfigured() && !stripeOverride) throw new AppError("BAD_REQUEST", "Οι πληρωμές δεν έχουν ρυθμιστεί ακόμη.");
   const org = await db.organization.findUniqueOrThrow({ where: { id: ctx.organizationId } });
   if (org.subscriptionStatus && PAID_STATUSES.has(org.subscriptionStatus)) throw new AppError("CONFLICT", "Υπάρχει ήδη ενεργή συνδρομή.");

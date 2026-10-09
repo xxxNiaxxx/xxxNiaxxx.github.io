@@ -6,6 +6,7 @@ import { TERMS_VERSION } from "@/lib/legal";
 import { rateLimited } from "@/lib/request";
 import { hasRole, type OrgContext } from "@/lib/permissions";
 import { requiredText } from "@/lib/validation/common";
+import { assertNotDemo } from "@/lib/demo";
 
 const nameSchema = z.object({ name: requiredText("Όνομα", 120) });
 /** Name and/or the daily reminder and monthly report emails. */
@@ -28,6 +29,7 @@ export async function updateOrganization(ctx: OrgContext, input: unknown) {
 
 /** Signs the user out of every browser and phone: sessions issued before this stop working. */
 export async function signOutEverywhere(userId: string) {
+  assertNotDemo((await db.user.findUnique({ where: { id: userId }, select: { email: true } }))?.email);
   await db.user.update({ where: { id: userId }, data: { sessionVersion: { increment: 1 } } });
 }
 
@@ -47,6 +49,7 @@ export async function changePassword(userId: string, input: unknown) {
   const data = passwordSchema.parse(input);
   if (await rateLimited(`password:${userId}`, 10, 15 * 60_000)) throw new AppError("BAD_REQUEST", "Πολλές προσπάθειες. Δοκιμάστε ξανά σε λίγο.");
   const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
+  assertNotDemo(user.email);
   if (!(await bcrypt.compare(data.currentPassword, user.passwordHash))) {
     throw new AppError("VALIDATION", "Ο τωρινός κωδικός δεν είναι σωστός", [{ path: "currentPassword", message: "Λάθος κωδικός" }]);
   }

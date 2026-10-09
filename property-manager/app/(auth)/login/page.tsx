@@ -25,8 +25,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       {showDemoLogin && (
         <div className="mt-8 rounded-xl border border-dashed border-border-strong bg-surface p-4 text-[13px] text-muted-foreground">
           <p className="font-medium text-foreground">Δοκιμαστικός λογαριασμός</p>
+          <p className="mt-1">Δοκιμάστε την εφαρμογή με έτοιμα δεδομένα. Επαναφέρονται κάθε βράδυ.</p>
           <p className="mt-1">
-            demo@demo-hospitality.test · <span className="font-mono">demo1234</span>
+            demo@demo-hospitality.test · <span className="font-mono">{process.env.DEMO_PASSWORD || "demo1234"}</span>
           </p>
         </div>
       )}

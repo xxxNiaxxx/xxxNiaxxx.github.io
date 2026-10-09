@@ -126,7 +126,7 @@ eas build -p android --profile production   # .aab για το Google Play
 | Ενότητα | Τι βάζετε |
 | --- | --- |
 | Privacy policy | `https://YOUR-APP.vercel.app/privacy` |
-| App access | «All or some functionality is restricted» → οδηγίες: email `demo@demo-hospitality.test` και ο **ιδιωτικός** κωδικός `DEMO_PASSWORD` του βήματος 2.6 (όχι `demo1234`) |
+| App access | «All or some functionality is restricted» → οδηγίες: email `demo@demo-hospitality.test` και ο κωδικός του demo (`demo1234`, ή το `DEMO_PASSWORD` αν ορίσατε άλλο). Ο λογαριασμός επίδειξης επαναφέρεται κάθε βράδυ και δεν επιτρέπει αλλαγή κωδικού ή διαγραφή |
 | Ads | No, my app does not contain ads |
 | Content rating | Συμπληρώστε το ερωτηματολόγιο: κατηγορία *Utility/Productivity*, όχι σε όλα τα «ευαίσθητα» θέματα |
 | Target audience | 18 και άνω |
