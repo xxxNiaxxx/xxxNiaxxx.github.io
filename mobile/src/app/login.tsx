@@ -1,7 +1,7 @@
 import { Redirect } from "expo-router";
 import * as Linking from "expo-linking";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View, Image } from "react-native";
 import { Button, Loading, styles } from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import { PasswordField } from "@/components/form";
@@ -35,9 +35,7 @@ export default function Login() {
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 80, gap: 16 }} keyboardShouldPersistTaps="handled">
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" }}>
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#2DD4BF" }} />
-          </View>
+          <Image source={require("../../assets/logo-mark.png")} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
           <Text style={{ fontSize: 20, fontWeight: "700", color: colors.text }}>Βραχυχρόνια.ai</Text>
         </View>
         <Text style={{ fontSize: 28, fontWeight: "700", color: colors.text, marginTop: 24, letterSpacing: -0.5 }}>Καλώς ήρθατε</Text>
