@@ -1,10 +1,13 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, type Href } from "expo-router";
-import { Linking, Pressable, Text, View } from "react-native";
+import { useState } from "react";
+import { Linking, Pressable, Text, TextInput, View } from "react-native";
+import { Segmented } from "@/components/form";
 import { Button, Card, Screen, styles } from "@/components/ui";
+import { api } from "@/lib/api";
 import { humanize } from "@/lib/format";
 import { useSession } from "@/lib/session";
-import { confirm } from "@/lib/use-mutation";
+import { confirm, notify, useMutation } from "@/lib/use-mutation";
 import { colors } from "@/theme";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
@@ -59,6 +62,7 @@ export default function More() {
           </Card>
         </View>
       ))}
+      <FeedbackCard />
       <Card>
         <Text style={styles.sectionTitle}>Βοήθεια</Text>
         <Text style={styles.rowSub}>Πώς υπολογίζονται ποσά, προμήθειες και φόροι, και τι ισχύει με πολλά καταλύματα.</Text>
@@ -71,5 +75,30 @@ export default function More() {
       </Card>
       <Button title="Αποσύνδεση" variant="danger" onPress={() => confirm("Αποσύνδεση;", undefined, "Αποσύνδεση", () => void signOut())} />
     </Screen>
+  );
+}
+
+const KINDS = [
+  { value: "BUG", label: "Πρόβλημα" },
+  { value: "IDEA", label: "Ιδέα" },
+  { value: "OTHER", label: "Σχόλιο" },
+];
+
+/** "Στείλτε σχόλιο": a problem or an idea, straight to the app's team. */
+function FeedbackCard() {
+  const [kind, setKind] = useState("BUG");
+  const [message, setMessage] = useState("");
+  const { run, pending } = useMutation();
+  return (
+    <Card style={{ gap: 10 }}>
+      <Text style={styles.sectionTitle}>Στείλτε σχόλιο</Text>
+      <Segmented options={KINDS.map((k) => ({ key: k.value, label: k.label }))} value={kind} onChange={setKind} />
+      <TextInput value={message} onChangeText={setMessage} multiline placeholder="Τι δεν δουλεύει ή τι θα σας βοηθούσε;" placeholderTextColor={colors.subtleText}
+        style={[styles.input, { height: 100, paddingTop: 10, textAlignVertical: "top" }]} />
+      <Button small title="Αποστολή" loading={pending} disabled={message.trim().length < 3} style={{ alignSelf: "flex-start" }}
+        onPress={() => void run(() => api("/api/feedback", { body: { kind, message, client: "mobile" } }), {
+          onSuccess: () => { setMessage(""); notify("Ευχαριστούμε! Το λάβαμε."); },
+        })} />
+    </Card>
   );
 }

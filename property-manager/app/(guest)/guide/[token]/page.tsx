@@ -63,8 +63,8 @@ export default async function GuidePage({ params, searchParams }: { params: Prom
         </>
       )}
 
-      {g.directBooking && (
-        <Link href={`/book/${token}?lang=${language}`} className="mt-8 block rounded-xl bg-primary p-4 text-center text-sm font-medium text-primary-foreground">
+      {g.bookingPath && (
+        <Link href={`${g.bookingPath}?lang=${language}`} className="mt-8 block rounded-xl bg-primary p-4 text-center text-sm font-medium text-primary-foreground">
           {t.bookTitle} →
         </Link>
       )}

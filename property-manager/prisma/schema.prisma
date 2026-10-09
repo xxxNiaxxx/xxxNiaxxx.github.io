@@ -145,8 +145,10 @@ model Property {
   compliance     Json           @default("{}")
   /// Secret token of the property's public iCal export (for Airbnb/Booking to block dates).
   icalToken      String?        @unique
-  /// Secret token of the property's public pages: guest guide (/guide/…) and direct booking (/book/…).
+  /// Secret token of the property's guest guide (/guide/…).
   publicToken    String?        @unique
+  /// Token of the direct booking page (/book/…) — separate, so the public booking link never opens the guide.
+  bookingToken   String?        @unique
   /// "15:00"
   checkInTime    String?
   /// "11:00"
@@ -633,4 +635,39 @@ model AppSetting {
   key       String   @id
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+enum FeedbackKind {
+  BUG
+  IDEA
+  OTHER
+}
+
+/// A comment from a user ("Στείλτε σχόλιο"), read by the app's administrators.
+model Feedback {
+  id             String       @id @default(cuid())
+  userId         String?
+  email          String
+  organizationId String?
+  kind           FeedbackKind @default(OTHER)
+  message        String
+  /// Page the user was on.
+  page           String?
+  /// Web or the mobile app.
+  client         String?
+  resolvedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([resolvedAt, createdAt])
+}
+
+/// Attempts per key and time window (login, public forms), shared by all server instances.
+model RateLimit {
+  key       String
+  window    BigInt
+  count     Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@id([key, window])
+  @@index([createdAt])
 }

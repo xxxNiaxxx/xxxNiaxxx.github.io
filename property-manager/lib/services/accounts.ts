@@ -2,8 +2,9 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { AppError, conflict } from "@/lib/errors";
 import { registerSchema } from "@/lib/validation/auth";
-import { acceptInvitation } from "./invitations";
-import { claimWaitlistAccess, isRegistrationOpen } from "./waitlist";
+import { isPlatformAdmin } from "@/lib/email";
+import { acceptInvitation, getInvitationByToken } from "./invitations";
+import { claimWaitlistAccess, getWaitlistAccess, isRegistrationOpen } from "./waitlist";
 
 export const CLOSED_REGISTRATION_MESSAGE = "Η εγγραφή γίνεται προς το παρόν μόνο με πρόσκληση. Γραφτείτε στη λίστα αναμονής και θα σας στείλουμε σύνδεσμο.";
 
@@ -14,7 +15,15 @@ export const CLOSED_REGISTRATION_MESSAGE = "Η εγγραφή γίνεται π�
  */
 export async function registerAccount(input: unknown) {
   const data = registerSchema.parse(input);
-  if (!data.invite && !data.access && !(await isRegistrationOpen())) throw new AppError("FORBIDDEN", CLOSED_REGISTRATION_MESSAGE);
+  // The app's administrators (ADMIN_EMAILS) are never created through sign-up:
+  // emails are not verified, so anyone could otherwise claim an admin address.
+  if (isPlatformAdmin(data.email)) throw new AppError("FORBIDDEN", "Αυτό το email δεν μπορεί να εγγραφεί από εδώ.");
+  // Check the link first, so a made-up link cannot be used to probe which emails have accounts.
+  if (data.invite) {
+    if ((await getInvitationByToken(data.invite))?.status !== "VALID") throw new AppError("BAD_REQUEST", "Η πρόσκληση δεν είναι έγκυρη ή έχει λήξει.");
+  } else if (data.access) {
+    if ((await getWaitlistAccess(data.access))?.status !== "VALID") throw new AppError("BAD_REQUEST", "Ο σύνδεσμος εγγραφής δεν είναι έγκυρος ή έχει λήξει.");
+  } else if (!(await isRegistrationOpen())) throw new AppError("FORBIDDEN", CLOSED_REGISTRATION_MESSAGE);
   const existing = await db.user.findUnique({ where: { email: data.email } });
   if (existing) throw conflict("Υπάρχει ήδη λογαριασμός με αυτό το email. Συνδεθείτε.");
   const passwordHash = await bcrypt.hash(data.password, 12);

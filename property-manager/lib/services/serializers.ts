@@ -29,8 +29,9 @@ export function serializeProperty(p: Property) {
     checkOutTime: p.checkOutTime,
     houseRules: p.houseRules,
     directBooking: p.directBooking,
-    /** Token of the public guest guide and booking pages (null until created). */
+    /** Tokens of the public guest guide and booking page (null until created). */
     publicToken: p.publicToken,
+    bookingToken: p.bookingToken,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   };

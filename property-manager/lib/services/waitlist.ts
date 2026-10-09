@@ -212,7 +212,7 @@ export async function claimWaitlistAccess(tx: Prisma.TransactionClient, user: { 
 const csvCell = (v: unknown) => {
   const s = v == null ? "" : String(v);
   // Leading = + - @ would run as a formula in Excel.
-  const safe = /^[=+\-@]/.test(s) ? `'${s}` : s;
+  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
   return /[",\n;]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 };
 

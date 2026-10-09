@@ -144,6 +144,7 @@ export interface Property {
   houseRules: string | null;
   directBooking: boolean;
   publicToken: string | null;
+  bookingToken: string | null;
 }
 
 export interface PriceSuggestion {

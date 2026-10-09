@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, MessageSquarePlus } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
 import {
   DropdownMenu,
@@ -13,8 +13,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { FeedbackDialog } from "./feedback-dialog";
 import { Logo } from "./logo";
-import { adminNav, helpNav, isActive, mainNav, mobileNav, settingsNav } from "./nav";
+import { adminFeedbackNav, adminNav, helpNav, isActive, mainNav, mobileNav, settingsNav } from "./nav";
 
 export function MobileTopBar({ appName, orgName }: { appName: string; orgName: string }) {
   return (
@@ -23,14 +24,23 @@ export function MobileTopBar({ appName, orgName }: { appName: string; orgName: s
         <Logo className="size-6" />
         <span className="truncate">{appName}</span>
       </Link>
-      <span className="ml-3 truncate text-xs text-muted-foreground">{orgName}</span>
+      <span className="ml-3 flex min-w-0 items-center gap-2">
+        <span className="truncate text-xs text-muted-foreground">{orgName}</span>
+        <FeedbackDialog
+          trigger={
+            <button aria-label="Στείλτε σχόλιο" className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+              <MessageSquarePlus className="size-5" />
+            </button>
+          }
+        />
+      </span>
     </header>
   );
 }
 
 export function MobileBottomNav({ pendingActions, waitlistAdmin = false }: { pendingActions: number; waitlistAdmin?: boolean }) {
   const pathname = usePathname();
-  const more = [...mainNav.filter((n) => !mobileNav.some((m) => m.href === n.href)), ...(waitlistAdmin ? [adminNav] : []), settingsNav, helpNav];
+  const more = [...mainNav.filter((n) => !mobileNav.some((m) => m.href === n.href)), ...(waitlistAdmin ? [adminNav, adminFeedbackNav] : []), settingsNav, helpNav];
   return (
     <nav
       aria-label="Μενού κινητού"

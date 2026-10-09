@@ -117,7 +117,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
           <Card id="guest-pages">
             <CardHeader title="Σελίδες για επισκέπτες" description="Οδηγός επισκέπτη και απευθείας κρατήσεις" />
             <CardContent>
-              <GuestPagesCard propertyId={p.id} publicToken={p.publicToken} directBooking={p.directBooking} canEdit={hasRole(ctx, "ADMIN")} />
+              <GuestPagesCard propertyId={p.id} publicToken={p.publicToken} bookingToken={p.bookingToken} directBooking={p.directBooking} canEdit={hasRole(ctx, "ADMIN")} />
             </CardContent>
           </Card>
           <Card id="calendars">

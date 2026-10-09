@@ -16,6 +16,9 @@ const GUEST_PAGE_LANGUAGE_SET = new Set<string>(GUEST_PAGE_LANGUAGES);
 
 // ─── Online check-in ─────────────────────────────────────────────────
 
+/** A check-in link stops working the day after departure. */
+const checkinExpired = (checkOut: Date, now = new Date()) => dateToISO(checkOut) < addDaysISO(todayISO(now), -1);
+
 /** The reservation's online check-in link (created on first use). */
 export async function checkinLink(ctx: OrgContext, reservationId: string) {
   const r = await db.reservation.findFirst({ where: { id: reservationId, organizationId: ctx.organizationId } });
@@ -31,7 +34,7 @@ export async function getCheckin(token: string) {
     where: { checkinToken: token },
     include: { guest: true, property: true },
   });
-  if (!r || r.status === "CANCELLED") return null;
+  if (!r || r.status === "CANCELLED" || checkinExpired(r.checkOut)) return null;
   return {
     propertyName: r.property.name,
     city: r.property.city,
@@ -44,7 +47,8 @@ export async function getCheckin(token: string) {
     language: guestLanguage(r.guest) as GuestLanguage,
     completed: !!r.checkinCompletedAt,
     guidePath: r.property.publicToken ? `/guide/${r.property.publicToken}` : null,
-    prefill: { phone: r.guest.phone ?? "", email: r.guest.email ?? "", country: r.guest.country ?? "" },
+    // Contact details are not shown: the link may have been forwarded.
+    prefill: { phone: "", email: "", country: r.guest.country ?? "" },
   };
 }
 
@@ -61,7 +65,9 @@ const checkinInput = z.object({
 /** Saves the guest's check-in: identity for the AADE declaration, contact details, arrival time. */
 export async function submitCheckin(token: string, input: unknown, now = new Date()) {
   const r = await db.reservation.findUnique({ where: { checkinToken: token }, include: { property: true, guest: true } });
-  if (!r || r.status === "CANCELLED") throw new AppError("NOT_FOUND", "notFound");
+  if (!r || r.status === "CANCELLED" || checkinExpired(r.checkOut, now)) throw new AppError("NOT_FOUND", "notFound");
+  // Once completed, a link cannot be used to change the guest's details again.
+  if (r.checkinCompletedAt) throw new AppError("CONFLICT", "alreadyDone");
   const data = checkinInput.parse(input);
   if (r.property.houseRules && !data.acceptRules) throw new AppError("BAD_REQUEST", "mustAccept");
   await db.$transaction([
@@ -84,12 +90,17 @@ export async function submitCheckin(token: string, input: unknown, now = new Dat
 
 // ─── Public pages of a property (guest guide, direct booking) ────────
 
-/** The token of the property's public pages (created on first use). */
+/**
+ * Links of the property's public pages (tokens created on first use). The
+ * guide and the booking page have separate tokens: the booking link is meant
+ * to be advertised, the guide only goes to guests.
+ */
 export async function publicPagesLink(ctx: OrgContext, propertyId: string) {
   const p = await assertProperty(ctx, propertyId);
-  const token = p.publicToken ?? newToken();
-  if (!p.publicToken) await db.property.update({ where: { id: p.id }, data: { publicToken: token } });
-  return { guidePath: `/guide/${token}`, bookingPath: `/book/${token}` };
+  const guideToken = p.publicToken ?? newToken();
+  const bookingToken = p.bookingToken ?? newToken();
+  if (!p.publicToken || !p.bookingToken) await db.property.update({ where: { id: p.id }, data: { publicToken: guideToken, bookingToken } });
+  return { guidePath: `/guide/${guideToken}`, bookingPath: `/book/${bookingToken}` };
 }
 
 /** Turns the direct booking page on or off. */
@@ -98,6 +109,14 @@ export async function setDirectBooking(ctx: OrgContext, propertyId: string, enab
   await assertProperty(ctx, propertyId);
   await db.property.update({ where: { id: propertyId }, data: { directBooking: enabled } });
   return { ...(await publicPagesLink(ctx, propertyId)), directBooking: enabled };
+}
+
+/** New link for the guide or the booking page; the old one stops working (e.g. it was shared too widely). */
+export async function rotatePublicLink(ctx: OrgContext, propertyId: string, page: "guide" | "booking") {
+  if (!hasRole(ctx, "ADMIN")) throw new AppError("FORBIDDEN", "Μόνο ο ιδιοκτήτης και οι διαχειριστές");
+  await assertProperty(ctx, propertyId);
+  await db.property.update({ where: { id: propertyId }, data: page === "guide" ? { publicToken: newToken() } : { bookingToken: newToken() } });
+  return publicPagesLink(ctx, propertyId);
 }
 
 /**
@@ -126,17 +145,19 @@ export async function getGuide(token: string, language: string) {
     /** Languages the host wrote notes in. */
     languages,
     directBooking: p.directBooking,
+    bookingPath: p.directBooking && p.bookingToken ? `/book/${p.bookingToken}` : null,
   };
 }
 
 // ─── Direct booking ──────────────────────────────────────────────────
 
 const MAX_NIGHTS = 59;
+const MAX_OPEN_REQUESTS = 10;
 /** First line of the notes of a request from the booking page (the dashboard lists them). */
 export const BOOKING_REQUEST_NOTE = "Αίτημα από τη σελίδα απευθείας κρατήσεων.";
 
 async function bookableProperty(token: string) {
-  const p = await db.property.findUnique({ where: { publicToken: token } });
+  const p = await db.property.findUnique({ where: { bookingToken: token } });
   return p && p.status === "ACTIVE" && p.directBooking ? p : null;
 }
 
@@ -214,6 +235,11 @@ export async function requestBooking(token: string, input: unknown, origin: stri
   const quote = await quoteStay(token, data, now);
   if (!quote.available) throw new AppError("CONFLICT", "unavailable");
   if (data.guestsCount > p.maxGuests) throw new AppError("BAD_REQUEST", "guests");
+  // A page cannot be used to flood the team with requests.
+  const open = await db.reservation.count({
+    where: { propertyId: p.id, status: "PENDING", source: "DIRECT", notes: { startsWith: BOOKING_REQUEST_NOTE }, checkOut: { gt: isoToDate(todayISO(now)) } },
+  });
+  if (open >= MAX_OPEN_REQUESTS) throw new AppError("BAD_REQUEST", "tooMany");
 
   const [firstName, ...rest] = data.name.split(/\s+/);
   const existing = await db.guest.findFirst({ where: { organizationId: p.organizationId, email: data.email } });
@@ -255,6 +281,7 @@ export async function requestBooking(token: string, input: unknown, origin: stri
     });
   }
   const { t } = guestPageText(data.language);
-  await sendEmail({ to: data.email, subject: `${t.bookTitle}: ${p.name}`, text: `${t.hello} ${firstName},\n\n${t.requestSent}\n\n${p.name} · ${data.checkIn} → ${data.checkOut}` });
+  // Fixed text only (nothing the visitor typed), since the address is not verified.
+  await sendEmail({ to: data.email, subject: `${t.bookTitle}: ${p.name}`, text: `${t.hello},\n\n${t.requestSent}\n\n${p.name} · ${data.checkIn} → ${data.checkOut}` });
   return { requested: true, reservationId: reservation.id };
 }
