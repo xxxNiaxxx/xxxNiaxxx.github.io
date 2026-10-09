@@ -49,9 +49,9 @@ describe("security", () => {
 
   it("admin emails cannot sign up, and a made-up link is refused before anything else", async () => {
     await setRegistrationOpen(true);
-    await expect(registerAccount({ name: "X", email: "boss@test.local", password: "password123", organizationName: "X" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(registerAccount({ name: "X", email: "boss@test.local", password: "password123", acceptTerms: true, organizationName: "X" })).rejects.toMatchObject({ code: "FORBIDDEN" });
     const user = await db.user.findFirstOrThrow();
-    await expect(registerAccount({ name: "X", email: user.email, password: "password123", invite: "made-up" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(registerAccount({ name: "X", email: user.email, password: "password123", acceptTerms: true, invite: "made-up" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await setRegistrationOpen(false);
   });
 

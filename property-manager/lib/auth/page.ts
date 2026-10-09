@@ -11,7 +11,7 @@ export async function getPageContext() {
     const ctx: OrgContext = { userId: user.id, organizationId: membership.organizationId, role: membership.role };
     return { ctx, user, organization, role: membership.role };
   } catch (e) {
-    if (e instanceof AppError && (e.code === "UNAUTHORIZED" || e.code === "FORBIDDEN")) redirect("/login");
+    if (e instanceof AppError && (e.code === "UNAUTHORIZED" || e.code === "FORBIDDEN")) redirect("/logout");
     throw e;
   }
 }

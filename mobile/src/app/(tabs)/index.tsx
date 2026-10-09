@@ -5,6 +5,7 @@ import { Badge, Card, Empty, ErrorBox, Loading, Screen, SectionTitle, Stat, stat
 import { api } from "@/lib/api";
 import { formatDay, formatMoney, formatPercent, formatTime, humanize } from "@/lib/format";
 import { PriceIdeasList } from "@/components/guest-pages";
+import { TermsBanner } from "@/components/terms-banner";
 import type { Dashboard, Reservation, Task } from "@/lib/types";
 import { useQuery } from "@/lib/use-query";
 import { colors } from "@/theme";
@@ -37,6 +38,7 @@ export default function Today() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={reload}>
+      <TermsBanner />
       <View>
         <Text style={{ fontSize: 26, fontWeight: "700", color: colors.text, letterSpacing: -0.5 }}>Γεια σας!</Text>
         {data && (

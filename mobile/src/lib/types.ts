@@ -112,6 +112,8 @@ export interface SessionInfo {
   organization: { id: string; name: string };
   role: Role;
   organizations: { id: string; name: string; role: Role }[];
+  /** Accepted the current terms of service and data processing agreement. */
+  termsAccepted?: boolean;
 }
 
 export interface TaxSettings {

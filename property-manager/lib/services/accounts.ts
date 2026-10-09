@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { AppError, conflict } from "@/lib/errors";
 import { registerSchema } from "@/lib/validation/auth";
 import { isPlatformAdmin } from "@/lib/email";
+import { TERMS_VERSION } from "@/lib/legal";
 import { acceptInvitation, getInvitationByToken } from "./invitations";
 import { claimWaitlistAccess, getWaitlistAccess, isRegistrationOpen } from "./waitlist";
 
@@ -28,7 +29,7 @@ export async function registerAccount(input: unknown) {
   if (existing) throw conflict("Υπάρχει ήδη λογαριασμός με αυτό το email. Συνδεθείτε.");
   const passwordHash = await bcrypt.hash(data.password, 12);
   return db.$transaction(async (tx) => {
-    const user = await tx.user.create({ data: { email: data.email, name: data.name, passwordHash } });
+    const user = await tx.user.create({ data: { email: data.email, name: data.name, passwordHash, termsVersion: TERMS_VERSION, termsAcceptedAt: new Date() } });
     if (data.invite) {
       const { organizationId } = await acceptInvitation(tx, user, data.invite);
       return { userId: user.id, organizationId };

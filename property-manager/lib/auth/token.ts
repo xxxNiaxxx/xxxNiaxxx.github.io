@@ -5,8 +5,9 @@ import { clientIp, rateLimited } from "@/lib/request";
 
 /**
  * Bearer tokens for the mobile app (which cannot use the web session cookie).
- * HS256-signed with AUTH_SECRET; they carry only the user id, and every request
- * still resolves organization membership from the database.
+ * HS256-signed with AUTH_SECRET; they carry the user id and the user's session
+ * version (signing out everywhere bumps it), and every request still resolves
+ * organization membership from the database.
  */
 const ISSUER = "brachychronia-mobile";
 const TTL = "30d";
@@ -17,14 +18,15 @@ function secret() {
   return new TextEncoder().encode(s);
 }
 
-export async function signMobileToken(userId: string) {
-  return new SignJWT({}).setProtectedHeader({ alg: "HS256" }).setSubject(userId).setIssuer(ISSUER).setIssuedAt().setExpirationTime(TTL).sign(secret());
+export async function signMobileToken(userId: string, sessionVersion = 0) {
+  return new SignJWT({ sv: sessionVersion }).setProtectedHeader({ alg: "HS256" }).setSubject(userId).setIssuer(ISSUER).setIssuedAt().setExpirationTime(TTL).sign(secret());
 }
 
-export async function verifyMobileToken(token: string): Promise<string | null> {
+export async function verifyMobileToken(token: string): Promise<{ userId: string; sessionVersion: number } | null> {
   try {
     const { payload } = await jwtVerify(token, secret(), { issuer: ISSUER, algorithms: ["HS256"] });
-    return typeof payload.sub === "string" ? payload.sub : null;
+    if (typeof payload.sub !== "string") return null;
+    return { userId: payload.sub, sessionVersion: typeof payload.sv === "number" ? payload.sv : 0 };
   } catch {
     return null;
   }
@@ -51,5 +53,5 @@ export async function verifyCredentials(email: string, password: string) {
   const user = await db.user.findUnique({ where: { email: normalized } });
   const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
   if (!user || !ok) return null;
-  return { id: user.id, email: user.email, name: user.name, image: user.image };
+  return { id: user.id, email: user.email, name: user.name, image: user.image, sessionVersion: user.sessionVersion };
 }

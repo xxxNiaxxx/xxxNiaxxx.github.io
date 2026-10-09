@@ -50,6 +50,7 @@ export async function registerAction(_prev: AuthFormState, form: FormData): Prom
       invite,
       access,
       password: String(form.get("password") ?? ""),
+      acceptTerms: form.get("acceptTerms") === "on",
     });
   } catch (e) {
     if (e instanceof ZodError) return { error: "Διορθώστε τα σημειωμένα πεδία.", fieldErrors: fieldErrorsOf(e), values };

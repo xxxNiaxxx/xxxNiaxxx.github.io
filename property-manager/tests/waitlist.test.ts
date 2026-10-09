@@ -51,9 +51,9 @@ describe("waitlist", () => {
 
   it("registration is closed by default: a new organization needs an approved link", async () => {
     expect(await isRegistrationOpen()).toBe(false);
-    await expect(registerAccount({ name: "X", email: newEmail(), password: "password123", organizationName: "X" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(registerAccount({ name: "X", email: newEmail(), password: "password123", acceptTerms: true, organizationName: "X" })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await setRegistrationOpen(true);
-    await expect(registerAccount({ name: "Y", email: newEmail(), password: "password123", organizationName: "Y" })).resolves.toMatchObject({ organizationId: expect.any(String) });
+    await expect(registerAccount({ name: "Y", email: newEmail(), password: "password123", acceptTerms: true, organizationName: "Y" })).resolves.toMatchObject({ organizationId: expect.any(String) });
     await setRegistrationOpen(false);
   });
 
@@ -89,8 +89,8 @@ describe("waitlist", () => {
     const token = tokenOf(path);
     expect(await getWaitlistAccess(token)).toMatchObject({ email: data.email, status: "VALID" });
 
-    await expect(registerAccount({ name: "Other", email: newEmail(), password: "password123", organizationName: "O", access: token })).rejects.toMatchObject({ code: "FORBIDDEN" });
-    const { organizationId, userId } = await registerAccount({ name: data.name, email: data.email, password: "password123", organizationName: "Νίκος Stays", access: token });
+    await expect(registerAccount({ name: "Other", email: newEmail(), password: "password123", acceptTerms: true, organizationName: "O", access: token })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const { organizationId, userId } = await registerAccount({ name: data.name, email: data.email, password: "password123", acceptTerms: true, organizationName: "Νίκος Stays", access: token });
     expect(await db.organizationMember.findFirst({ where: { organizationId, userId, role: "OWNER" } })).not.toBeNull();
     expect(await db.waitlistEntry.findUniqueOrThrow({ where: { id: entry.id } })).toMatchObject({ status: "REGISTERED", userId });
     expect(await getWaitlistAccess(token)).toMatchObject({ status: "USED" });
@@ -104,7 +104,7 @@ describe("waitlist", () => {
     const past = new Date(Date.now() - 20 * 86_400_000);
     const old = tokenOf((await approveEntry(entry.id, ORIGIN, past)).path);
     expect(await getWaitlistAccess(old)).toMatchObject({ status: "EXPIRED" });
-    await expect(registerAccount({ name: "N", email: data.email, password: "password123", organizationName: "N", access: old })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(registerAccount({ name: "N", email: data.email, password: "password123", acceptTerms: true, organizationName: "N", access: old })).rejects.toMatchObject({ code: "BAD_REQUEST" });
 
     const fresh = tokenOf((await approveEntry(entry.id, ORIGIN)).path);
     expect(await getWaitlistAccess(old)).toBeNull();

@@ -4,7 +4,7 @@ import { APP_NAME, SUPPORT_EMAIL } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Πολιτική απορρήτου · Privacy policy" };
 
-const LAST_UPDATED = "2026-10-08";
+const LAST_UPDATED = "2026-10-10";
 
 function Contact() {
   return SUPPORT_EMAIL ? <a className="text-accent underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> : <span>τα στοιχεία επικοινωνίας στη σελίδα της εφαρμογής στο Google Play</span>;
@@ -24,7 +24,10 @@ export default function PrivacyPage() {
       <ul>
         <li><strong>Λογαριασμός:</strong> όνομα, email και κωδικός (αποθηκεύεται μόνο κρυπτογραφημένος με bcrypt).</li>
         <li><strong>Δεδομένα επιχείρησης που καταχωρείτε:</strong> ακίνητα, κρατήσεις, εργασίες, έσοδα/έξοδα.</li>
-        <li><strong>Στοιχεία επισκεπτών που καταχωρείτε:</strong> όνομα, email, τηλέφωνο, χώρα, σημειώσεις και μηνύματα. Για αυτά τα δεδομένα εσείς είστε ο υπεύθυνος επεξεργασίας και εμείς ενεργούμε ως εκτελών την επεξεργασία.</li>
+        <li><strong>Στοιχεία επισκεπτών που καταχωρείτε ή συμπληρώνουν οι ίδιοι στο online check-in:</strong> όνομα, email, τηλέφωνο, χώρα, ΑΦΜ ή αριθμός διαβατηρίου/ταυτότητας (για τη δήλωση διαμονής στην ΑΑΔΕ), ώρα άφιξης, σημειώσεις και μηνύματα. Για αυτά τα δεδομένα ο οικοδεσπότης είναι ο υπεύθυνος επεξεργασίας και εμείς ενεργούμε ως εκτελών την επεξεργασία (δείτε τη <Link className="text-accent underline" href="/dpa">Σύμβαση επεξεργασίας δεδομένων</Link>).</li>
+        <li><strong>Αιτήματα από τη σελίδα απευθείας κρατήσεων:</strong> όνομα, email, τηλέφωνο, ημερομηνίες και μήνυμα, που διαβιβάζονται στον οικοδεσπότη.</li>
+        <li><strong>Σχόλια</strong> που μας στέλνετε από το κουμπί «Στείλτε σχόλιο».</li>
+        <li><strong>Τεχνικά στοιχεία:</strong> η διεύθυνση IP χρησιμοποιείται προσωρινά για όριο προσπαθειών (προστασία από κατάχρηση) και διαγράφεται μέσα σε 2 ημέρες. Χρησιμοποιούμε μόνο το απαραίτητο cookie σύνδεσης, χωρίς cookies παρακολούθησης.</li>
         <li><strong>Συνομιλίες με τον βοηθό AI</strong> και οι ενέργειες που προτείνει/εγκρίνετε.</li>
         <li><strong>Λίστα αναμονής:</strong> όσα συμπληρώνετε στη φόρμα «Θέλω να δοκιμάσω» (όνομα, email, προαιρετικά τηλέφωνο, περιοχή, αριθμό ακινήτων, πλατφόρμες, τύπο κινητού και email Google Play), μόνο με τη συναίνεσή σας.</li>
       </ul>
@@ -34,21 +37,24 @@ export default function PrivacyPage() {
       <ul>
         <li>Για να λειτουργεί η υπηρεσία (σύνδεση, εμφάνιση και αποθήκευση των δεδομένων σας).</li>
         <li>Για τη λίστα αναμονής: για να σας στείλουμε email επιβεβαίωσης και τον σύνδεσμο εγγραφής και, αν έχετε Android, για να σας προσθέσουμε ως δοκιμαστή στο Google Play. Τα email στέλνονται μέσω παρόχου αποστολής email.</li>
-        <li>Για τις απαντήσεις του βοηθού AI: όταν κάνετε ερώτηση, τα σχετικά δεδομένα του οργανισμού σας μπορεί να αποσταλούν στον πάροχο τεχνητής νοημοσύνης που έχει ρυθμιστεί, μόνο για να παραχθεί η απάντηση.</li>
+        <li>Για τις απαντήσεις του βοηθού AI: όταν κάνετε ερώτηση, τα σχετικά δεδομένα του οργανισμού σας μπορεί να αποσταλούν στον πάροχο τεχνητής νοημοσύνης που έχει ρυθμιστεί (OpenAI), μόνο για να παραχθεί η απάντηση. Ο πάροχος δεν τα χρησιμοποιεί για εκπαίδευση μοντέλων.</li>
+        <li>Για τις υπενθυμίσεις και τη μηνιαία αναφορά με email, που μπορείτε να απενεργοποιήσετε στις Ρυθμίσεις.</li>
       </ul>
       <p>Δεν πουλάμε και δεν μοιραζόμαστε δεδομένα με τρίτους για διαφημιστικούς σκοπούς.</p>
 
       <h2>Πού αποθηκεύονται</h2>
       <p>
-        Σε διακομιστές και βάση δεδομένων παρόχων φιλοξενίας (cloud). Όλη η επικοινωνία γίνεται κρυπτογραφημένα (HTTPS). Κάθε
-        οργανισμός βλέπει μόνο τα δικά του δεδομένα.
+        Σε διακομιστές και βάση δεδομένων παρόχων φιλοξενίας (cloud): Vercel και Neon. Όλη η επικοινωνία γίνεται κρυπτογραφημένα
+        (HTTPS). Κάθε οργανισμός βλέπει μόνο τα δικά του δεδομένα. Η πλήρης λίστα παρόχων και τα μέτρα ασφαλείας βρίσκονται στη{" "}
+        <Link className="text-accent underline" href="/dpa">Σύμβαση επεξεργασίας δεδομένων</Link>.
       </p>
 
       <h2>Διατήρηση και διαγραφή</h2>
       <p>
         Τα δεδομένα διατηρούνται όσο υπάρχει ο λογαριασμός σας. Μπορείτε να διαγράψετε τον λογαριασμό σας οποιαδήποτε στιγμή
         από την εφαρμογή — δείτε <Link className="text-accent underline" href="/account-deletion">Διαγραφή λογαριασμού</Link>.
-        Τα στοιχεία της λίστας αναμονής διατηρούνται μέχρι το τέλος της δοκιμαστικής περιόδου ή μέχρι να ζητήσετε τη διαγραφή τους.
+        Τα στοιχεία του online check-in παραμένουν στην κράτηση όσο τα χρειάζεται ο οικοδεσπότης για τις φορολογικές του
+        υποχρεώσεις· ο οικοδεσπότης μπορεί να τα διορθώσει ή να τα διαγράψει. Τα στοιχεία της λίστας αναμονής διατηρούνται μέχρι το τέλος της δοκιμαστικής περιόδου ή μέχρι να ζητήσετε τη διαγραφή τους.
       </p>
 
       <h2>Τα δικαιώματά σας (GDPR)</h2>
@@ -62,7 +68,8 @@ export default function PrivacyPage() {
         {APP_NAME} stores your account (name, email, bcrypt-hashed password) and the business data you enter (properties,
         reservations, guests, tasks, finances, AI chats). Guest data is processed on your behalf. When you ask the AI
         assistant a question, relevant data from your organization may be sent to the configured AI provider solely to
-        generate the answer. No ads, no tracking, no sale of data. Data is kept until you delete your account, which you can
+        generate the answer. Guests who complete online check-in provide their name, contact details and tax/passport
+        number to the host, who is the controller of that data. No ads, no tracking, no sale of data. Data is kept until you delete your account, which you can
         do in the app at any time (<Link className="text-accent underline" href="/account-deletion">account deletion</Link>). Contact: <Contact />.
       </p>
     </>

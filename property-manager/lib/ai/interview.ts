@@ -147,7 +147,7 @@ const answerInput = z.object({
 function checkFieldAnswer(topic: Topic, answer: string) {
   if (topic.field === "checkInTime" || topic.field === "checkOutTime") {
     const m = answer.replace(/\s/g, "").match(TIME);
-    if (!m) throw new AppError("VALIDATION", "Γράψτε την ώρα σε μορφή ΩΩ:ΛΛ, π.χ. 15:00", { answer: "Ώρα σε μορφή ΩΩ:ΛΛ" });
+    if (!m) throw new AppError("VALIDATION", "Γράψτε την ώρα σε μορφή ΩΩ:ΛΛ, π.χ. 15:00", [{ path: "answer", message: "Ώρα σε μορφή ΩΩ:ΛΛ" }]);
     return `${m[1].padStart(2, "0")}:${m[2]}`;
   }
   return answer;
@@ -162,7 +162,7 @@ export async function answerTopic(ctx: OrgContext, input: unknown, provider: Cha
   const p = await interviewProperty(ctx, data.propertyId);
   const topic = topicOf(data.topic);
   if (topic.key === "access" && /\b\d{4,}\b/.test(data.answer)) {
-    throw new AppError("VALIDATION", "Μη γράφετε κωδικούς πόρτας ή κλειδοθήκης εδώ: φαίνονται στον οδηγό επισκέπτη.", { answer: "Χωρίς κωδικούς πόρτας" });
+    throw new AppError("VALIDATION", "Μη γράφετε κωδικούς πόρτας ή κλειδοθήκης εδώ: φαίνονται στον οδηγό επισκέπτη.", [{ path: "answer", message: "Χωρίς κωδικούς πόρτας" }]);
   }
 
   if (topic.field) {
@@ -312,13 +312,13 @@ export async function suggestFromListing(ctx: OrgContext, input: unknown, provid
   let text = data.text ?? "";
   if (!text && data.url) {
     const url = new URL(data.url);
-    if (!LISTING_HOSTS.test(url.hostname)) throw new AppError("VALIDATION", "Δώστε σύνδεσμο από Booking.com ή Airbnb, ή επικολλήστε το κείμενο της σελίδας.", { url: "Booking.com ή Airbnb" });
+    if (!LISTING_HOSTS.test(url.hostname)) throw new AppError("VALIDATION", "Δώστε σύνδεσμο από Booking.com ή Airbnb, ή επικολλήστε το κείμενο της σελίδας.", [{ path: "url", message: "Booking.com ή Airbnb" }]);
     const page = await fetchPublicText(url.toString(), {
       maxBytes: 5_000_000,
       timeoutMs: 15_000,
       headers: { "User-Agent": "Mozilla/5.0 (compatible; Vrachychronia/1.0)", "Accept-Language": "el,en;q=0.8", Accept: "text/html" },
     }).catch((e: unknown) => {
-      if (e instanceof BlockedUrlError) throw new AppError("VALIDATION", "Ο σύνδεσμος δεν επιτρέπεται.", { url: "Μη επιτρεπτός σύνδεσμος" });
+      if (e instanceof BlockedUrlError) throw new AppError("VALIDATION", "Ο σύνδεσμος δεν επιτρέπεται.", [{ path: "url", message: "Μη επιτρεπτός σύνδεσμος" }]);
       return { ok: false as const, status: 0, text: "" };
     });
     text = page.ok ? htmlToText(page.text) : "";

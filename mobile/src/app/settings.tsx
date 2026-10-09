@@ -1,15 +1,16 @@
 import { Stack } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { NumberField, SelectField, TextField, CheckRow } from "@/components/form";
+import { NumberField, PasswordField, SelectField, TextField, CheckRow } from "@/components/form";
 import { Button, Card, Screen, SectionTitle, styles } from "@/components/ui";
 import { api } from "@/lib/api";
 import { COMMISSION_SOURCES } from "@/lib/constants";
 import { humanize } from "@/lib/format";
 import { useSession } from "@/lib/session";
-import { useMutation } from "@/lib/use-mutation";
+import { confirm, notify, useMutation } from "@/lib/use-mutation";
 import type { TaxSettings } from "@/lib/types";
 import { useQuery } from "@/lib/use-query";
+import { colors } from "@/theme";
 
 export default function Settings() {
   const { session, serverUrl, refresh, switchOrganization } = useSession();
@@ -80,6 +81,8 @@ export default function Settings() {
 
       {tax.data && admin && <PricingCard settings={tax.data} onSaved={tax.reload} />}
 
+      <SecurityCard />
+
       {__DEV__ && (
         <View>
           <Text style={[styles.rowSub, { textAlign: "center" }]}>Server: {serverUrl}</Text>
@@ -111,6 +114,34 @@ function PricingCard({ settings, onSaved }: { settings: TaxSettings; onSaved: ()
           method: "PATCH",
           body: { commissionRates: Object.fromEntries(COMMISSION_SOURCES.map((s) => [s, Number(rates[s]) || 0])), ...(settings.regime === "BUSINESS" ? { businessTaxRate: ownRate === "" ? null : Number(ownRate) } : {}) },
         }), { onSuccess: onSaved })} />
+    </Card>
+  );
+}
+
+/** Change password and sign out everywhere: both end every session, this phone's too. */
+function SecurityCard() {
+  const { signOut } = useSession();
+  const { run, pending, fieldErrors: err } = useMutation();
+  const [currentPassword, setCurrent] = useState("");
+  const [newPassword, setNew] = useState("");
+  return (
+    <Card style={{ gap: 12 }}>
+      <SectionTitle title="Ασφάλεια" />
+      <Text style={styles.rowSub}>Αν χάσατε ένα κινητό ή συνδεθήκατε σε ξένο υπολογιστή, αποσυνδεθείτε παντού. Η αλλαγή κωδικού αποσυνδέει επίσης όλες τις συσκευές.</Text>
+      <PasswordField label="Τωρινός κωδικός" value={currentPassword} onChangeText={setCurrent} autoComplete="current-password" />
+      {err.currentPassword ? <Text style={{ color: colors.danger, fontSize: 12 }}>{err.currentPassword}</Text> : null}
+      <PasswordField label="Νέος κωδικός (τουλάχιστον 8 χαρακτήρες)" value={newPassword} onChangeText={setNew} autoComplete="new-password" />
+      {err.newPassword ? <Text style={{ color: colors.danger, fontSize: 12 }}>{err.newPassword}</Text> : null}
+      <Button small title="Αλλαγή κωδικού" variant="outline" loading={pending} disabled={!currentPassword || newPassword.length < 8} style={{ alignSelf: "flex-start" }}
+        onPress={() => void run(() => api("/api/me/password", { body: { currentPassword, newPassword } }), {
+          onSuccess: () => {
+            notify("Ο κωδικός άλλαξε", "Συνδεθείτε με τον νέο κωδικό.");
+            void signOut();
+          },
+        })} />
+      <Button title="Αποσύνδεση από όλες τις συσκευές" variant="danger"
+        onPress={() => confirm("Αποσύνδεση παντού;", "Θα χρειαστεί να συνδεθείτε ξανά σε κάθε υπολογιστή και κινητό, και σε αυτό.", "Αποσύνδεση", () =>
+          void run(() => api("/api/me/sign-out-everywhere", { method: "POST" }), { onSuccess: () => void signOut() }))} />
     </Card>
   );
 }

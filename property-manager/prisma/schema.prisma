@@ -13,13 +13,18 @@ datasource db {
 // ─── Identity & tenancy ──────────────────────────────────────────────
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String?
-  image        String?
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String?
+  image           String?
+  passwordHash    String
+  /// Bumped to sign the user out everywhere: web sessions and mobile tokens carry the value they were issued with.
+  sessionVersion  Int       @default(0)
+  /// Version of the terms of service (lib/legal.ts) the user accepted, and when.
+  termsVersion    String?
+  termsAcceptedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   memberships     OrganizationMember[]
   assignedTasks   Task[]               @relation("TaskAssignee")
