@@ -3,6 +3,7 @@ import { DeleteAccount } from "@/components/settings/delete-account";
 import { NameForm } from "@/components/settings/name-form";
 import { OrgSwitcher } from "@/components/settings/org-switcher";
 import { RemindersToggle } from "@/components/settings/reminders-toggle";
+import { ChangePassword, SignOutEverywhere } from "@/components/settings/security";
 import { TeamPanel } from "@/components/settings/team";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DefinitionList, PageHeader } from "@/components/ui/misc";
@@ -27,12 +28,22 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader title="Ρυθμίσεις" description="Προφίλ, οργανισμός και ομάδα" />
-      <div className="grid max-w-3xl gap-6">
+      <div className="grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6">
         <Card id="profile">
           <CardHeader title="Προφίλ" />
           <CardContent className="grid gap-4">
             <NameForm endpoint="/api/me" label="Το όνομά σας" initial={user.name ?? ""} success="Το προφίλ ενημερώθηκε" />
             <DefinitionList items={[{ label: "Email", value: user.email }, { label: "Ρόλος", value: humanize(role) }]} />
+          </CardContent>
+        </Card>
+        <Card id="security">
+          <CardHeader title="Ασφάλεια" description="Αν χάσατε ένα κινητό ή συνδεθήκατε σε ξένο υπολογιστή, αποσυνδεθείτε παντού. Η αλλαγή κωδικού αποσυνδέει επίσης όλες τις συσκευές." />
+          <CardContent className="grid gap-5">
+            <ChangePassword />
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <p className="text-[13px] text-muted-foreground">Θα χρειαστεί να συνδεθείτε ξανά σε κάθε συσκευή.</p>
+              <SignOutEverywhere />
+            </div>
           </CardContent>
         </Card>
         <Card id="organization">
@@ -56,7 +67,11 @@ export default async function SettingsPage() {
         <Card>
           <CardHeader title="Διαγραφή λογαριασμού" description="Οριστική διαγραφή του λογαριασμού σας και, όπου είστε το μόνο μέλος, των δεδομένων του οργανισμού." />
           <CardContent className="flex flex-wrap items-center justify-between gap-3">
-            <a href="/privacy" className="text-[13px] text-muted-foreground underline-offset-4 hover:underline">Πολιτική απορρήτου</a>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted-foreground">
+              <a href="/terms" className="underline-offset-4 hover:underline">Όροι χρήσης</a>
+              <a href="/dpa" className="underline-offset-4 hover:underline">Σύμβαση επεξεργασίας δεδομένων</a>
+              <a href="/privacy" className="underline-offset-4 hover:underline">Πολιτική απορρήτου</a>
+            </div>
             <DeleteAccount />
           </CardContent>
         </Card>

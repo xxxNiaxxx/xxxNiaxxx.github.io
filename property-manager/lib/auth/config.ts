@@ -24,11 +24,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     jwt({ token, user }) {
-      if (user?.id) token.sub = user.id;
+      if (user?.id) {
+        token.sub = user.id;
+        token.sv = (user as { sessionVersion?: number }).sessionVersion ?? 0;
+      }
       return token;
     },
     session({ session, token }) {
       if (token.sub) session.user.id = token.sub;
+      (session as { sessionVersion?: number }).sessionVersion = typeof token.sv === "number" ? token.sv : 0;
       return session;
     },
   },

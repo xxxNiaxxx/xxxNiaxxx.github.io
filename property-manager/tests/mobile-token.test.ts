@@ -4,7 +4,8 @@ import { signMobileToken, verifyMobileToken } from "@/lib/auth/token";
 
 describe("mobile bearer tokens", () => {
   it("round-trips the user id", async () => {
-    expect(await verifyMobileToken(await signMobileToken("user_1"))).toBe("user_1");
+    expect(await verifyMobileToken(await signMobileToken("user_1"))).toEqual({ userId: "user_1", sessionVersion: 0 });
+    expect(await verifyMobileToken(await signMobileToken("user_1", 3))).toEqual({ userId: "user_1", sessionVersion: 3 });
   });
 
   it("rejects tampered, foreign-secret and garbage tokens", async () => {

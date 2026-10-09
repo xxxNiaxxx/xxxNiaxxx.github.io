@@ -33,6 +33,18 @@ export function RegisterForm({
           <Input id="organizationName" name="organizationName" required defaultValue={state.values?.organizationName} aria-invalid={!!err.organizationName} />
         </Field>
       )}
+      <div className="grid gap-1">
+        <label className="flex items-start gap-2.5 text-sm text-muted-foreground">
+          <input type="checkbox" name="acceptTerms" required className="mt-0.5 size-4 shrink-0 accent-[var(--color-accent)]" aria-invalid={!!err.acceptTerms} />
+          <span>
+            Αποδέχομαι τους{" "}
+            <a href="/terms" target="_blank" className="text-foreground underline underline-offset-4">Όρους χρήσης</a> και τη{" "}
+            <a href="/dpa" target="_blank" className="text-foreground underline underline-offset-4">Σύμβαση επεξεργασίας δεδομένων</a>, και
+            έχω διαβάσει την <a href="/privacy" target="_blank" className="text-foreground underline underline-offset-4">Πολιτική απορρήτου</a>.
+          </span>
+        </label>
+        {err.acceptTerms && <p className="text-xs text-danger" role="alert">{err.acceptTerms}</p>}
+      </div>
       {state.error && (
         <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger" role="alert">
           {state.error}

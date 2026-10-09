@@ -14,24 +14,27 @@ export { resolveMembership };
 export const ACTIVE_ORG_COOKIE = "apm_org";
 export const ACTIVE_ORG_HEADER = "x-organization-id";
 
-/** User id from a mobile bearer token, or from the web session cookie. */
-async function currentUserId(): Promise<string | null> {
+/** User id and session version from a mobile bearer token, or from the web session cookie. */
+async function currentSession(): Promise<{ userId: string; sessionVersion: number } | null> {
   const authorization = (await headers()).get("authorization");
   if (authorization?.startsWith("Bearer ")) return verifyMobileToken(authorization.slice(7).trim());
   const session = await auth();
-  return session?.user?.id ?? null;
+  if (!session?.user?.id) return null;
+  return { userId: session.user.id, sessionVersion: (session as { sessionVersion?: number }).sessionVersion ?? 0 };
 }
 
-/** The signed-in user, or an UNAUTHORIZED error. */
+/** The signed-in user, or an UNAUTHORIZED error (also after "sign out everywhere"). */
 export async function requireUser() {
-  const userId = await currentUserId();
-  if (!userId) throw new AppError("UNAUTHORIZED", "Πρέπει να συνδεθείτε");
+  const session = await currentSession();
+  if (!session) throw new AppError("UNAUTHORIZED", "Πρέπει να συνδεθείτε");
   const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { id: true, email: true, name: true, image: true },
+    where: { id: session.userId },
+    select: { id: true, email: true, name: true, image: true, sessionVersion: true, termsVersion: true },
   });
-  if (!user) throw new AppError("UNAUTHORIZED", "Πρέπει να συνδεθείτε");
-  return user;
+  if (!user || user.sessionVersion !== session.sessionVersion) throw new AppError("UNAUTHORIZED", "Πρέπει να συνδεθείτε");
+  const { sessionVersion: _sv, ...rest } = user;
+  void _sv;
+  return rest;
 }
 
 /** The active organization of the signed-in user. */

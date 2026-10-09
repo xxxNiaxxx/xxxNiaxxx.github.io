@@ -72,8 +72,10 @@ export default function More() {
         <Button title="Πώς λειτουργεί" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(`${serverUrl}/help`)} />
       </Card>
       <Card>
-        <Text style={styles.sectionTitle}>Απόρρητο</Text>
+        <Text style={styles.sectionTitle}>Απόρρητο και όροι</Text>
         <Button title="Πολιτική απορρήτου" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(`${serverUrl}/privacy`)} />
+        <Button title="Όροι χρήσης" variant="outline" style={{ marginTop: 8 }} onPress={() => Linking.openURL(`${serverUrl}/terms`)} />
+        <Button title="Σύμβαση επεξεργασίας δεδομένων (GDPR)" variant="outline" style={{ marginTop: 8 }} onPress={() => Linking.openURL(`${serverUrl}/dpa`)} />
         <Button title="Διαγραφή λογαριασμού" variant="danger" style={{ marginTop: 8 }} onPress={() => router.push("/delete-account")} />
       </Card>
       <Button title="Αποσύνδεση" variant="danger" onPress={() => confirm("Αποσύνδεση;", undefined, "Αποσύνδεση", () => void signOut())} />

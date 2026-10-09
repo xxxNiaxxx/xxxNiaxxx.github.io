@@ -60,7 +60,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     await Promise.all([storage.set(TOKEN_KEY, res.token), storage.set(SERVER_KEY, baseUrl)]);
     configureApi({ token: res.token });
     setServerUrl(baseUrl);
-    setSession({ user: res.user, organization: res.organization, role: res.role, organizations: res.organizations });
+    setSession({ user: res.user, organization: res.organization, role: res.role, organizations: res.organizations, termsAccepted: res.termsAccepted });
   }, []);
 
   const switchOrganization = useCallback(

@@ -97,15 +97,15 @@ describe("team invitations", () => {
     const email = newEmail();
     const { token } = await createInvitation(owner, { email });
     const before = await db.organization.count();
-    const { organizationId } = await registerAccount({ name: "Maria", email, password: "password123", invite: token });
+    const { organizationId } = await registerAccount({ name: "Maria", email, password: "password123", acceptTerms: true, invite: token });
     expect(organizationId).toBe(owner.organizationId);
     expect(await db.organization.count()).toBe(before);
 
-    await expect(registerAccount({ name: "X", email: newEmail(), password: "password123" })).rejects.toMatchObject({ name: "ZodError" });
+    await expect(registerAccount({ name: "X", email: newEmail(), password: "password123", acceptTerms: true })).rejects.toMatchObject({ name: "ZodError" });
     // A wrong email rolls the whole registration back.
     const second = await createInvitation(owner, { email: newEmail() });
     const wrong = newEmail();
-    await expect(registerAccount({ name: "Y", email: wrong, password: "password123", invite: second.token })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(registerAccount({ name: "Y", email: wrong, password: "password123", acceptTerms: true, invite: second.token })).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(await db.user.findUnique({ where: { email: wrong } })).toBeNull();
   });
 });

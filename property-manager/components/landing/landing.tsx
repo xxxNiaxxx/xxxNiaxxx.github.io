@@ -162,6 +162,8 @@ export function Landing() {
           <nav className="flex gap-4">
             <Link href="/help" className="hover:text-foreground">Βοήθεια</Link>
             <Link href="/privacy" className="hover:text-foreground">Απόρρητο</Link>
+            <Link href="/terms" className="hover:text-foreground">Όροι χρήσης</Link>
+            <Link href="/dpa" className="hover:text-foreground">GDPR</Link>
             <Link href="/login" className="hover:text-foreground">Σύνδεση</Link>
           </nav>
         </div>
