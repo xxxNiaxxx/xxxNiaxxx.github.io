@@ -1,21 +1,39 @@
+import { Bot, CalendarCheck2, Landmark, UserCheck, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { APP_NAME, FREE_UNTIL_NOTE } from "@/lib/brand";
+import { BENEFITS } from "@/lib/marketing";
 import { WaitlistForm } from "./waitlist-form";
 
-export const metadata: Metadata = { title: "Λίστα αναμονής" };
+export const metadata: Metadata = {
+  title: "Δοκιμάστε δωρεάν",
+  description: "Η εφαρμογή για Έλληνες οικοδεσπότες βραχυχρόνιας μίσθωσης: κρατήσεις από όλες τις πλατφόρμες, ΑΑΔΕ, φόροι, check-in και βοηθός AI. Δωρεάν έως το τέλος του 2026.",
+};
+
+const ICONS = { calendar: CalendarCheck2, net: Wallet, aade: Landmark, checkin: UserCheck, ai: Bot } as const;
 
 export default function WaitlistPage() {
   return (
     <>
-      <h1 className="text-2xl font-semibold tracking-tight">Θέλω να δοκιμάσω το {APP_NAME}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Ανοίγουμε την εφαρμογή σταδιακά. Αφήστε τα στοιχεία σας και θα σας στείλουμε email με τον προσωπικό σας σύνδεσμο εγγραφής.
-      </p>
-      <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent">{FREE_UNTIL_NOTE}</p>
-      <p className="mt-3 text-sm text-muted-foreground">
-        <Link href="/help" className="font-medium text-foreground underline-offset-4 hover:underline">Δείτε πώς λειτουργεί</Link>: ποσά, προμήθειες, φόροι, πολλά καταλύματα.
-      </p>
+      <h1 className="text-2xl font-semibold tracking-tight">Έχετε Airbnb ή Booking; Αυτή η εφαρμογή σας γλιτώνει χρόνο.</h1>
+
+      <ul className="mt-5 grid gap-3" aria-label="Τι κάνει για εσάς">
+        {BENEFITS.map((b) => {
+          const Icon = ICONS[b.key];
+          return (
+            <li key={b.key} className="flex items-center gap-3 text-[15px]">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+                <Icon className="size-4" />
+              </span>
+              <span className="font-medium">{b.title}</span>
+            </li>
+          );
+        })}
+      </ul>
+
+      <p className="mt-5 rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent">Δωρεάν μέχρι το τέλος του 2026. Χωρίς κάρτα.</p>
+
+      <h2 className="mt-8 text-lg font-semibold tracking-tight">Θέλω να το δοκιμάσω</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Θα σας στείλουμε email με τον σύνδεσμο εγγραφής.</p>
       <WaitlistForm />
       <p className="mt-6 text-sm text-muted-foreground">
         Έχετε ήδη λογαριασμό;{" "}

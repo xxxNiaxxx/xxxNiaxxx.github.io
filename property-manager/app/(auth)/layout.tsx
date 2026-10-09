@@ -1,5 +1,6 @@
 import { Logo } from "@/components/layout/logo";
 import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
+import { BENEFITS } from "@/lib/marketing";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,12 +15,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="relative hidden overflow-hidden bg-primary lg:block">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(45,212,191,0.25),transparent_45%),radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.08),transparent_40%)]" />
         <div className="relative flex h-full flex-col justify-end p-12 text-primary-foreground">
-          <p className="text-sm text-white/60">Παρατήρησε → Αποφάσισε → Δράσε</p>
+          <p className="text-sm text-white/60">Για Έλληνες οικοδεσπότες</p>
           <p className="mt-3 max-w-md text-3xl leading-tight font-semibold tracking-tight">{APP_TAGLINE}</p>
-          <ul className="mt-8 space-y-3 text-sm text-white/75">
-            <li>• Δείτε με μια ματιά τι χρειάζεται την προσοχή σας σήμερα</li>
-            <li>• Κρατήσεις, ημερολόγιο, καθαρισμοί και συντήρηση σε ένα σημείο</li>
-            <li>• Βοηθός AI που απαντά από τα πραγματικά σας δεδομένα — και ρωτά πριν κάνει οτιδήποτε</li>
+          <ul className="mt-8 space-y-4 text-sm text-white/75">
+            {BENEFITS.map((b) => (
+              <li key={b.key}>
+                <span className="font-medium text-white">{b.title}</span>
+                <span className="block">{b.text}</span>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
