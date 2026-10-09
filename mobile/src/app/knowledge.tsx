@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useState } from "react";
 import { Pressable, Switch, Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -36,6 +36,7 @@ export default function Knowledge() {
     <Screen refreshing={memories.refreshing} onRefresh={memories.reload}>
       <Stack.Screen options={{ title: "Γνώσεις του βοηθού" }} />
       <Text style={styles.rowSub}>Ο βοηθός χρησιμοποιεί αυτές τις πληροφορίες στις απαντήσεις και στα μηνύματα προς τους επισκέπτες. Μαθαίνει και όταν διορθώνετε τα μηνύματά του.</Text>
+      <Button title="Ο βοηθός σάς ρωτά: απαντήστε σε ερωτήσεις" variant="accent" onPress={() => router.push("/interview")} />
       <Card style={{ gap: 12 }}>
         <SectionTitle title="Νέα γνώση" />
         <SelectField label="Τύπος" value={kind} onChange={(v) => setKind(v as Memory["kind"])} options={Object.entries(MEMORY_KIND_LABELS).map(([value, label]) => ({ value, label }))} />

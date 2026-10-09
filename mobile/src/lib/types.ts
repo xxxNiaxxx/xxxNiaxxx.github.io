@@ -291,3 +291,21 @@ export interface SyncResult {
   errors?: string[];
   error?: string;
 }
+
+export interface InterviewAnswer {
+  key: string;
+  label: string;
+  question: string;
+  hint: string | null;
+  answer: string | null;
+  status: "answered" | "skipped" | "open";
+}
+
+export interface InterviewState {
+  property: { id: string; name: string };
+  answered: number;
+  total: number;
+  next: InterviewAnswer | null;
+  answers: InterviewAnswer[];
+  aiEnabled: boolean;
+}

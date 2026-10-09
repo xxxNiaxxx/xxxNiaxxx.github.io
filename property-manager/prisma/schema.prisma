@@ -124,40 +124,42 @@ enum PropertyStatus {
 }
 
 model Property {
-  id             String         @id @default(cuid())
-  organizationId String
-  name           String
-  description    String?
-  address        String?
-  city           String
-  country        String
-  bedrooms       Int            @default(1)
-  bathrooms      Int            @default(1)
-  maxGuests      Int            @default(2)
-  status         PropertyStatus @default(ACTIVE)
-  basePrice      Decimal        @db.Decimal(12, 2)
-  currency       String         @default("EUR") @db.Char(3)
+  id               String         @id @default(cuid())
+  organizationId   String
+  name             String
+  description      String?
+  address          String?
+  city             String
+  country          String
+  bedrooms         Int            @default(1)
+  bathrooms        Int            @default(1)
+  maxGuests        Int            @default(2)
+  status           PropertyStatus @default(ACTIVE)
+  basePrice        Decimal        @db.Decimal(12, 2)
+  currency         String         @default("EUR") @db.Char(3)
   /// Αριθμός Μητρώου Ακινήτου (AADE short-term rental registry)
-  ama            String?
-  kind           PropertyKind   @default(APARTMENT)
-  areaSqm        Int?
+  ama              String?
+  kind             PropertyKind   @default(APARTMENT)
+  areaSqm          Int?
   /// Safety checklist and insurance: { fireExtinguisher: true, …, insuranceExpiresOn: "YYYY-MM-DD" }
-  compliance     Json           @default("{}")
+  compliance       Json           @default("{}")
   /// Secret token of the property's public iCal export (for Airbnb/Booking to block dates).
-  icalToken      String?        @unique
+  icalToken        String?        @unique
   /// Secret token of the property's guest guide (/guide/…).
-  publicToken    String?        @unique
+  publicToken      String?        @unique
   /// Token of the direct booking page (/book/…) — separate, so the public booking link never opens the guide.
-  bookingToken   String?        @unique
+  bookingToken     String?        @unique
   /// "15:00"
-  checkInTime    String?
+  checkInTime      String?
   /// "11:00"
-  checkOutTime   String?
-  houseRules     String?
+  checkOutTime     String?
+  houseRules       String?
   /// The direct booking page (/book/…) takes booking requests.
-  directBooking  Boolean        @default(false)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  directBooking    Boolean        @default(false)
+  /// Questions of the knowledge interview the manager chose to skip (topic keys).
+  interviewSkipped String[]       @default([])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   reservations  Reservation[]
@@ -518,6 +520,10 @@ enum AIMemorySource {
   MANUAL
   CHAT
   EDIT
+  /// Answered in the knowledge interview
+  INTERVIEW
+  /// Read from the listing on Booking.com / Airbnb
+  IMPORT
 }
 
 /// What the assistant has learned from the organization's managers.
@@ -532,6 +538,8 @@ model AIMemory {
   /// For MESSAGE_TEMPLATE: checkin | thanks | general
   messageKind     String?
   source          AIMemorySource @default(MANUAL)
+  /// Knowledge-interview topic this note answers (wifi, parking, …).
+  topic           String?
   active          Boolean        @default(true)
   createdByUserId String?
   createdAt       DateTime       @default(now())
