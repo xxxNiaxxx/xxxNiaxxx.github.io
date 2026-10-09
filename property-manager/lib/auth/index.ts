@@ -7,6 +7,7 @@ import { isPlatformAdmin } from "@/lib/email";
 import { AppError } from "@/lib/errors";
 import { hasRole, type OrgContext } from "@/lib/permissions";
 import { resolveMembership } from "./membership";
+import { assertAccess } from "@/lib/services/billing";
 import { verifyMobileToken } from "./token";
 
 export { resolveMembership };
@@ -47,9 +48,14 @@ export async function requireOrganization() {
   return { user, membership, organization: membership.organization };
 }
 
-/** Tenant context used by every service call. */
+/**
+ * Tenant context used by every service call. After the free period it also
+ * requires a subscription (billing, export and account routes use
+ * requireOrganization / requireUser instead, so they keep working).
+ */
 export async function requireOrganizationMember(): Promise<OrgContext> {
   const { user, membership } = await requireOrganization();
+  await assertAccess(membership.organizationId);
   return { userId: user.id, organizationId: membership.organizationId, role: membership.role };
 }
 

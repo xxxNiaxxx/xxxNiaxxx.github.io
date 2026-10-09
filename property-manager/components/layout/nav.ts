@@ -13,6 +13,8 @@ import {
   Sparkles,
   Users,
   Wallet,
+  Bug,
+  CreditCard,
 } from "lucide-react";
 
 export interface NavItem {
@@ -39,6 +41,9 @@ export const helpNav: NavItem = { href: "/help", label: "Βοήθεια", icon: 
 /** Only for the app's administrators (ADMIN_EMAILS). */
 export const adminNav: NavItem = { href: "/admin/waitlist", label: "Λίστα αναμονής", icon: Inbox };
 export const adminFeedbackNav: NavItem = { href: "/admin/feedback", label: "Σχόλια χρηστών", icon: MessagesSquare };
+export const adminOrgsNav: NavItem = { href: "/admin/organizations", label: "Οργανισμοί", icon: Building2 };
+export const billingNav: NavItem = { href: "/billing", label: "Συνδρομή", icon: CreditCard };
+export const adminErrorsNav: NavItem = { href: "/admin/errors", label: "Σφάλματα", icon: Bug };
 
 /** Mobile bottom bar: Home, Calendar, Tasks, AI (+ "More" menu). */
 export const mobileNav: NavItem[] = [

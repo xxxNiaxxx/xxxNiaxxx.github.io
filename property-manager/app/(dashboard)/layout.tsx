@@ -9,10 +9,12 @@ import { TERMS_VERSION } from "@/lib/legal";
 import { TermsBanner } from "@/components/layout/terms-banner";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { ctx, user, organization } = await getPageContext();
+  const { ctx, user, organization } = await getPageContext({ withoutSubscription: true });
   const pendingActions = await db.aIAction.count({ where: { organizationId: ctx.organizationId, status: "PROPOSED" } });
   const admin = isPlatformAdmin(user.email);
-  const waitlistPending = admin ? await db.waitlistEntry.count({ where: { status: "PENDING" } }) : 0;
+  const [waitlistPending, openErrors] = admin
+    ? await Promise.all([db.waitlistEntry.count({ where: { status: "PENDING" } }), db.errorEvent.count({ where: { resolvedAt: null } })])
+    : [0, 0];
   return (
     <div className="flex min-h-dvh">
       <Sidebar
@@ -21,7 +23,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         userName={user.name ?? user.email}
         userEmail={user.email}
         pendingActions={pendingActions}
-        waitlistAdmin={admin ? { pending: waitlistPending } : undefined}
+        waitlistAdmin={admin ? { pending: waitlistPending, errors: openErrors } : undefined}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileTopBar appName={APP_NAME} orgName={organization.name} />
