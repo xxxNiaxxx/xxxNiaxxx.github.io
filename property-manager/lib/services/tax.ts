@@ -313,8 +313,8 @@ export async function getTaxOverview(ctx: OrgContext, now = new Date()) {
         /** The month has ended, so its return can be filed. */
         closed: `${period}-01` < `${periodOf(today)}-01`,
       };
-    })
-    .reverse();
+    });
+  // Newest month first (lastMonths already counts back from this month).
 
   const compliance = tax.properties
     .filter((p) => p.status === "ACTIVE")
