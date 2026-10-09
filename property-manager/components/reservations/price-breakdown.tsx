@@ -36,6 +36,10 @@ export function PriceBreakdown({ tax, source }: { tax: StayTax; source: string }
       )}
       <Row label={`Προμήθεια ${SOURCE_LABELS[source] ?? ""}`.trim()} value={tax.commission} minus
         sub={tax.commissionRate ? `${tax.commissionRate}% πάνω σε ${formatMoney(commissionBase(tax.totalAmount, source))}${source === "BOOKING_COM" ? " (τιμή χωρίς το τέλος 0,5%)" : ""}` : undefined} />
+      {tax.paymentFee > 0 && (
+        <Row label={`Χρέωση υπηρεσίας πληρωμών ${SOURCE_LABELS[source] ?? ""}`.trim()} value={tax.paymentFee} minus
+          sub={`${tax.paymentFeeRate}% πάνω σε ${formatMoney(tax.guestTotal)} (πληρωμή επισκέπτη)`} />
+      )}
       <Row label="Φόρος εισοδήματος (εκτίμηση)" value={tax.incomeTax} minus
         sub={tax.incomeTaxRate !== null ? `${pct(tax.incomeTaxRate)} — ${tax.regime === "BUSINESS" ? "πάνω στο κέρδος (μίσθωμα χωρίς ΦΠΑ − προμήθεια)" : "μέσος συντελεστής Ε2 του έτους, στο μίσθωμα − 5%"}` : undefined} />
       <div className="my-1 border-t border-border" />

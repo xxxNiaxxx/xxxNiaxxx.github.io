@@ -77,14 +77,14 @@ export function OtherIncomeInput({ value }: { value: number }) {
   );
 }
 
-/** Commission % per platform and an optional own business tax rate. */
-export function PricingSettings({ commissionRates, businessTaxRate, business, disabled }: { commissionRates: Record<string, number>; businessTaxRate: number | null; business: boolean; disabled?: boolean }) {
+/** Commission % per platform, the Booking.com payment charge and an optional own business tax rate. */
+export function PricingSettings({ commissionRates, paymentFeeRates, businessTaxRate, business, disabled }: { commissionRates: Record<string, number>; paymentFeeRates: Record<string, number>; businessTaxRate: number | null; business: boolean; disabled?: boolean }) {
   const { run, pending } = useMutation();
   const save = (body: object) => run(() => api("/api/tax/settings", { method: "PATCH", body }), { success: "Αποθηκεύτηκε" });
   const field = (label: string, value: number | string, onSave: (v: string) => void, placeholder?: string) => (
     <label className="flex items-center gap-2 text-[13px]">
       <span className="text-muted-foreground">{label}</span>
-      <Input type="number" min={0} max={60} step="0.5" defaultValue={value} placeholder={placeholder} disabled={disabled || pending} className="h-8 w-20"
+      <Input type="number" min={0} max={60} step="0.1" defaultValue={value} placeholder={placeholder} disabled={disabled || pending} className="h-8 w-20"
         onBlur={(e) => e.target.value !== String(value) && onSave(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} />
       <span className="text-muted-foreground">%</span>
     </label>
@@ -95,6 +95,8 @@ export function PricingSettings({ commissionRates, businessTaxRate, business, di
       {COMMISSION_SOURCES.map((s) => (
         <span key={s}>{field(SOURCE_LABELS[s], commissionRates[s] ?? 0, (v) => save({ commissionRates: { [s]: Number(v) || 0 } }))}</span>
       ))}
+      <span className="w-full text-[13px] font-medium">Χρέωση υπηρεσίας πληρωμών <span className="font-normal text-muted-foreground">(όταν η πλατφόρμα εισπράττει από τον επισκέπτη· 0 αν πληρώνεστε απευθείας)</span></span>
+      {field(SOURCE_LABELS.BOOKING_COM, paymentFeeRates.BOOKING_COM ?? 0, (v) => save({ paymentFeeRates: { BOOKING_COM: Number(v) || 0 } }))}
       {business && field("Δικός σας συντελεστής φόρου", businessTaxRate ?? "", (v) => save({ businessTaxRate: v === "" ? null : Number(v) }), "κλίμακα")}
     </div>
   );

@@ -73,6 +73,8 @@ model Organization {
   taxRegime            TaxRegimeSetting @default(AUTO)
   /// Platform commission % by booking source, e.g. {"BOOKING_COM": 15, "AIRBNB": 15}. Null = defaults.
   commissionRates      Json?
+  /// Payment service charge % of the guest's total by source, e.g. {"BOOKING_COM": 1.6}. Null = defaults.
+  paymentFeeRates      Json?
   /// Own income tax rate (%) for the business regime; null = estimate from the tax scale.
   businessTaxRate      Decimal?         @db.Decimal(5, 2)
   /// Daily email of deadlines (declarations, ΤΑΚΚ, insurance) and the monthly report.
