@@ -63,6 +63,11 @@ export function WaitlistAdmin({
       onSuccess: (r) => setLink({ name: e.name, email: e.email, url: `${window.location.origin}${r.path}`, emailed: r.emailed }),
     });
 
+  // Sign-ups per source (utm_source of the ad or post link).
+  const bySource = Object.entries(
+    entries.reduce<Record<string, number>>((acc, e) => ({ ...acc, [e.source ?? "χωρίς πηγή"]: (acc[e.source ?? "χωρίς πηγή"] ?? 0) + 1 }), {}),
+  ).sort((a, b) => b[1] - a[1]);
+
   return (
     <div className="grid gap-6">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -71,6 +76,13 @@ export function WaitlistAdmin({
         <Stat label="Έφτιαξαν λογαριασμό" value={count("REGISTERED")} />
         <Stat label="Android" value={entries.filter((e) => e.device === "ANDROID").length} hint={`${playEmails.length} με πρόσβαση`} />
       </div>
+
+      {bySource.length > 0 && (
+        <p className="text-[13px] text-muted-foreground">
+          <span className="font-medium text-foreground">Από πού ήρθαν: </span>
+          {bySource.map(([src, n]) => `${src} ${n}`).join(" · ")}
+        </p>
+      )}
 
       <Card>
         <CardHeader title="Ρυθμίσεις" />
@@ -165,6 +177,7 @@ export function WaitlistAdmin({
                   </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted-foreground">
                     <span>Αίτηση {formatDay(e.createdAt.slice(0, 10), { day: "numeric", month: "short", year: "numeric" })}</span>
+                    {e.source && <span>Από: {e.source}</span>}
                     {e.city && <span>{e.city}</span>}
                     {e.propertiesCount && <span>{e.propertiesCount} {e.propertiesCount === 1 ? "ακίνητο" : "ακίνητα"}</span>}
                     {e.platforms.length > 0 && <span>{e.platforms.map((p) => WAITLIST_PLATFORMS[p] ?? p).join(", ")}</span>}

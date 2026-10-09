@@ -645,6 +645,8 @@ model WaitlistEntry {
   /// Google account to add as a tester on Google Play (Android).
   playEmail         String?
   message           String?
+  /// Where the visitor came from: utm_source of the link, or "google-ads" for an ad click.
+  source            String?
   consentAt         DateTime
   status            WaitlistStatus @default(PENDING)
   tokenHash         String?        @unique

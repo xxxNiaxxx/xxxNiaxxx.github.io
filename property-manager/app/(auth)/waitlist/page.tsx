@@ -11,7 +11,14 @@ export const metadata: Metadata = {
 
 const ICONS = { calendar: CalendarCheck2, net: Wallet, aade: Landmark, checkin: UserCheck, ai: Bot } as const;
 
-export default function WaitlistPage() {
+/** Where the visitor came from: utm_source, or an ad click (gclid / fbclid). */
+function sourceOf(params: Record<string, string | string[] | undefined>) {
+  const first = (k: string) => (Array.isArray(params[k]) ? params[k]![0] : params[k]) as string | undefined;
+  return first("utm_source") ?? (first("gclid") ? "google-ads" : first("fbclid") ? "facebook" : null);
+}
+
+export default async function WaitlistPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const source = sourceOf(await searchParams);
   return (
     <>
       <h1 className="text-2xl font-semibold tracking-tight">Έχετε Airbnb ή Booking; Αυτή η εφαρμογή σας γλιτώνει χρόνο.</h1>
@@ -34,7 +41,7 @@ export default function WaitlistPage() {
 
       <h2 className="mt-8 text-lg font-semibold tracking-tight">Θέλω να το δοκιμάσω</h2>
       <p className="mt-1 text-sm text-muted-foreground">Θα σας στείλουμε email με τον σύνδεσμο εγγραφής.</p>
-      <WaitlistForm />
+      <WaitlistForm source={source} />
       <p className="mt-6 text-sm text-muted-foreground">
         Έχετε ήδη λογαριασμό;{" "}
         <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">

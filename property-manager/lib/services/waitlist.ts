@@ -37,6 +37,8 @@ export const waitlistSchema = z.object({
   device: z.preprocess((v) => (v === "" ? null : v), z.enum(["ANDROID", "IPHONE", "NONE"]).nullish()),
   playEmail: optionalEmail,
   message: optionalText(1000),
+  /** Where the visitor came from (utm_source / ad click), set by the page. */
+  source: z.preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, 40) || null : null), z.string().nullish()),
   consent: z.literal(true, { error: "Χρειάζεται η συναίνεσή σας για να σας καταχωρίσουμε" }),
 });
 
@@ -66,7 +68,7 @@ export async function joinWaitlist(input: unknown, origin: string, now = new Dat
   const existing = await db.waitlistEntry.findUnique({ where: { email: data.email } });
   if (existing) {
     if (existing.status === "PENDING" || existing.status === "REJECTED") {
-      await db.waitlistEntry.update({ where: { id: existing.id }, data: { ...data, consentAt: now } });
+      await db.waitlistEntry.update({ where: { id: existing.id }, data: { ...data, source: existing.source ?? data.source, consentAt: now } });
     }
     return { joined: true };
   }
@@ -114,6 +116,7 @@ function serialize(e: WaitlistEntry, now: Date) {
     device: e.device,
     playEmail: e.playEmail,
     message: e.message,
+    source: e.source,
     status: e.status,
     linkExpired: e.status === "APPROVED" && !!e.tokenExpiresAt && e.tokenExpiresAt <= now,
     approvedAt: e.approvedAt?.toISOString() ?? null,

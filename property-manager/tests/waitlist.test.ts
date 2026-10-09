@@ -8,6 +8,7 @@ import {
   getWaitlistAccess,
   isRegistrationOpen,
   joinWaitlist,
+  listWaitlist,
   rejectEntry,
   setRegistrationOpen,
   waitlistCsv,
@@ -74,6 +75,14 @@ describe("waitlist", () => {
     expect(await db.waitlistEntry.count({ where: { email: data.email } })).toBe(1);
     expect((await db.waitlistEntry.findUniqueOrThrow({ where: { email: data.email } })).city).toBe("Ρέθυμνο");
     expect(sent).toHaveLength(0);
+  });
+
+  it("remembers where each sign-up came from (first visit wins)", async () => {
+    const data = form({ email: newEmail(), source: "Google-Ads<script>" });
+    await joinWaitlist(data, ORIGIN);
+    await joinWaitlist({ ...data, source: "facebook" }, ORIGIN);
+    const [entry] = (await listWaitlist()).filter((e) => e.email === data.email);
+    expect(entry.source).toBe("google-adsscript");
   });
 
   it("approval emails a personal link that creates the account once, only for that email", async () => {
