@@ -435,7 +435,9 @@ export type AnnualReport = Awaited<ReturnType<typeof getAnnualReport>>;
 
 function csv(rows: (string | number | null)[][]) {
   const cell = (v: string | number | null) => {
-    const s = v == null ? "" : typeof v === "number" ? v.toFixed(2).replace(/\.00$/, "") : v;
+    const raw = v == null ? "" : typeof v === "number" ? v.toFixed(2).replace(/\.00$/, "") : v;
+    // Text starting with = + - @ (or tab / CR) would run as a formula in Excel.
+    const s = typeof v === "string" && /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
     return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   // BOM so Excel opens Greek text correctly.

@@ -1,29 +1,45 @@
 import "server-only";
 import { headers } from "next/headers";
-
-/** Public address of the app for links in emails: the request's own host, else NEXT_PUBLIC_APP_URL. */
-export async function appOrigin() {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  if (host) return `${h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https")}://${host}`;
-  return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
-}
-
-export async function clientIp() {
-  const h = await headers();
-  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
-}
-
-const hits = new Map<string, number[]>();
+import { db } from "@/lib/db";
 
 /**
- * Best-effort limit per key within one server instance (enough to slow down
- * a script filling a public form; not a security boundary).
+ * Public address of the app for links in emails. A configured address wins
+ * over the request's Host header, so a forged header cannot put a phishing
+ * link into an email.
  */
-export function tooManyAttempts(key: string, limit: number, windowMs: number, now = Date.now()) {
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
-  recent.push(now);
-  hits.set(key, recent);
-  if (hits.size > 5000) hits.clear();
-  return recent.length > limit;
+export async function appOrigin() {
+  const configured = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "");
+  if (configured) return configured.replace(/\/$/, "");
+  const h = await headers();
+  const host = h.get("host");
+  return host ? `${host.startsWith("localhost") ? "http" : "https"}://${host}` : "http://localhost:3000";
+}
+
+/**
+ * The client's IP as seen by the platform: Vercel sets x-real-ip (and the
+ * first x-forwarded-for entry) itself; elsewhere the last proxy hop is used,
+ * which a client cannot forge.
+ */
+export async function clientIp() {
+  const h = await headers();
+  const vercel = h.get("x-vercel-forwarded-for") ?? (process.env.VERCEL ? h.get("x-real-ip") : null);
+  if (vercel) return vercel.split(",")[0].trim();
+  const hops = (h.get("x-forwarded-for") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  return hops.at(-1) ?? h.get("x-real-ip") ?? "unknown";
+}
+
+/**
+ * Counts an attempt for `key` and tells whether it is over `limit` within the
+ * window. Stored in the database, so it holds across server instances.
+ */
+export async function rateLimited(key: string, limit: number, windowMs: number, now = Date.now()) {
+  const window = BigInt(Math.floor(now / windowMs));
+  const row = await db.rateLimit.upsert({
+    where: { key_window: { key, window } },
+    create: { key, window },
+    update: { count: { increment: 1 } },
+  });
+  // Old windows are of no use: clean up now and then.
+  if (Math.random() < 0.01) await db.rateLimit.deleteMany({ where: { createdAt: { lt: new Date(now - 2 * 86_400_000) } } });
+  return row.count > limit;
 }

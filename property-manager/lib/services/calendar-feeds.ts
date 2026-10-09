@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { addDaysISO, dateToISO, isoToDate, todayISO } from "@/lib/dates";
 import { AppError, conflict, notFound } from "@/lib/errors";
 import { buildIcs, classifyEvent, parseIcs, type IcsEvent } from "@/lib/ical/ics";
+import { BlockedUrlError, fetchPublicText } from "@/lib/net/safe-fetch";
 import { label } from "@/lib/labels";
 import { hasRole, type OrgContext } from "@/lib/permissions";
 import { isMirror, recordConflict, resolveGoneConflicts } from "./calendar-conflicts";
@@ -106,12 +107,14 @@ export async function exportIcs(token: string, now = new Date()) {
 class FeedError extends Error {}
 
 async function fetchIcs(url: string) {
-  const res = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { "User-Agent": "Brachychronia.ai calendar sync", Accept: "text/calendar, */*" }, redirect: "follow" });
-  if (!res.ok) throw new FeedError(`Το ημερολόγιο απάντησε με σφάλμα ${res.status}. Ελέγξτε τον σύνδεσμο.`);
-  if (Number(res.headers.get("content-length") ?? 0) > MAX_ICS_BYTES) throw new FeedError("Το ημερολόγιο είναι πολύ μεγάλο");
-  const text = await res.text();
-  if (text.length > MAX_ICS_BYTES) throw new FeedError("Το ημερολόγιο είναι πολύ μεγάλο");
-  return text;
+  try {
+    const res = await fetchPublicText(url, { maxBytes: MAX_ICS_BYTES, timeoutMs: 15_000, headers: { "User-Agent": "Brachychronia.ai calendar sync", Accept: "text/calendar, */*" } });
+    if (!res.ok) throw new FeedError(`Το ημερολόγιο απάντησε με σφάλμα ${res.status}. Ελέγξτε τον σύνδεσμο.`);
+    return res.text;
+  } catch (e) {
+    if (e instanceof BlockedUrlError) throw new FeedError(e.message === "too-large" ? "Το ημερολόγιο είναι πολύ μεγάλο" : "Ο σύνδεσμος δεν είναι δημόσιο ημερολόγιο iCal");
+    throw e;
+  }
 }
 
 async function placeholderGuest(organizationId: string, source: string) {

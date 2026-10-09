@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { Building, LogOut, UserRound } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
 import { cn } from "@/lib/utils";
+import { FeedbackDialog } from "./feedback-dialog";
 import { Logo } from "./logo";
-import { adminNav, helpNav, isActive, mainNav, settingsNav, type NavItem } from "./nav";
+import { adminFeedbackNav, adminNav, helpNav, isActive, mainNav, settingsNav, type NavItem } from "./nav";
 
 function NavLink({ item, pathname, badge }: { item: NavItem; pathname: string; badge?: number }) {
   const active = isActive(pathname, item.href);
@@ -56,8 +57,10 @@ export function Sidebar({
       </nav>
       <div className="mt-4 flex flex-col gap-0.5 border-t border-border pt-4">
         {waitlistAdmin && <NavLink item={adminNav} pathname={pathname} badge={waitlistAdmin.pending} />}
+        {waitlistAdmin && <NavLink item={adminFeedbackNav} pathname={pathname} />}
         <NavLink item={settingsNav} pathname={pathname} />
         <NavLink item={helpNav} pathname={pathname} />
+        <FeedbackDialog />
         <Link href="/settings#organization" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-surface/70 hover:text-foreground">
           <Building className="size-[18px] text-subtle-foreground" />
           <span className="truncate">{orgName}</span>

@@ -11,7 +11,8 @@ const PUBLIC = [...AUTH_PAGES, "/privacy", "/account-deletion", "/invite", "/wai
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = req.cookies.has("authjs.session-token") || req.cookies.has("__Secure-authjs.session-token");
-  if (!hasSession && !PUBLIC.some((p) => pathname.startsWith(p))) {
+  // "/" is the public landing page (signed-in visitors are sent on to the dashboard by the page).
+  if (!hasSession && pathname !== "/" && !PUBLIC.some((p) => pathname.startsWith(p))) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.search = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname)}`;

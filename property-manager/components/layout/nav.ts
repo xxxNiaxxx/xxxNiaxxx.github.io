@@ -2,6 +2,7 @@ import {
   Building2,
   CircleHelp,
   Inbox,
+  MessagesSquare,
   CalendarDays,
   ClipboardList,
   Landmark,
@@ -37,6 +38,7 @@ export const helpNav: NavItem = { href: "/help", label: "Βοήθεια", icon: 
 
 /** Only for the app's administrators (ADMIN_EMAILS). */
 export const adminNav: NavItem = { href: "/admin/waitlist", label: "Λίστα αναμονής", icon: Inbox };
+export const adminFeedbackNav: NavItem = { href: "/admin/feedback", label: "Σχόλια χρηστών", icon: MessagesSquare };
 
 /** Mobile bottom bar: Home, Calendar, Tasks, AI (+ "More" menu). */
 export const mobileNav: NavItem[] = [

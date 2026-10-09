@@ -14,8 +14,10 @@ import { colors } from "@/theme";
 export function GuestPagesCard({ property, admin, onChanged }: { property: Property; admin: boolean; onChanged: () => void }) {
   const { serverUrl } = useSession();
   const { run, pending } = useMutation();
-  const [token, setToken] = useState(property.publicToken);
-  const url = (kind: "guide" | "book") => `${serverUrl}/${kind}/${token}`;
+  const [links, setLinks] = useState<{ guidePath: string; bookingPath: string } | null>(
+    property.publicToken && property.bookingToken ? { guidePath: `/guide/${property.publicToken}`, bookingPath: `/book/${property.bookingToken}` } : null,
+  );
+  const url = (kind: "guide" | "book") => `${serverUrl}${kind === "guide" ? links!.guidePath : links!.bookingPath}`;
   const share = async (link: string) => {
     await Clipboard.setStringAsync(link);
     notify("Ο σύνδεσμος αντιγράφηκε");
@@ -24,15 +26,16 @@ export function GuestPagesCard({ property, admin, onChanged }: { property: Prope
   return (
     <Card style={{ gap: 8 }}>
       <SectionTitle title="Σελίδες για επισκέπτες" />
-      {!token ? (
+      {!links ? (
         <>
           <Text style={styles.rowSub}>Οδηγός επισκέπτη (Wi-Fi, check-in, κανόνες) και σελίδα απευθείας κρατήσεων χωρίς προμήθεια.</Text>
           <Button small title="Δημιουργία σελίδων" loading={pending} disabled={!admin} style={{ alignSelf: "flex-start" }}
-            onPress={() => void run(() => api<{ guidePath: string }>(`/api/properties/${property.id}/public-pages`, { method: "POST" }), { onSuccess: (r) => setToken(r.guidePath.split("/").pop()!) })} />
+            onPress={() => void run(() => api<{ guidePath: string; bookingPath: string }>(`/api/properties/${property.id}/public-pages`, { method: "POST" }), { onSuccess: setLinks })} />
         </>
       ) : (
         <>
           <Text style={styles.rowTitle}>Οδηγός επισκέπτη</Text>
+          <Text style={styles.rowSub}>Μόνο για επισκέπτες· μη γράφετε κωδικούς πόρτας στις πληροφορίες.</Text>
           <Text style={styles.rowSub} numberOfLines={1}>{url("guide")}</Text>
           <View style={{ flexDirection: "row", gap: 8 }}>
             <Button small variant="outline" title="Αντιγραφή" onPress={() => void share(url("guide"))} />

@@ -29,7 +29,8 @@ export function CheckinForm({ token, t, houseRules, prefill }: { token: string; 
       });
       if (!res.ok) {
         const msg = (await res.json().catch(() => null))?.error?.message as string | undefined;
-        setError(msg === "mustAccept" ? t.mustAccept : msg === "notFound" ? t.notFound : t.required);
+        if (msg === "alreadyDone") setDone(true);
+        else setError(msg === "mustAccept" ? t.mustAccept : msg === "notFound" ? t.notFound : t.required);
       } else setDone(true);
     } catch {
       setError(t.notFound);

@@ -4,7 +4,7 @@ import { AuthError } from "next-auth";
 import { ZodError } from "zod";
 import { signIn, signOut } from "@/lib/auth/config";
 import { AppError } from "@/lib/errors";
-import { appOrigin, clientIp, tooManyAttempts } from "@/lib/request";
+import { appOrigin, clientIp, rateLimited } from "@/lib/request";
 import { registerAccount } from "@/lib/services/accounts";
 import { joinWaitlist } from "@/lib/services/waitlist";
 
@@ -75,7 +75,7 @@ export async function waitlistAction(_prev: AuthFormState, form: FormData): Prom
   };
   // Hidden field that people never see; bots fill it in.
   if (String(form.get("website") ?? "")) return { done: true };
-  if (tooManyAttempts(`waitlist:${await clientIp()}`, 5, 10 * 60_000)) {
+  if (await rateLimited(`waitlist:${await clientIp()}`, 5, 60 * 60_000)) {
     return { error: "Πολλές αιτήσεις σε λίγο χρόνο. Δοκιμάστε ξανά σε λίγα λεπτά.", values };
   }
   try {
