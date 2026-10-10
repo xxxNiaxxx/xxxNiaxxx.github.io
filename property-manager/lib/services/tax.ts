@@ -1,6 +1,6 @@
 import type { Prisma, TaxFilingKind } from "@prisma/client";
 import { z } from "zod";
-import { defaultPaymentMethod, PAYMENT_METHODS } from "@/lib/aade";
+import { defaultPaymentMethod, isGreece, PAYMENT_METHODS, PLATFORM_NAMES } from "@/lib/aade";
 import { RESERVATION_SOURCES } from "@/lib/reservation-sources";
 import { db } from "@/lib/db";
 import { addDaysISO, dateToISO, diffDaysISO, isoToDate, todayISO } from "@/lib/dates";
@@ -84,7 +84,7 @@ export async function updateTaxSettings(ctx: OrgContext, input: unknown) {
 
 const stayInclude = {
   property: { select: { id: true, name: true, ama: true, kind: true, areaSqm: true } },
-  guest: { select: { firstName: true, lastName: true, idType: true, idNumber: true } },
+  guest: { select: { firstName: true, lastName: true, idType: true, idNumber: true, country: true } },
 } as const;
 type StayRow = Prisma.ReservationGetPayload<{ include: typeof stayInclude }>;
 
@@ -171,32 +171,66 @@ export type StayTaxInfo = ReturnType<typeof stayTaxInfo>;
 
 const dmy = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 
+export interface DeclarationField {
+  key: string;
+  label: string;
+  value: string | null;
+  /** Left empty on the AADE form when there is no value. */
+  optional?: boolean;
+  /** Shown instead of a value when an optional field is empty. */
+  hint?: string;
+  /** Where a missing value is filled in. */
+  fix?: "guest" | "reservation" | "property";
+}
+
 /**
- * The values to type into the AADE stay declaration, in the form's order.
- * The amount is the agreed rent: without ΤΑΚΚ, and for a business also
- * without VAT and the 0,5% fee.
+ * The values to type into the AADE stay declaration, with the AADE form's
+ * labels and in its order. The amount is the agreed rent: without ΤΑΚΚ, and
+ * for a business also without VAT and the 0,5% fee.
  */
 export function declarationForm(r: StayRow, info: StayTaxInfo) {
   const method = (r.paymentMethod ?? defaultPaymentMethod(r.source)) as keyof typeof PAYMENT_METHODS | null;
-  const platform = defaultPaymentMethod(r.source) !== null;
   const name = [r.guest.firstName, r.guest.lastName === "—" ? "" : r.guest.lastName].join(" ").trim();
-  const fields: { key: string; label: string; value: string | null; optional?: boolean }[] = [
-    { key: "ama", label: "ΑΜΑ ακινήτου", value: r.property.ama },
-    // Platform stays have a booking number; direct ones may not.
-    { key: "bookingNumber", label: "Αριθμός κράτησης", value: r.confirmationCode ?? r.externalId ?? null, optional: !platform },
-    { key: "guestName", label: "Ονοματεπώνυμο μισθωτή", value: name || null },
-    { key: "idNumber", label: "ΑΦΜ / Αριθμός διαβατηρίου", value: r.guest.idNumber },
-    { key: "checkIn", label: "Ημερομηνία άφιξης", value: dmy(info.checkIn) },
-    { key: "checkOut", label: "Ημερομηνία αναχώρησης", value: dmy(info.checkOut) },
-    { key: "paymentMethod", label: "Τρόπος πληρωμής", value: method ? PAYMENT_METHODS[method] : null },
-    { key: "amount", label: "Συνολικό συμφωνηθέν μίσθωμα (€)", value: info.rent > 0 ? info.rent.toFixed(2).replace(".", ",") : null },
+  const { idType, idNumber } = r.guest;
+  // Greek tenants are declared by ΑΦΜ; everyone else ticks «Αλλοδαπός» and gives a passport or EU ID.
+  const greek = idType === "TAX_ID" || (idType !== "PASSPORT" && idType !== "ID_CARD" && isGreece(r.guest.country));
+  const taxId = idType === "TAX_ID" || (!idType && /^\d{9}$/.test(idNumber ?? "")) ? idNumber : null;
+  const cancelled = r.status === "CANCELLED";
+  const amount = info.rent > 0 ? info.rent.toFixed(2).replace(".", ",") : null;
+
+  const fields: DeclarationField[] = [
+    { key: "ama", label: "Αρ. Μητρώου Ακινήτου (ΑΜΑ)", value: r.property.ama, fix: "property" },
+    { key: "checkIn", label: "Άφιξη", value: dmy(info.checkIn) },
+    { key: "checkOut", label: "Αναχώρηση", value: dmy(info.checkOut) },
+    cancelled
+      ? { key: "amount", label: "Συνολικό συμφωνηθέν μίσθωμα", value: null, optional: true, hint: "το ποσό της αρχικής κράτησης" }
+      : { key: "amount", label: "Συνολικό συμφωνηθέν μίσθωμα", value: amount, fix: "reservation" },
+    { key: "paymentMethod", label: "Τρόπος πληρωμής μισθώματος", value: method ? PAYMENT_METHODS[method] : null, fix: "reservation" },
+    { key: "platform", label: "Ηλεκτρονική πλατφόρμα", value: PLATFORM_NAMES[r.source] ?? null, optional: true, hint: "καμία, απευθείας κράτηση" },
+    { key: "foreigner", label: "Αλλοδαπός", value: greek ? "Όχι" : "Ναι" },
+    ...(greek
+      ? [
+          { key: "taxId", label: "ΑΦΜ", value: taxId, fix: "guest" as const },
+          { key: "guestName", label: "Ονοματεπώνυμο μισθωτή", value: name || null, optional: true, hint: "συμπληρώνεται μόνο του από το ΑΦΜ" },
+        ]
+      : [
+          { key: "guestName", label: "Ονοματεπώνυμο μισθωτή", value: name || null, fix: "guest" as const },
+          { key: "idNumber", label: "Αρ. Διαβατηρίου / Ταυτότητα Ε.Ε.", value: idNumber, fix: "guest" as const },
+        ]),
+    ...(cancelled
+      ? [
+          { key: "cancelAmount", label: "Συνολικό εισπραχθέν ποσό βάσει της πολιτικής ακύρωσης", value: amount, fix: "reservation" as const },
+          { key: "cancelDate", label: "Ημερομηνία ακύρωσης", value: r.cancelledAt ? dmy(dateToISO(r.cancelledAt)) : null, fix: "reservation" as const },
+        ]
+      : []),
+    { key: "bookingNumber", label: "Σημειώσεις: αριθμός κράτησης", value: r.confirmationCode ?? r.externalId ?? null, optional: true, hint: "προαιρετικό" },
   ];
   return {
     fields,
     /** Labels of the values still missing (fill them in on the guest or the reservation). */
     missing: fields.filter((f) => !f.value && !f.optional).map((f) => f.label),
     paymentMethodIsDefault: !r.paymentMethod && !!method,
-    cancelled: r.status === "CANCELLED",
+    cancelled,
   };
 }
 

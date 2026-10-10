@@ -212,7 +212,7 @@ function TaxCard({ tax, reservationId, onChange }: { tax: StayTax; reservationId
   );
 }
 
-/** The AADE stay declaration ready to copy, field by field, into myAADE. */
+/** The AADE stay declaration ready to copy, field by field, with the AADE form's labels and order. */
 function DeclarationCard({ tax, reservationId, guestId, onChange }: { tax: StayTax; reservationId: string; guestId: string; onChange: () => void }) {
   const { run, pending } = useMutation();
   const setStatus = (status: StayTax["declaration"]["status"]) =>
@@ -242,10 +242,10 @@ function DeclarationCard({ tax, reservationId, guestId, onChange }: { tax: StayT
             {f.value ? (
               <Text style={styles.rowTitle}>{f.value}{f.key === "paymentMethod" && form.paymentMethodIsDefault ? " (προεπιλογή)" : ""}</Text>
             ) : f.optional ? (
-              <Text style={styles.rowSub}>— (χωρίς αριθμό κράτησης)</Text>
+              <Text style={styles.rowSub}>—{f.hint ? ` (${f.hint})` : ""}</Text>
             ) : (
               <Text style={{ color: colors.warning }}>
-                Λείπει{["guestName", "idNumber"].includes(f.key) ? " · συμπληρώστε στον επισκέπτη" : ["bookingNumber", "paymentMethod"].includes(f.key) ? " · από την επεξεργασία της κράτησης" : ""}
+                Λείπει{f.fix === "guest" ? " · συμπληρώστε στον επισκέπτη" : f.fix === "reservation" ? " · από την επεξεργασία της κράτησης" : f.fix === "property" ? " · στο κατάλυμα" : ""}
               </Text>
             )}
           </View>
@@ -254,7 +254,7 @@ function DeclarationCard({ tax, reservationId, guestId, onChange }: { tax: StayT
       ))}
       <Text style={[styles.rowSub, { marginTop: 4 }]}>Πατήστε ένα στοιχείο για αντιγραφή.</Text>
       <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-        {form.missing.some((m) => m.includes("διαβατηρίου")) && (
+        {form.fields.some((f) => f.fix === "guest" && !f.value) && (
           <Button small variant="outline" title="Στοιχεία επισκέπτη" onPress={() => router.push(`/guest/edit/${guestId}`)} />
         )}
         <Button small variant="outline" title="Άνοιγμα ΑΑΔΕ" onPress={() => Linking.openURL(AADE_PORTAL_URL)} />
