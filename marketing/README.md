@@ -11,6 +11,7 @@
 |---|---|
 | `ad-square-1080.png` | Facebook / Instagram post, ομάδες Facebook |
 | `ad-story-1080x1920.png` | Instagram / Facebook Stories, Status στο Viber/WhatsApp |
+| `facebook-cover-1640x856.png` | Εξώφυλλο της Σελίδας Facebook (το logo και το κείμενο δεν κόβονται σε κινητό ή υπολογιστή) |
 | `og-waitlist-1200x630.png` | Εμφανίζεται μόνη της όταν μοιράζεστε τον σύνδεσμο (Facebook, Viber, WhatsApp, Messenger) |
 
 ## Ανάρτηση σε ομάδες Facebook οικοδεσποτών
