@@ -10,17 +10,7 @@ import { AADE_PORTAL_URL } from "@/lib/aade";
 import { formatDay } from "@/lib/format";
 import { DeclareButton } from "./actions";
 
-interface Field { key: string; label: string; value: string | null; optional?: boolean }
-
-/** Where each missing value is filled in. */
-const FIX: Record<string, "guest" | "reservation" | "property"> = {
-  ama: "property",
-  bookingNumber: "reservation",
-  guestName: "guest",
-  idNumber: "guest",
-  paymentMethod: "reservation",
-  amount: "reservation",
-};
+interface Field { key: string; label: string; value: string | null; optional?: boolean; hint?: string; fix?: "guest" | "reservation" | "property" }
 
 async function copyText(text: string) {
   try {
@@ -52,8 +42,9 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 }
 
 /**
- * The AADE stay declaration ready to copy, field by field, into myAADE
- * (there is no public AADE interface to submit it automatically).
+ * The AADE stay declaration ready to copy, field by field, into the form of
+ * the Μητρώο Βραχυχρόνιας Διαμονής, with its labels and in its order (there is
+ * no public AADE interface to submit it automatically).
  */
 export function DeclarationCard({
   reservationId,
@@ -71,8 +62,7 @@ export function DeclarationCard({
   /** The stay has ended (or was cancelled), so it can be declared. */
   canDeclare: boolean;
 }) {
-  const fixHref = (key: string) =>
-    FIX[key] === "guest" ? `/guests/${guestId}` : FIX[key] === "property" ? `/properties/${propertyId}` : null;
+  const fixHref = (f: Field) => (f.fix === "guest" ? `/guests/${guestId}` : f.fix === "property" ? `/properties/${propertyId}` : null);
   const declared = declaration.status === "DECLARED";
 
   return (
@@ -100,12 +90,12 @@ export function DeclarationCard({
                   {f.key === "paymentMethod" && form.paymentMethodIsDefault && <span className="ml-1 text-xs font-normal text-muted-foreground">(προεπιλογή πλατφόρμας)</span>}
                 </div>
               ) : f.optional ? (
-                <div className="text-muted-foreground">— <span className="text-xs">(χωρίς αριθμό κράτησης· συμπληρώστε τον από «Επεξεργασία» αν υπάρχει)</span></div>
+                <div className="text-muted-foreground">— <span className="text-xs">{f.hint ? `(${f.hint})` : null}</span></div>
               ) : (
                 <div className="text-warning">
                   Λείπει
-                  {fixHref(f.key) ? (
-                    <> · <Link href={fixHref(f.key)!} className="underline underline-offset-4">συμπληρώστε</Link></>
+                  {fixHref(f) ? (
+                    <> · <Link href={fixHref(f)!} className="underline underline-offset-4">συμπληρώστε</Link></>
                   ) : (
                     <span className="text-xs text-muted-foreground"> · από «Επεξεργασία» της κράτησης</span>
                   )}
@@ -118,7 +108,7 @@ export function DeclarationCard({
       </ul>
 
       {form.missing.length > 0 && (
-        <p className="text-xs text-muted-foreground">Το ΑΦΜ (Έλληνες) ή τον αριθμό διαβατηρίου (ξένοι) τον ζητάτε από τον επισκέπτη, π.χ. στο check-in.</p>
+        <p className="text-xs text-muted-foreground">Το ΑΦΜ (Έλληνες) ή τον αριθμό διαβατηρίου / ταυτότητας Ε.Ε. (αλλοδαποί) τον ζητάτε από τον επισκέπτη, π.χ. στο check-in.</p>
       )}
 
       <div className="flex flex-wrap items-center gap-2">
