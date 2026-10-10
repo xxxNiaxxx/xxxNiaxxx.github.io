@@ -123,7 +123,7 @@ export function DeclarationCard({
 
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" asChild>
-          <a href={AADE_PORTAL_URL} target="_blank" rel="noreferrer"><ExternalLink /> Άνοιγμα myAADE</a>
+          <a href={AADE_PORTAL_URL} target="_blank" rel="noreferrer"><ExternalLink /> Άνοιγμα ΑΑΔΕ</a>
         </Button>
         <Button
           size="sm"

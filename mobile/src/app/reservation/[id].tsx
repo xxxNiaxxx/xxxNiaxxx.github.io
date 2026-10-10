@@ -257,7 +257,7 @@ function DeclarationCard({ tax, reservationId, guestId, onChange }: { tax: StayT
         {form.missing.some((m) => m.includes("διαβατηρίου")) && (
           <Button small variant="outline" title="Στοιχεία επισκέπτη" onPress={() => router.push(`/guest/edit/${guestId}`)} />
         )}
-        <Button small variant="outline" title="Άνοιγμα myAADE" onPress={() => Linking.openURL(AADE_PORTAL_URL)} />
+        <Button small variant="outline" title="Άνοιγμα ΑΑΔΕ" onPress={() => Linking.openURL(AADE_PORTAL_URL)} />
         {declared ? (
           <Button small variant="ghost" title="Αναίρεση" loading={pending} onPress={() => setStatus("PENDING")} />
         ) : tax.declaration.due ? (
