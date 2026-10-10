@@ -11,12 +11,13 @@ export const GUEST_ID_TYPES = {
 export type GuestIdType = keyof typeof GUEST_ID_TYPES;
 export const GUEST_ID_TYPE_KEYS = Object.keys(GUEST_ID_TYPES) as [GuestIdType, ...GuestIdType[]];
 
+/** Labels as in the AADE form's «Τρόπος πληρωμής μισθώματος» list, plus card (POS) payments. */
 export const PAYMENT_METHODS = {
-  PAYMENT_ACCOUNT_GR: "Λογαριασμός πληρωμών ημεδαπής",
-  PAYMENT_ACCOUNT_FOREIGN: "Λογαριασμός πληρωμών αλλοδαπής",
-  CARD: "Κάρτα",
+  PAYMENT_ACCOUNT_GR: "Λογαριασμός Πληρωμών Ημεδαπής",
+  PAYMENT_ACCOUNT_FOREIGN: "Λογαριασμός Πληρωμών Αλλοδαπής",
+  CARD: "Κάρτα (POS)",
   CASH: "Μετρητά",
-  OTHER: "Άλλος τρόπος",
+  OTHER: "Λοιποί",
 } as const;
 export type PaymentMethod = keyof typeof PAYMENT_METHODS;
 export const PAYMENT_METHOD_KEYS = Object.keys(PAYMENT_METHODS) as [PaymentMethod, ...PaymentMethod[]];

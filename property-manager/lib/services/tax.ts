@@ -1,6 +1,6 @@
 import type { Prisma, TaxFilingKind } from "@prisma/client";
 import { z } from "zod";
-import { defaultPaymentMethod, isGreece, PAYMENT_METHODS, PLATFORM_NAMES } from "@/lib/aade";
+import { AADE_PAYMENT_OPTION, defaultPaymentMethod, isGreece, type PaymentMethod, PLATFORM_NAMES } from "@/lib/aade";
 import { RESERVATION_SOURCES } from "@/lib/reservation-sources";
 import { db } from "@/lib/db";
 import { addDaysISO, dateToISO, diffDaysISO, isoToDate, todayISO } from "@/lib/dates";
@@ -189,7 +189,7 @@ export interface DeclarationField {
  * for a business also without VAT and the 0,5% fee.
  */
 export function declarationForm(r: StayRow, info: StayTaxInfo) {
-  const method = (r.paymentMethod ?? defaultPaymentMethod(r.source)) as keyof typeof PAYMENT_METHODS | null;
+  const method = (r.paymentMethod ?? defaultPaymentMethod(r.source)) as PaymentMethod | null;
   const name = [r.guest.firstName, r.guest.lastName === "—" ? "" : r.guest.lastName].join(" ").trim();
   const { idType, idNumber } = r.guest;
   // Greek tenants are declared by ΑΦΜ; everyone else ticks «Αλλοδαπός» and gives a passport or EU ID.
@@ -205,7 +205,7 @@ export function declarationForm(r: StayRow, info: StayTaxInfo) {
     cancelled
       ? { key: "amount", label: "Συνολικό συμφωνηθέν μίσθωμα", value: null, optional: true, hint: "το ποσό της αρχικής κράτησης" }
       : { key: "amount", label: "Συνολικό συμφωνηθέν μίσθωμα", value: amount, fix: "reservation" },
-    { key: "paymentMethod", label: "Τρόπος πληρωμής μισθώματος", value: method ? PAYMENT_METHODS[method] : null, fix: "reservation" },
+    { key: "paymentMethod", label: "Τρόπος πληρωμής μισθώματος", value: method ? AADE_PAYMENT_OPTION[method] : null, fix: "reservation" },
     { key: "platform", label: "Ηλεκτρονική πλατφόρμα", value: PLATFORM_NAMES[r.source] ?? null, optional: true, hint: "καμία, απευθείας κράτηση" },
     { key: "foreigner", label: "Αλλοδαπός", value: greek ? "Όχι" : "Ναι" },
     ...(greek
