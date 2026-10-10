@@ -1,12 +1,13 @@
 "use client";
 
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AADE_PORTAL_URL } from "@/lib/aade";
+import { autofillPayload } from "@/lib/aade-autofill";
 import { formatDay } from "@/lib/format";
 import { DeclareButton } from "./actions";
 
@@ -107,6 +108,11 @@ export function DeclarationCard({
         ))}
       </ul>
 
+      <p className="hidden text-xs text-muted-foreground md:block">
+        Στον υπολογιστή: «Αυτόματη συμπλήρωση» και μετά ο σελιδοδείκτης «Συμπλήρωση ΑΑΔΕ» στη φόρμα της ΑΑΔΕ ·{" "}
+        <Link href="/tax/autofill" className="underline underline-offset-4">πώς το βάζω</Link>
+      </p>
+
       {form.missing.length > 0 && (
         <p className="text-xs text-muted-foreground">Το ΑΦΜ (Έλληνες) ή τον αριθμό διαβατηρίου / ταυτότητας Ε.Ε. (αλλοδαποί) τον ζητάτε από τον επισκέπτη, π.χ. στο check-in.</p>
       )}
@@ -114,6 +120,16 @@ export function DeclarationCard({
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" asChild>
           <a href={AADE_PORTAL_URL} target="_blank" rel="noreferrer"><ExternalLink /> Άνοιγμα ΑΑΔΕ</a>
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={async () => {
+            if (await copyText(autofillPayload(form.fields)))
+              toast.success("Έτοιμο για αυτόματη συμπλήρωση", { description: "Στη φόρμα της ΑΑΔΕ πατήστε τον σελιδοδείκτη «Συμπλήρωση ΑΑΔΕ»." });
+          }}
+        >
+          <Wand2 /> Αυτόματη συμπλήρωση
         </Button>
         <Button
           size="sm"
