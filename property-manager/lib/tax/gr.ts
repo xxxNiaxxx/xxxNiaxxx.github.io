@@ -274,6 +274,7 @@ export const COMPLIANCE_ITEMS = [
 export type ComplianceKey = (typeof COMPLIANCE_ITEMS)[number]["key"];
 
 export const SOURCES = [
+  { label: "ΑΑΔΕ — Βραχυχρόνια μίσθωση ακινήτων (Μητρώο, δηλώσεις)", url: "https://www.aade.gr/brahyhronia-misthosi-akiniton" },
   { label: "ΑΑΔΕ — Συχνές ερωτήσεις βραχυχρόνιας μίσθωσης (Σεπ. 2025)", url: "https://www.aade.gr/sites/default/files/2025-09/FAQs_braxixronias_misthosis1_0.pdf" },
   { label: "ΑΑΔΕ — Χρηστικός οδηγός μετά τον ν. 5073/2023", url: "https://www.aade.gr/sites/default/files/2024-09/odigos_vrachicronias_n.5073%202023_final_CLEAN.docx.pdf" },
   { label: "ΑΑΔΕ — FAQ Τέλους Ανθεκτικότητας (Ιαν. 2026)", url: "https://www.aade.gr/sites/default/files/2026-02/FAQs_el_telos_anthektikotitas_stin_klimatiki_krisi_02_02_2026.pdf" },

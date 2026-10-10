@@ -26,5 +26,5 @@ export function defaultPaymentMethod(source: string): PaymentMethod | null {
   return ["DIRECT", "MANUAL", "OTHER", "TRAVEL_AGENCY"].includes(source) ? null : "PAYMENT_ACCOUNT_GR";
 }
 
-/** myAADE, where the declaration is submitted (Μητρώο Ακινήτων Βραχυχρόνιας Διαμονής). */
-export const AADE_PORTAL_URL = "https://www.aade.gr/myaade";
+/** AADE short-term rental page, the entry point to the Μητρώο Ακινήτων Βραχυχρόνιας Διαμονής where the declaration is submitted. */
+export const AADE_PORTAL_URL = "https://www.aade.gr/brahyhronia-misthosi-akiniton";

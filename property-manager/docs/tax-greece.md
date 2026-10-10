@@ -60,6 +60,7 @@
 
 ## 5. Πηγές
 
+- ΑΑΔΕ — Βραχυχρόνια μίσθωση ακινήτων (Μητρώο, δηλώσεις): https://www.aade.gr/brahyhronia-misthosi-akiniton
 - ΑΑΔΕ — Συχνές ερωτήσεις βραχυχρόνιας μίσθωσης (Σεπτ. 2025): https://www.aade.gr/sites/default/files/2025-09/FAQs_braxixronias_misthosis1_0.pdf
 - ΑΑΔΕ — Χρηστικός οδηγός μετά τον ν. 5073/2023: https://www.aade.gr/sites/default/files/2024-09/odigos_vrachicronias_n.5073%202023_final_CLEAN.docx.pdf
 - ΑΑΔΕ — FAQ Τέλους Ανθεκτικότητας (Ιαν. 2026): https://www.aade.gr/sites/default/files/2026-02/FAQs_el_telos_anthektikotitas_stin_klimatiki_krisi_02_02_2026.pdf
