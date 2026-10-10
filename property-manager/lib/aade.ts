@@ -11,12 +11,13 @@ export const GUEST_ID_TYPES = {
 export type GuestIdType = keyof typeof GUEST_ID_TYPES;
 export const GUEST_ID_TYPE_KEYS = Object.keys(GUEST_ID_TYPES) as [GuestIdType, ...GuestIdType[]];
 
+/** Labels as in the AADE form's «Τρόπος πληρωμής μισθώματος» list, plus card (POS) payments. */
 export const PAYMENT_METHODS = {
-  PAYMENT_ACCOUNT_GR: "Λογαριασμός πληρωμών ημεδαπής",
-  PAYMENT_ACCOUNT_FOREIGN: "Λογαριασμός πληρωμών αλλοδαπής",
-  CARD: "Κάρτα",
+  PAYMENT_ACCOUNT_GR: "Λογαριασμός Πληρωμών Ημεδαπής",
+  PAYMENT_ACCOUNT_FOREIGN: "Λογαριασμός Πληρωμών Αλλοδαπής",
+  CARD: "Κάρτα (POS)",
   CASH: "Μετρητά",
-  OTHER: "Άλλος τρόπος",
+  OTHER: "Λοιποί",
 } as const;
 export type PaymentMethod = keyof typeof PAYMENT_METHODS;
 export const PAYMENT_METHOD_KEYS = Object.keys(PAYMENT_METHODS) as [PaymentMethod, ...PaymentMethod[]];
@@ -26,16 +27,30 @@ export function defaultPaymentMethod(source: string): PaymentMethod | null {
   return ["DIRECT", "MANUAL", "OTHER", "TRAVEL_AGENCY"].includes(source) ? null : "PAYMENT_ACCOUNT_GR";
 }
 
-/** «Ηλεκτρονική πλατφόρμα» of the declaration; sources not listed were not booked through a platform. */
+/** The option to pick in the AADE «Τρόπος πληρωμής μισθώματος» list: card (POS) payments settle into a Greek payment account. */
+export const AADE_PAYMENT_OPTION: Record<PaymentMethod, string> = {
+  PAYMENT_ACCOUNT_GR: PAYMENT_METHODS.PAYMENT_ACCOUNT_GR,
+  PAYMENT_ACCOUNT_FOREIGN: PAYMENT_METHODS.PAYMENT_ACCOUNT_FOREIGN,
+  CARD: PAYMENT_METHODS.PAYMENT_ACCOUNT_GR,
+  CASH: PAYMENT_METHODS.CASH,
+  OTHER: PAYMENT_METHODS.OTHER,
+};
+
+/**
+ * The option to pick in the AADE «Ηλεκτρονική πλατφόρμα» list. Vrbo is the
+ * former HomeAway; platforms AADE does not list go under «Άλλες ψηφιακές
+ * πλατφόρμες». Sources not listed here were not booked through a platform.
+ */
+export const OTHER_PLATFORMS = "Άλλες ψηφιακές πλατφόρμες";
 export const PLATFORM_NAMES: Record<string, string> = {
   AIRBNB: "Airbnb",
   BOOKING_COM: "Booking.com",
-  VRBO: "Vrbo",
-  EXPEDIA: "Expedia",
-  AGODA: "Agoda",
-  TRIP_COM: "Trip.com",
-  HOLIDU: "Holidu",
-  HOMETOGO: "HomeToGo",
+  VRBO: "HomeAway",
+  EXPEDIA: OTHER_PLATFORMS,
+  AGODA: OTHER_PLATFORMS,
+  TRIP_COM: OTHER_PLATFORMS,
+  HOLIDU: OTHER_PLATFORMS,
+  HOMETOGO: OTHER_PLATFORMS,
 };
 
 const normalize = (s: string) => s.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");

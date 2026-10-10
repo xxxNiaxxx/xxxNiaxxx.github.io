@@ -37,7 +37,7 @@ describe("AADE stay declaration form", () => {
     expect(value(tax.declarationForm, "bookingNumber")).toBe("HM2FJKFQHC");
     expect(value(tax.declarationForm, "amount")).toBe("213,17");
     expect(value(tax.declarationForm, "checkIn")).toBe("19/11/2026");
-    expect(value(tax.declarationForm, "paymentMethod")).toBe("Λογαριασμός πληρωμών ημεδαπής");
+    expect(value(tax.declarationForm, "paymentMethod")).toBe("Λογαριασμός Πληρωμών Ημεδαπής");
     expect(tax.declarationForm.paymentMethodIsDefault).toBe(true);
 
     await updateGuest(ctx, guestId, { idNumber: "YB1234567" });
@@ -45,7 +45,8 @@ describe("AADE stay declaration form", () => {
     tax = await getStayTax(ctx, r.id, NOW);
     expect(tax.declarationForm.missing).toEqual([]);
     expect(value(tax.declarationForm, "idNumber")).toBe("YB1234567");
-    expect(value(tax.declarationForm, "paymentMethod")).toBe("Κάρτα");
+    // AADE has no card option: card (POS) payments are declared as a Greek payment account.
+    expect(value(tax.declarationForm, "paymentMethod")).toBe("Λογαριασμός Πληρωμών Ημεδαπής");
   });
 
   it("individuals declare the whole room price; direct stays need a payment method", async () => {
