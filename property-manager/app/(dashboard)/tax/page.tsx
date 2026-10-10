@@ -1,4 +1,4 @@
-import { AlertTriangle, Download, FolderOpen, Info } from "lucide-react";
+import { AlertTriangle, Download, FolderOpen, Info, Wand2 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DeclareButton, FilingButton, NotRequiredButton, OtherIncomeInput, PricingSettings, RegimeSelect } from "@/components/tax/actions";
@@ -40,6 +40,7 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
             <Button asChild><Link href={`/tax/accountant?year=${year}`}><FolderOpen /> Φάκελος λογιστή</Link></Button>
             <Button asChild variant="outline"><a href={`/api/tax/export?type=stays&year=${year}`}><Download /> Διαμονές CSV {year}</a></Button>
             <Button asChild variant="outline"><a href={`/api/tax/export?type=annual&year=${year}`}><Download /> Ετήσια CSV {year}</a></Button>
+            <Button asChild variant="outline" className="hidden md:inline-flex"><Link href="/tax/autofill"><Wand2 /> Αυτόματη συμπλήρωση ΑΑΔΕ</Link></Button>
           </>
         }
       />
