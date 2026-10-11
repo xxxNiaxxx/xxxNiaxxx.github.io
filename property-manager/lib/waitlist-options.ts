@@ -22,7 +22,7 @@ export function approvalMessage(name: string, url: string, sender?: string | nul
   const me = sender?.trim().split(/\s+/)[0];
   return [
     `Γεια σας ${first}! 😊`,
-    `${me ? `Είμαι η ${me}, οικοδέσποινα κι εγώ. ` : ""}Η πρόσβασή σας στο Βραχυχρόνια.ai είναι έτοιμη!`,
+    `${me ? `${me} εδώ, έχω κι εγώ κατάλυμα. ` : ""}Η πρόσβασή σας στο Βραχυχρόνια.ai είναι έτοιμη!`,
     "Σε 5 λεπτά ανεβάζετε το αρχείο κρατήσεων της Booking ή του Airbnb και βλέπετε πόσα σας μένουν πραγματικά καθαρά και τη δήλωση της ΑΑΔΕ έτοιμη. Χωρίς Excel και χωρίς άγχος στο τέλος του μήνα.",
     "Είναι δωρεάν μέχρι το τέλος του 2026, χωρίς κάρτα, και δουλεύει και από το κινητό.",
     `Ο προσωπικός σας σύνδεσμος (ισχύει ${ACCESS_DAYS} ημέρες):\n${url}`,
@@ -65,3 +65,20 @@ export const WAITLIST_PLATFORMS: Record<string, string> = Object.fromEntries(
 );
 
 export const WAITLIST_PLATFORM_VALUES = Object.keys(WAITLIST_PLATFORMS) as [WaitlistPlatform, ...WaitlistPlatform[]];
+
+/**
+ * A first personal message to someone who just joined the waitlist: thanks,
+ * who is writing, and one question about what troubles them most, so the
+ * conversation starts with listening rather than selling.
+ */
+export function interestMessage(name: string, sender?: string | null) {
+  const first = name.trim().split(/\s+/)[0] || name;
+  const me = sender?.trim().split(/\s+/)[0];
+  return [
+    `Γεια σας ${first}! 😊`,
+    `${me ? `${me} εδώ, έχω κι εγώ κατάλυμα. ` : ""}Σας ευχαριστώ πολύ που δείξατε ενδιαφέρον για το Βραχυχρόνια.ai!`,
+    "Το έφτιαξα αρχικά για μένα, για να βλέπω εύκολα πόσα μου μένουν καθαρά από τη Booking και το Airbnb και να έχω τη δήλωση της ΑΑΔΕ έτοιμη κάθε μήνα.",
+    "Για να σας βοηθήσω όσο καλύτερα γίνεται: τι σας δυσκολεύει περισσότερο σήμερα; Η δήλωση στην ΑΑΔΕ, το ΤΑΚΚ, να ξέρετε τα καθαρά, ή κάτι άλλο;",
+    "Σας στέλνω πολύ σύντομα τον σύνδεσμο για να μπείτε. Είναι δωρεάν μέχρι το τέλος του 2026, χωρίς κάρτα.",
+  ].join("\n\n");
+}
