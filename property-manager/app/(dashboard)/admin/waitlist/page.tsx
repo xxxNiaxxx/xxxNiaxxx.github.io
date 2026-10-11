@@ -20,7 +20,6 @@ export default async function WaitlistAdminPage() {
         registrationOpen={registrationOpen}
         emailReady={emailConfigured()}
         playTestingUrl={process.env.PLAY_TESTING_URL || null}
-        senderName={user.name ?? null}
       />
     </>
   );

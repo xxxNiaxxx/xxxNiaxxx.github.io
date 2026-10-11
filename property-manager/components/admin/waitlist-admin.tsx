@@ -40,9 +40,7 @@ export function WaitlistAdmin({
   registrationOpen,
   emailReady,
   playTestingUrl,
-  senderName,
 }: {
-  senderName: string | null;
   entries: WaitlistEntryDTO[];
   registrationOpen: boolean;
   emailReady: boolean;
@@ -139,7 +137,7 @@ export function WaitlistAdmin({
         </CardContent>
       </Card>
 
-      {link && <AccessLink {...link} sender={senderName} onClose={() => setLink(null)} />}
+      {link && <AccessLink {...link} onClose={() => setLink(null)} />}
 
       <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Φίλτρο κατάστασης">
         {(["PENDING", "APPROVED", "REGISTERED", "REJECTED", "ALL"] as const).map((s) => (
@@ -192,7 +190,7 @@ export function WaitlistAdmin({
                   </div>
                   {e.message && <p className="rounded-lg bg-muted px-3 py-2 text-sm whitespace-pre-line">{e.message}</p>}
 
-                  {messageFor === e.id && <InterestMessage entry={e} sender={senderName} onClose={() => setMessageFor(null)} />}
+                  {messageFor === e.id && <InterestMessage entry={e} onClose={() => setMessageFor(null)} />}
 
                   {e.status !== "REGISTERED" && (
                     <div className="flex flex-wrap gap-2">
@@ -237,8 +235,8 @@ export function WaitlistAdmin({
  * in spam, so it can also go straight out by Viber, WhatsApp or SMS with a
  * ready message (to the applicant's phone when they gave one).
  */
-function AccessLink({ name, email, phone, url, emailed, sender, onClose }: { name: string; email: string; phone: string | null; url: string; emailed: boolean; sender: string | null; onClose: () => void }) {
-  const message = approvalMessage(name, url, sender);
+function AccessLink({ name, email, phone, url, emailed, onClose }: { name: string; email: string; phone: string | null; url: string; emailed: boolean; onClose: () => void }) {
+  const message = approvalMessage(name, url);
   return (
     <div className="grid gap-2 rounded-xl border border-accent/30 bg-accent-soft/40 p-3">
       <div className="flex items-start justify-between gap-2">
@@ -306,8 +304,8 @@ function ShareButtons({ message, phone, copiedLabel = "Το μήνυμα αντ�
 }
 
 /** A personal thank-you to someone who just showed interest, before approving them. */
-function InterestMessage({ entry, sender, onClose }: { entry: WaitlistEntryDTO; sender: string | null; onClose: () => void }) {
-  const [message, setMessage] = useState(() => interestMessage(entry.name, sender));
+function InterestMessage({ entry, onClose }: { entry: WaitlistEntryDTO; onClose: () => void }) {
+  const [message, setMessage] = useState(() => interestMessage(entry.name));
   return (
     <div className="grid gap-2 rounded-xl border border-accent/30 bg-accent-soft/40 p-3">
       <div className="flex items-start justify-between gap-2">

@@ -14,19 +14,18 @@ export function internationalPhone(phone: string | null | undefined) {
 
 /**
  * The message that goes with an approval link sent by Messenger, Viber,
- * WhatsApp or SMS: personal, about what the host gets, without the usual
+ * WhatsApp or SMS, from the team: about what the host gets, without the usual
  * objections (cost, card, time), and an open door to reply.
  */
-export function approvalMessage(name: string, url: string, sender?: string | null) {
+export function approvalMessage(name: string, url: string) {
   const first = name.trim().split(/\s+/)[0] || name;
-  const me = sender?.trim().split(/\s+/)[0];
   return [
     `Γεια σας ${first}! 😊`,
-    `${me ? `${me} εδώ, έχω κι εγώ κατάλυμα. ` : ""}Η πρόσβασή σας στο Βραχυχρόνια.ai είναι έτοιμη!`,
+    "Από την ομάδα του Βραχυχρόνια.ai: η πρόσβασή σας είναι έτοιμη!",
     "Σε 5 λεπτά ανεβάζετε το αρχείο κρατήσεων της Booking ή του Airbnb και βλέπετε πόσα σας μένουν πραγματικά καθαρά και τη δήλωση της ΑΑΔΕ έτοιμη. Χωρίς Excel και χωρίς άγχος στο τέλος του μήνα.",
     "Είναι δωρεάν μέχρι το τέλος του 2026, χωρίς κάρτα, και δουλεύει και από το κινητό.",
     `Ο προσωπικός σας σύνδεσμος (ισχύει ${ACCESS_DAYS} ημέρες):\n${url}`,
-    "Ό,τι απορία έχετε, γράψτε μου εδώ. Θα χαρώ πολύ να ακούσω τη γνώμη σας!",
+    "Ό,τι απορία έχετε, γράψτε μας εδώ. Θα χαρούμε πολύ να ακούσουμε τη γνώμη σας!",
   ].join("\n\n");
 }
 
@@ -67,18 +66,17 @@ export const WAITLIST_PLATFORMS: Record<string, string> = Object.fromEntries(
 export const WAITLIST_PLATFORM_VALUES = Object.keys(WAITLIST_PLATFORMS) as [WaitlistPlatform, ...WaitlistPlatform[]];
 
 /**
- * A first personal message to someone who just joined the waitlist: thanks,
- * who is writing, and one question about what troubles them most, so the
- * conversation starts with listening rather than selling.
+ * A first personal message to someone who just joined the waitlist, from the
+ * team: thanks, why the app exists, and one question about what troubles
+ * them most, so the conversation starts with listening rather than selling.
  */
-export function interestMessage(name: string, sender?: string | null) {
+export function interestMessage(name: string) {
   const first = name.trim().split(/\s+/)[0] || name;
-  const me = sender?.trim().split(/\s+/)[0];
   return [
     `Γεια σας ${first}! 😊`,
-    `${me ? `${me} εδώ, έχω κι εγώ κατάλυμα. ` : ""}Σας ευχαριστώ πολύ που δείξατε ενδιαφέρον για το Βραχυχρόνια.ai!`,
-    "Το έφτιαξα αρχικά για μένα, για να βλέπω εύκολα πόσα μου μένουν καθαρά από τη Booking και το Airbnb και να έχω τη δήλωση της ΑΑΔΕ έτοιμη κάθε μήνα.",
-    "Για να σας βοηθήσω όσο καλύτερα γίνεται: τι σας δυσκολεύει περισσότερο σήμερα; Η δήλωση στην ΑΑΔΕ, το ΤΑΚΚ, να ξέρετε τα καθαρά, ή κάτι άλλο;",
-    "Σας στέλνω πολύ σύντομα τον σύνδεσμο για να μπείτε. Είναι δωρεάν μέχρι το τέλος του 2026, χωρίς κάρτα.",
+    "Από την ομάδα του Βραχυχρόνια.ai: σας ευχαριστούμε πολύ που δείξατε ενδιαφέρον!",
+    "Το φτιάξαμε από οικοδεσπότες για οικοδεσπότες, για να βλέπετε εύκολα πόσα σας μένουν καθαρά από τη Booking και το Airbnb και να έχετε τη δήλωση της ΑΑΔΕ έτοιμη κάθε μήνα.",
+    "Για να σας βοηθήσουμε όσο καλύτερα γίνεται: τι σας δυσκολεύει περισσότερο σήμερα; Η δήλωση στην ΑΑΔΕ, το ΤΑΚΚ, να ξέρετε τα καθαρά, ή κάτι άλλο;",
+    "Σας στέλνουμε πολύ σύντομα τον σύνδεσμο για να μπείτε. Είναι δωρεάν μέχρι το τέλος του 2026, χωρίς κάρτα.",
   ].join("\n\n");
 }
