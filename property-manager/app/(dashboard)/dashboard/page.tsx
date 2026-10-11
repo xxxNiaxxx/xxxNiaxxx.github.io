@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AIPreview } from "@/components/dashboard/ai-preview";
 import { AttentionList } from "@/components/dashboard/attention-list";
+import { GettingStarted } from "@/components/dashboard/getting-started";
 import { SavingsCard } from "@/components/dashboard/savings-card";
 import { PriceSuggestionList } from "@/components/properties/price-suggestions";
 import { TodayAgenda } from "@/components/dashboard/today-agenda";
@@ -12,6 +13,7 @@ import { PageHeader, Stat } from "@/components/ui/misc";
 import { getPageContext } from "@/lib/auth/page";
 import { formatDay, formatMoney, formatPercent } from "@/lib/format";
 import { getDashboard } from "@/lib/services/dashboard";
+import { getOnboarding } from "@/lib/services/onboarding";
 
 export const metadata: Metadata = { title: "Πίνακας ελέγχου" };
 
@@ -22,7 +24,7 @@ function greeting(now: Date) {
 
 export default async function DashboardPage() {
   const { ctx } = await getPageContext();
-  const d = await getDashboard(ctx);
+  const [d, onboarding] = await Promise.all([getDashboard(ctx), getOnboarding(ctx)]);
   const s = d.summary;
   return (
     <>
@@ -40,6 +42,8 @@ export default async function DashboardPage() {
           </>
         }
       />
+
+      {!onboarding.complete && <GettingStarted steps={onboarding.steps} firstPropertyId={onboarding.firstPropertyId} />}
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
         <Stat label="Ακίνητα" value={s.activeProperties} hint={`${s.properties} συνολικά`} icon={<Building2 />} />
