@@ -23,6 +23,9 @@ model User {
   /// Version of the terms of service (lib/legal.ts) the user accepted, and when.
   termsVersion    String?
   termsAcceptedAt DateTime?
+  /// Last request made while signed in (updated at most every couple of minutes), and from where: "web" or "app".
+  lastSeenAt      DateTime?
+  lastSeenClient  String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

@@ -15,6 +15,7 @@ import {
   Wallet,
   Bug,
   CreditCard,
+  Activity,
 } from "lucide-react";
 
 export interface NavItem {
@@ -44,6 +45,7 @@ export const adminFeedbackNav: NavItem = { href: "/admin/feedback", label: "Σχ
 export const adminOrgsNav: NavItem = { href: "/admin/organizations", label: "Οργανισμοί", icon: Building2 };
 export const billingNav: NavItem = { href: "/billing", label: "Συνδρομή", icon: CreditCard };
 export const adminErrorsNav: NavItem = { href: "/admin/errors", label: "Σφάλματα", icon: Bug };
+export const adminActivityNav: NavItem = { href: "/admin/activity", label: "Χρήστες live", icon: Activity };
 
 /** Mobile bottom bar: Home, Calendar, Tasks, AI (+ "More" menu). */
 export const mobileNav: NavItem[] = [

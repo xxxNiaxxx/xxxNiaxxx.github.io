@@ -16,13 +16,19 @@ export const ACTIVE_ORG_COOKIE = "apm_org";
 export const ACTIVE_ORG_HEADER = "x-organization-id";
 
 /** User id and session version from a mobile bearer token, or from the web session cookie. */
-async function currentSession(): Promise<{ userId: string; sessionVersion: number } | null> {
+async function currentSession(): Promise<{ userId: string; sessionVersion: number; client: "web" | "app" } | null> {
   const authorization = (await headers()).get("authorization");
-  if (authorization?.startsWith("Bearer ")) return verifyMobileToken(authorization.slice(7).trim());
+  if (authorization?.startsWith("Bearer ")) {
+    const token = await verifyMobileToken(authorization.slice(7).trim());
+    return token && { ...token, client: "app" };
+  }
   const session = await auth();
   if (!session?.user?.id) return null;
-  return { userId: session.user.id, sessionVersion: (session as { sessionVersion?: number }).sessionVersion ?? 0 };
+  return { userId: session.user.id, sessionVersion: (session as { sessionVersion?: number }).sessionVersion ?? 0, client: "web" };
 }
+
+/** «Last seen» is written at most this often, so requests don't each cost a write. */
+const SEEN_EVERY_MS = 2 * 60_000;
 
 /** The signed-in user, or an UNAUTHORIZED error (also after "sign out everywhere"). */
 export async function requireUser() {
@@ -30,11 +36,16 @@ export async function requireUser() {
   if (!session) throw new AppError("UNAUTHORIZED", "Πρέπει να συνδεθείτε");
   const user = await db.user.findUnique({
     where: { id: session.userId },
-    select: { id: true, email: true, name: true, image: true, sessionVersion: true, termsVersion: true },
+    select: { id: true, email: true, name: true, image: true, sessionVersion: true, termsVersion: true, lastSeenAt: true, lastSeenClient: true },
   });
   if (!user || user.sessionVersion !== session.sessionVersion) throw new AppError("UNAUTHORIZED", "Πρέπει να συνδεθείτε");
-  const { sessionVersion: _sv, ...rest } = user;
+  const { sessionVersion: _sv, lastSeenAt, lastSeenClient, ...rest } = user;
   void _sv;
+  const now = new Date();
+  if (!lastSeenAt || now.getTime() - lastSeenAt.getTime() > SEEN_EVERY_MS || lastSeenClient !== session.client) {
+    // Best effort: activity tracking must never fail a request.
+    await db.user.update({ where: { id: user.id }, data: { lastSeenAt: now, lastSeenClient: session.client } }).catch(() => {});
+  }
   return rest;
 }
 
