@@ -1,0 +1,53 @@
+<!doctype html><html lang="el"><head><meta charset="utf-8">
+<style>
+  @page { size: 91mm 61mm; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: "Inter", sans-serif; color: #1c1917; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 91mm; height: 61mm; position: relative; overflow: hidden; page-break-after: always; break-after: page; }
+  /* Trim box is 3 mm in from each edge; keep text 4 mm inside the trim (7 mm from the page edge). */
+  .safe { position: absolute; inset: 7mm; }
+  .front { background: #fafaf8; }
+  .front .safe { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1.6mm; }
+  .front img { width: 21mm; height: 21mm; }
+  .name { font-size: 15pt; font-weight: 700; letter-spacing: -0.02em; }
+  .tag { font-size: 7.4pt; color: #57534e; line-height: 1.35; }
+  .band { position: absolute; left: 0; right: 0; bottom: 0; height: 7.5mm; background: #b5694a; }
+  .back { background: #ffffff; }
+  .back .safe { display: grid; grid-template-columns: 25mm 1fr; gap: 4mm; align-items: center; }
+  .qr { width: 25mm; height: 25mm; }
+  .scan { font-size: 6pt; color: #b5694a; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1.3mm; text-align: center; }
+  .h { font-size: 9.2pt; font-weight: 700; line-height: 1.2; margin-bottom: 1.6mm; letter-spacing: -0.01em; }
+  ul { list-style: none; display: grid; gap: 0.9mm; }
+  li { font-size: 6.6pt; line-height: 1.3; padding-left: 3mm; position: relative; color: #292524; }
+  li::before { content: ""; position: absolute; left: 0; top: 1.1mm; width: 1.5mm; height: 1.5mm; border-radius: 50%; background: #b5694a; }
+  .free { margin-top: 2mm; display: inline-block; font-size: 6.3pt; font-weight: 700; color: #fff; background: #b5694a; border-radius: 1.4mm; padding: 0.7mm 1.8mm; }
+  .url { position: absolute; left: 7mm; right: 7mm; bottom: 4.6mm; font-size: 5.6pt; color: #78716c; text-align: center; letter-spacing: 0.01em; }
+  .crop .page { outline: 0.2mm dashed transparent; }
+</style></head><body>
+<section class="page front">
+  <div class="safe">
+    <img src="logo-mark.png" alt="">
+    <div class="name">Βραχυχρόνια.ai</div>
+    <div class="tag">Airbnb &amp; Booking χωρίς άγχος:<br>κρατήσεις, καθαρά έσοδα και ΑΑΔΕ σε ένα μέρος</div>
+  </div>
+  <div class="band"></div>
+</section>
+<section class="page back">
+  <div class="safe">
+    <div>
+      <img class="qr" src="qr.svg" alt="">
+      <div class="scan">Σκανάρετε</div>
+    </div>
+    <div>
+      <div class="h">Πόσα σας μένουν πραγματικά από κάθε κράτηση;</div>
+      <ul>
+        <li>Τα καθαρά μετά από προμήθειες, ΤΑΚΚ και φόρο</li>
+        <li>Η δήλωση της ΑΑΔΕ έτοιμη κάθε μήνα</li>
+        <li>Όλες οι κρατήσεις σε ένα ημερολόγιο</li>
+      </ul>
+      <span class="free">Δωρεάν ως το τέλος του 2026</span>
+    </div>
+  </div>
+  <div class="url">aivrachychronia.vercel.app</div>
+</section>
+</body></html>
