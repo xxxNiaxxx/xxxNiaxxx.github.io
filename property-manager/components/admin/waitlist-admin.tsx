@@ -6,14 +6,14 @@ import { toast } from "sonner";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Input, Textarea } from "@/components/ui/input";
 import { EmptyState, Stat } from "@/components/ui/misc";
 import { api } from "@/lib/client/api";
 import { useMutation } from "@/lib/client/use-mutation";
 import { formatDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { WaitlistEntryDTO } from "@/lib/services/waitlist";
-import { approvalMessage, internationalPhone, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
+import { approvalMessage, interestMessage, internationalPhone, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
 
 type Status = WaitlistEntryDTO["status"];
 
@@ -50,6 +50,7 @@ export function WaitlistAdmin({
 }) {
   const { run, pending } = useMutation();
   const [filter, setFilter] = useState<Status | "ALL">("PENDING");
+  const [messageFor, setMessageFor] = useState<string | null>(null);
   const [link, setLink] = useState<{ name: string; email: string; phone: string | null; url: string; emailed: boolean } | null>(null);
 
   const count = (s: Status) => entries.filter((e) => e.status === s).length;
@@ -191,8 +192,15 @@ export function WaitlistAdmin({
                   </div>
                   {e.message && <p className="rounded-lg bg-muted px-3 py-2 text-sm whitespace-pre-line">{e.message}</p>}
 
+                  {messageFor === e.id && <InterestMessage entry={e} sender={senderName} onClose={() => setMessageFor(null)} />}
+
                   {e.status !== "REGISTERED" && (
                     <div className="flex flex-wrap gap-2">
+                      {e.status === "PENDING" && messageFor !== e.id && (
+                        <Button size="sm" variant="outline" onClick={() => setMessageFor(e.id)}>
+                          <MessageCircle /> Μήνυμα
+                        </Button>
+                      )}
                       <Button size="sm" disabled={pending} onClick={() => approve(e)}>
                         <Check /> {e.status === "APPROVED" ? "Νέος σύνδεσμος" : "Έγκριση"}
                       </Button>
@@ -230,10 +238,7 @@ export function WaitlistAdmin({
  * ready message (to the applicant's phone when they gave one).
  */
 function AccessLink({ name, email, phone, url, emailed, sender, onClose }: { name: string; email: string; phone: string | null; url: string; emailed: boolean; sender: string | null; onClose: () => void }) {
-  const [copied, setCopied] = useState(false);
   const message = approvalMessage(name, url, sender);
-  const intl = internationalPhone(phone);
-  const text = encodeURIComponent(message);
   return (
     <div className="grid gap-2 rounded-xl border border-accent/30 bg-accent-soft/40 p-3">
       <div className="flex items-start justify-between gap-2">
@@ -245,11 +250,26 @@ function AccessLink({ name, email, phone, url, emailed, sender, onClose }: { nam
         <button type="button" onClick={onClose} aria-label="Κλείσιμο" className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
       </div>
       <Input readOnly value={url} onFocus={(ev) => ev.currentTarget.select()} className="font-mono text-xs" aria-label="Σύνδεσμος εγγραφής" />
+      <ShareButtons message={message} phone={phone} copiedLabel="Το μήνυμα με τον σύνδεσμο αντιγράφηκε" />
+    </div>
+  );
+}
+
+/**
+ * Sends a ready message by Messenger, Viber, WhatsApp or SMS. WhatsApp and SMS
+ * go to the applicant's phone when they gave one; Messenger cannot be
+ * pre-filled, so the message is copied for pasting into the chat.
+ */
+function ShareButtons({ message, phone, copiedLabel = "Το μήνυμα αντιγράφηκε" }: { message: string; phone: string | null; copiedLabel?: string }) {
+  const [copied, setCopied] = useState(false);
+  const intl = internationalPhone(phone);
+  const text = encodeURIComponent(message);
+  return (
+    <>
       <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
           onClick={async () => {
-            // Messenger cannot be pre-filled: copy the message, then open it to paste into the chat.
             await copy(message, "Το μήνυμα αντιγράφηκε· επικολλήστε το στη συνομιλία");
             const mobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
             window.open(mobile ? "fb-messenger://" : "https://www.messenger.com/", "_blank");
@@ -272,7 +292,7 @@ function AccessLink({ name, email, phone, url, emailed, sender, onClose }: { nam
           size="sm"
           variant="outline"
           onClick={async () => {
-            await copy(message, "Το μήνυμα με τον σύνδεσμο αντιγράφηκε");
+            await copy(message, copiedLabel);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
           }}
@@ -281,6 +301,23 @@ function AccessLink({ name, email, phone, url, emailed, sender, onClose }: { nam
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">Messenger: αντιγράφει το μήνυμα και ανοίγει το Messenger· ανοίξτε τη συνομιλία και επικολλήστε. Viber: διαλέγετε την επαφή και το μήνυμα είναι έτοιμο.</p>
+    </>
+  );
+}
+
+/** A personal thank-you to someone who just showed interest, before approving them. */
+function InterestMessage({ entry, sender, onClose }: { entry: WaitlistEntryDTO; sender: string | null; onClose: () => void }) {
+  const [message, setMessage] = useState(() => interestMessage(entry.name, sender));
+  return (
+    <div className="grid gap-2 rounded-xl border border-accent/30 bg-accent-soft/40 p-3">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[13px]">
+          Προσωπικό μήνυμα στον/στην <b>{entry.name}</b>{entry.phone ? <> ({entry.phone})</> : null}. Μπορείτε να το αλλάξετε πριν το στείλετε.
+        </p>
+        <button type="button" onClick={onClose} aria-label="Κλείσιμο" className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
+      </div>
+      <Textarea value={message} onChange={(ev) => setMessage(ev.target.value)} rows={9} className="text-sm" aria-label="Μήνυμα" />
+      <ShareButtons message={message} phone={entry.phone} />
     </div>
   );
 }

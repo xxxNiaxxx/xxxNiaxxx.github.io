@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ACCESS_DAYS, approvalMessage, internationalPhone } from "@/lib/waitlist-options";
+import { ACCESS_DAYS, approvalMessage, interestMessage, internationalPhone } from "@/lib/waitlist-options";
 
 describe("sharing an approval link", () => {
   it("turns Greek and international numbers into wa.me digits", () => {
@@ -14,10 +14,18 @@ describe("sharing an approval link", () => {
   it("writes a short personal message with the link", () => {
     const m = approvalMessage("Μαρία Παπαδοπούλου", "https://x.test/waitlist/access/abc", "Δήμητρα Χ.");
     expect(m).toContain("Γεια σας Μαρία!");
-    expect(m).toContain("Είμαι η Δήμητρα, οικοδέσποινα κι εγώ.");
+    expect(m).toContain("Δήμητρα εδώ, έχω κι εγώ κατάλυμα.");
     expect(m).toContain(`ισχύει ${ACCESS_DAYS} ημέρες`);
     expect(m).toContain("https://x.test/waitlist/access/abc");
     // Without a sender name it still reads well.
-    expect(approvalMessage("Anna", "https://x.test/a")).not.toContain("Είμαι η");
+    expect(approvalMessage("Anna", "https://x.test/a")).not.toContain("εδώ, έχω");
+  });
+
+  it("thanks someone who just showed interest and asks what troubles them", () => {
+    const m = interestMessage("Νίκος Π.", "Δήμητρα");
+    expect(m).toContain("Γεια σας Νίκος!");
+    expect(m).toContain("Δήμητρα εδώ");
+    expect(m).toContain("τι σας δυσκολεύει περισσότερο");
+    expect(m).not.toContain("http");
   });
 });
