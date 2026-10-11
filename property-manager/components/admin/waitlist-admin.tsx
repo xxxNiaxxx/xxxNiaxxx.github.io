@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Download, Mail, MailWarning, Smartphone, Trash2, X } from "lucide-react";
+import { Check, Copy, Download, Mail, MailWarning, MessageCircle, MessageSquare, Smartphone, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
@@ -13,7 +13,7 @@ import { useMutation } from "@/lib/client/use-mutation";
 import { formatDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { WaitlistEntryDTO } from "@/lib/services/waitlist";
-import { WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
+import { approvalMessage, internationalPhone, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
 
 type Status = WaitlistEntryDTO["status"];
 
@@ -40,7 +40,9 @@ export function WaitlistAdmin({
   registrationOpen,
   emailReady,
   playTestingUrl,
+  senderName,
 }: {
+  senderName: string | null;
   entries: WaitlistEntryDTO[];
   registrationOpen: boolean;
   emailReady: boolean;
@@ -48,7 +50,7 @@ export function WaitlistAdmin({
 }) {
   const { run, pending } = useMutation();
   const [filter, setFilter] = useState<Status | "ALL">("PENDING");
-  const [link, setLink] = useState<{ name: string; email: string; url: string; emailed: boolean } | null>(null);
+  const [link, setLink] = useState<{ name: string; email: string; phone: string | null; url: string; emailed: boolean } | null>(null);
 
   const count = (s: Status) => entries.filter((e) => e.status === s).length;
   const shown = filter === "ALL" ? entries : entries.filter((e) => e.status === filter);
@@ -60,7 +62,7 @@ export function WaitlistAdmin({
   const approve = (e: WaitlistEntryDTO) =>
     run(() => api<{ path: string; emailed: boolean }>(`/api/admin/waitlist/${e.id}/approve`, { method: "POST" }), {
       success: e.status === "APPROVED" ? "Νέος σύνδεσμος δημιουργήθηκε" : "Εγκρίθηκε",
-      onSuccess: (r) => setLink({ name: e.name, email: e.email, url: `${window.location.origin}${r.path}`, emailed: r.emailed }),
+      onSuccess: (r) => setLink({ name: e.name, email: e.email, phone: e.phone, url: `${window.location.origin}${r.path}`, emailed: r.emailed }),
     });
 
   // Sign-ups per source (utm_source of the ad or post link).
@@ -136,7 +138,7 @@ export function WaitlistAdmin({
         </CardContent>
       </Card>
 
-      {link && <AccessLink {...link} onClose={() => setLink(null)} />}
+      {link && <AccessLink {...link} sender={senderName} onClose={() => setLink(null)} />}
 
       <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Φίλτρο κατάστασης">
         {(["PENDING", "APPROVED", "REGISTERED", "REJECTED", "ALL"] as const).map((s) => (
@@ -184,7 +186,7 @@ export function WaitlistAdmin({
                     {e.regime && <span>{REGIMES[e.regime] ?? e.regime}</span>}
                     {e.device && <span>{DEVICES[e.device] ?? e.device}{e.playEmail && e.playEmail !== e.email ? ` · Play: ${e.playEmail}` : ""}</span>}
                     {e.status === "APPROVED" && e.approvedAt && (
-                      <span>{e.approvalEmailedAt ? "Ο σύνδεσμος στάλθηκε με email" : "Ο σύνδεσμος δεν στάλθηκε με email"}</span>
+                      <span>{e.approvalEmailedAt ? "Ο σύνδεσμος στάλθηκε με email" : "Ο σύνδεσμος δεν στάλθηκε με email"} · δεν έχει φτιάξει λογαριασμό: «Νέος σύνδεσμος» και στείλτε τον με Messenger/Viber</span>
                     )}
                   </div>
                   {e.message && <p className="rounded-lg bg-muted px-3 py-2 text-sm whitespace-pre-line">{e.message}</p>}
@@ -222,32 +224,63 @@ export function WaitlistAdmin({
   );
 }
 
-function AccessLink({ name, email, url, emailed, onClose }: { name: string; email: string; url: string; emailed: boolean; onClose: () => void }) {
+/**
+ * The approval link, shown once after approving. Emails often end up unread or
+ * in spam, so it can also go straight out by Viber, WhatsApp or SMS with a
+ * ready message (to the applicant's phone when they gave one).
+ */
+function AccessLink({ name, email, phone, url, emailed, sender, onClose }: { name: string; email: string; phone: string | null; url: string; emailed: boolean; sender: string | null; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
+  const message = approvalMessage(name, url, sender);
+  const intl = internationalPhone(phone);
+  const text = encodeURIComponent(message);
   return (
     <div className="grid gap-2 rounded-xl border border-accent/30 bg-accent-soft/40 p-3">
       <div className="flex items-start justify-between gap-2">
         <p className="text-[13px]">
           {emailed
-            ? <>Εγκρίθηκε: <b>{name}</b>. Ο σύνδεσμος εγγραφής στάλθηκε στο <b>{email}</b>· μπορείτε να τον στείλετε και με Viber ή WhatsApp.</>
-            : <>Εγκρίθηκε: <b>{name}</b>. Το email δεν στάλθηκε — στείλτε αυτόν τον σύνδεσμο στο <b>{email}</b> με το χέρι. Εμφανίζεται μόνο τώρα.</>}
+            ? <>Εγκρίθηκε: <b>{name}</b>. Ο σύνδεσμος εγγραφής στάλθηκε στο <b>{email}</b>. Επειδή πολλοί δεν βλέπουν το email, στείλτε τον και με Messenger, Viber, WhatsApp ή SMS{phone ? <> στο <b>{phone}</b></> : null}.</>
+            : <>Εγκρίθηκε: <b>{name}</b>. Το email δεν στάλθηκε: στείλτε τον σύνδεσμο με Messenger, Viber ή WhatsApp{phone ? <> ({phone})</> : null}. Εμφανίζεται μόνο τώρα.</>}
         </p>
         <button type="button" onClick={onClose} aria-label="Κλείσιμο" className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
       </div>
       <Input readOnly value={url} onFocus={(ev) => ev.currentTarget.select()} className="font-mono text-xs" aria-label="Σύνδεσμος εγγραφής" />
-      <div>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          onClick={async () => {
+            // Messenger cannot be pre-filled: copy the message, then open it to paste into the chat.
+            await copy(message, "Το μήνυμα αντιγράφηκε· επικολλήστε το στη συνομιλία");
+            const mobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+            window.open(mobile ? "fb-messenger://" : "https://www.messenger.com/", "_blank");
+          }}
+        >
+          <MessageCircle /> Messenger
+        </Button>
+        <Button size="sm" asChild>
+          <a href={`viber://forward?text=${text}`}><MessageCircle /> Viber</a>
+        </Button>
+        <Button size="sm" asChild>
+          <a href={intl ? `https://wa.me/${intl}?text=${text}` : `https://wa.me/?text=${text}`} target="_blank" rel="noreferrer"><MessageCircle /> WhatsApp</a>
+        </Button>
+        {intl && (
+          <Button size="sm" variant="outline" asChild>
+            <a href={`sms:+${intl}?body=${text}`}><MessageSquare /> SMS</a>
+          </Button>
+        )}
         <Button
           size="sm"
           variant="outline"
           onClick={async () => {
-            await copy(url, "Αντιγράφηκε");
+            await copy(message, "Το μήνυμα με τον σύνδεσμο αντιγράφηκε");
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
           }}
         >
-          {copied ? <Check /> : <Copy />} {copied ? "Αντιγράφηκε" : "Αντιγραφή"}
+          {copied ? <Check /> : <Copy />} {copied ? "Αντιγράφηκε" : "Αντιγραφή μηνύματος"}
         </Button>
       </div>
+      <p className="text-xs text-muted-foreground">Messenger: αντιγράφει το μήνυμα και ανοίγει το Messenger· ανοίξτε τη συνομιλία και επικολλήστε. Viber: διαλέγετε την επαφή και το μήνυμα είναι έτοιμο.</p>
     </div>
   );
 }
