@@ -6,9 +6,10 @@ import { db } from "@/lib/db";
 import { platformAdminEmails, sendEmail } from "@/lib/email";
 import { AppError, conflict } from "@/lib/errors";
 import { email, optionalEmail, optionalText, requiredText } from "@/lib/validation/common";
-import { WAITLIST_PLATFORM_VALUES, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
+import { ACCESS_DAYS, WAITLIST_PLATFORM_VALUES, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
 
-export const ACCESS_DAYS = 14;
+export { ACCESS_DAYS };
+
 const REGISTRATION_KEY = "registrationOpen";
 
 export const WAITLIST_REGIMES = { INDIVIDUAL: "Ιδιώτης", BUSINESS: "Επιχείρηση (με έναρξη)" } as const;
