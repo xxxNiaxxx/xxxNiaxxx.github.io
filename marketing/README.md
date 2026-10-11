@@ -12,6 +12,7 @@
 | `ad-square-1080.png` | Facebook / Instagram post, ομάδες Facebook |
 | `ad-story-1080x1920.png` | Instagram / Facebook Stories, Status στο Viber/WhatsApp |
 | `facebook-cover-1640x856.png` | Εξώφυλλο της Σελίδας Facebook (το logo και το κείμενο δεν κόβονται σε κινητό ή υπολογιστή) |
+| `business-card/business-card-print.pdf` | Επαγγελματική κάρτα μπρος-πίσω για το τυπογραφείο (85×55 mm + 3 mm περιθώριο κοπής). QR → λίστα αναμονής με πηγή `card`. Προεπισκόπηση: `business-card-front.png`, `business-card-back.png`· πηγή: `card.html` |
 | `og-waitlist-1200x630.png` | Εμφανίζεται μόνη της όταν μοιράζεστε τον σύνδεσμο (Facebook, Viber, WhatsApp, Messenger) |
 
 ## Ανάρτηση σε ομάδες Facebook οικοδεσποτών
