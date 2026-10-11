@@ -12,19 +12,17 @@ describe("sharing an approval link", () => {
   });
 
   it("writes a short personal message with the link", () => {
-    const m = approvalMessage("Μαρία Παπαδοπούλου", "https://x.test/waitlist/access/abc", "Δήμητρα Χ.");
+    const m = approvalMessage("Μαρία Παπαδοπούλου", "https://x.test/waitlist/access/abc");
     expect(m).toContain("Γεια σας Μαρία!");
-    expect(m).toContain("Δήμητρα εδώ, έχω κι εγώ κατάλυμα.");
+    expect(m).toContain("Από την ομάδα του Βραχυχρόνια.ai");
     expect(m).toContain(`ισχύει ${ACCESS_DAYS} ημέρες`);
     expect(m).toContain("https://x.test/waitlist/access/abc");
-    // Without a sender name it still reads well.
-    expect(approvalMessage("Anna", "https://x.test/a")).not.toContain("εδώ, έχω");
   });
 
   it("thanks someone who just showed interest and asks what troubles them", () => {
-    const m = interestMessage("Νίκος Π.", "Δήμητρα");
+    const m = interestMessage("Νίκος Π.");
     expect(m).toContain("Γεια σας Νίκος!");
-    expect(m).toContain("Δήμητρα εδώ");
+    expect(m).toContain("Από την ομάδα του Βραχυχρόνια.ai");
     expect(m).toContain("τι σας δυσκολεύει περισσότερο");
     expect(m).not.toContain("http");
   });
