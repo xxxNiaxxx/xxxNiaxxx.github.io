@@ -13,17 +13,24 @@
 export const AUTOFILL_PREFIX = "AADE-AUTOFILL:";
 
 /** Shown in the progress badge and the diagnostics, to know which version ran. */
-export const AUTOFILL_VERSION = "2026-10-12.9";
+export const AUTOFILL_VERSION = "2026-10-12.10";
 
 /** Declaration fields the bookmarklet knows how to fill. */
 const AUTOFILL_KEYS = ["checkIn", "checkOut", "amount", "paymentMethod", "platform", "foreigner", "taxId", "guestName", "idNumber", "cancelAmount", "cancelDate", "bookingNumber"];
 
-/** The text the declaration card copies for the bookmarklet. */
-export function autofillPayload(fields: { key: string; value: string | null }[]) {
+/** The declaration values the bookmarklet fills in, by field key. */
+export function autofillValues(fields: { key: string; value: string | null }[]) {
   const values: Record<string, string> = {};
   for (const f of fields) if (f.value && AUTOFILL_KEYS.includes(f.key)) values[f.key] = f.value;
-  return AUTOFILL_PREFIX + JSON.stringify(values);
+  return values;
 }
+
+/** The text the declaration card copies for the bookmarklet. */
+export function autofillPayload(fields: { key: string; value: string | null }[]) {
+  return AUTOFILL_PREFIX + JSON.stringify(autofillValues(fields));
+}
+
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://aivrachychronia.vercel.app").replace(/\/$/, "");
 
 /**
  * Plain JavaScript (kept as text so the bundler leaves it alone). Fields are
@@ -33,6 +40,7 @@ export function autofillPayload(fields: { key: string; value: string | null }[])
 export const AUTOFILL_SOURCE = String.raw`(async function () {
   var PREFIX = ${JSON.stringify(AUTOFILL_PREFIX)};
   var VERSION = ${JSON.stringify(AUTOFILL_VERSION)};
+  var APP = ${JSON.stringify(APP_URL)};
   var $ = window.jQuery;
   var norm = function (s) {
     return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^0-9a-zα-ω]+/g, " ").trim();
@@ -41,17 +49,70 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
   // In the mobile app the values are handed over directly and the result goes back to the app.
   var app = window.ReactNativeWebView;
   var d = window.__AADE_AUTOFILL__;
-  if (!d) {
+  var missingInApp = [];
+  /** Values copied with «Αυτόματη συμπλήρωση» in the app, if the clipboard holds them. */
+  async function fromClipboard(ask) {
     var text = "";
     try { text = (await navigator.clipboard.readText()) || ""; } catch (e) {}
-    if (text.indexOf(PREFIX) !== 0) {
+    if (text.indexOf(PREFIX) !== 0 && ask) {
       text = prompt("Επικολλήστε τα στοιχεία που αντιγράψατε από το Βραχυχρόνια.ai με το κουμπί «Αυτόματη συμπλήρωση»:") || "";
     }
-    if (text.indexOf(PREFIX) !== 0) {
-      alert("Δεν βρέθηκαν στοιχεία δήλωσης. Στο Βραχυχρόνια.ai πατήστε πρώτα «Αυτόματη συμπλήρωση» στην κράτηση.");
-      return;
+    if (text.indexOf(PREFIX) !== 0) return null;
+    try { return JSON.parse(text.slice(PREFIX.length)); } catch (e) { return null; }
+  }
+  var dm = function (iso) { return iso.slice(8, 10) + "/" + iso.slice(5, 7); };
+  var esc = function (t) { return String(t).replace(/[&<>"]/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]; }); };
+  /** Lets the host pick a stay; resolves to the stay, "clipboard", or null (closed). */
+  function pickStay(stays) {
+    return new Promise(function (resolve) {
+      var veil = document.createElement("div");
+      veil.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:rgba(15,23,42,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px;font:16px/1.35 sans-serif";
+      var card = document.createElement("div");
+      card.style.cssText = "background:#fff;color:#1f2937;border-radius:16px;max-width:460px;width:100%;padding:18px;box-shadow:0 10px 40px rgba(0,0,0,.3)";
+      card.innerHTML = '<div style="font-weight:700;font-size:18px;margin-bottom:4px">Ποια κράτηση δηλώνετε;</div><div style="color:#6b7280;font-size:14px;margin-bottom:12px">Βραχυχρόνια.ai · κρατήσεις που δεν έχουν δηλωθεί</div>';
+      var add = function (html, value, plain) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.innerHTML = html;
+        b.style.cssText = "display:block;width:100%;text-align:left;margin:8px 0 0;padding:12px 14px;border-radius:12px;font:inherit;cursor:pointer;" +
+          (plain ? "border:none;background:none;color:#0f766e;font-weight:600" : "border:1px solid #d1d5db;background:#f9fafb;color:#1f2937");
+        b.onclick = function (e) { e.preventDefault(); veil.remove(); resolve(value); };
+        card.appendChild(b);
+      };
+      stays.forEach(function (s) {
+        add("<b>" + esc(s.guestName) + "</b>" + (s.cancelled ? " · ακύρωση" : "") + '<br><span style="color:#4b5563;font-size:14px">' +
+          dm(s.checkIn) + " – " + dm(s.checkOut) + " · " + esc(s.values.platform || "Απευθείας") + " · " + esc(s.propertyName) + "</span>" +
+          (s.missing.length ? '<br><span style="color:#b45309;font-size:13px">Λείπει: ' + esc(s.missing.join(", ")) + "</span>" : ""), s);
+      });
+      add("Άλλη κράτηση (από το πρόχειρο)", "clipboard", true);
+      add("Άκυρο", null, true);
+      veil.appendChild(card);
+      document.body.appendChild(veil);
+    });
+  }
+  // With a key (bookmarks copied after 12/10/2026) the stays come straight from the app.
+  if (!d && window.__AADE_KEY__) {
+    var stays = null;
+    try {
+      var res = await fetch(APP + "/api/aade/pending", { headers: { "x-autofill-key": window.__AADE_KEY__ }, cache: "no-store" });
+      var body = await res.json().catch(function () { return null; });
+      if (res.ok && body) stays = body.data;
+      else if (body && body.error) alert(body.error.message);
+    } catch (e) {}
+    if (stays && stays.length) {
+      var pick = stays.length === 1 ? stays[0] : await pickStay(stays);
+      if (pick === null) return;
+      if (pick === "clipboard") d = await fromClipboard(true);
+      else { d = pick.values; missingInApp = pick.missing; }
+      if (!d) { alert("Δεν βρέθηκαν στοιχεία δήλωσης στο πρόχειρο. Στο Βραχυχρόνια.ai πατήστε «Αυτόματη συμπλήρωση» στην κράτηση."); return; }
+    } else if (stays) {
+      d = await fromClipboard(false);
+      if (!d) { alert("Δεν υπάρχει κράτηση που περιμένει δήλωση στο Βραχυχρόνια.ai. Για άλλη κράτηση, πατήστε «Αυτόματη συμπλήρωση» σε αυτή και ξαναπατήστε τον σελιδοδείκτη."); return; }
     }
-    try { d = JSON.parse(text.slice(PREFIX.length)); } catch (e) { alert("Τα στοιχεία δεν διαβάστηκαν. Αντιγράψτε τα ξανά από την κράτηση."); return; }
+  }
+  if (!d) {
+    d = await fromClipboard(true);
+    if (!d) { alert("Δεν βρέθηκαν στοιχεία δήλωσης. Στο Βραχυχρόνια.ai πατήστε πρώτα «Αυτόματη συμπλήρωση» στην κράτηση."); return; }
   }
 
   var labelOf = function (c) { return (c.id && /_input$/.test(c.id) && document.getElementById(c.id.replace(/_input$/, "_label"))) || null; };
@@ -383,13 +444,13 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
   alert(
     (done.length ? "Συμπληρώθηκαν: " + done.join(", ") + "." : "Δεν συμπληρώθηκε κανένα πεδίο.") +
     (failed.length ? "\nΣυμπληρώστε με το χέρι: " + failed.join(", ") + "." : "") +
+    (missingInApp.length ? "\nΔεν υπάρχουν στο Βραχυχρόνια.ai: " + missingInApp.join(", ") + "." : "") +
     "\n\nΕλέγξτε τα στοιχεία και κάντε εσείς την υποβολή. (έκδοση " + VERSION + ")" +
     (report && copied ? "\n\nΑντιγράφηκαν τεχνικά στοιχεία (χωρίς προσωπικά δεδομένα): στείλτε τα στην υποστήριξη για να διορθωθεί." : "")
   );
   if (report && !copied) prompt("Τεχνικά στοιχεία για την υποστήριξη (αντιγράψτε τα):", report);
 })();`;
 
-const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://aivrachychronia.vercel.app").replace(/\/$/, "");
 export const AUTOFILL_SCRIPT_URL = `${APP_URL}/api/aade/autofill-script`;
 
 /**
@@ -401,3 +462,8 @@ export const AUTOFILL_LOADER = `(function(){var builtIn=function(){${AUTOFILL_SO
 
 /** The bookmark's address. */
 export const AUTOFILL_BOOKMARKLET = `javascript:${encodeURIComponent(AUTOFILL_LOADER)}`;
+
+/** The bookmark's address with a key, so it fetches the stays itself (see /api/aade/pending). */
+export function bookmarkletFor(key: string) {
+  return `javascript:${encodeURIComponent(`window.__AADE_KEY__=${JSON.stringify(key)};${AUTOFILL_LOADER}`)}`;
+}

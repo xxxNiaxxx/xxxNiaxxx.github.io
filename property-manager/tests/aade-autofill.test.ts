@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AUTOFILL_BOOKMARKLET, AUTOFILL_LOADER, AUTOFILL_PREFIX, AUTOFILL_SCRIPT_URL, AUTOFILL_SOURCE, autofillPayload } from "@/lib/aade-autofill";
+import { bookmarkletFor, AUTOFILL_BOOKMARKLET, AUTOFILL_LOADER, AUTOFILL_PREFIX, AUTOFILL_SCRIPT_URL, AUTOFILL_SOURCE, autofillPayload } from "@/lib/aade-autofill";
 
 describe("AADE autofill bookmarklet", () => {
   it("copies only the fillable values, after the prefix", () => {
@@ -36,5 +36,13 @@ describe("autofill script for the mobile app", () => {
     expect(body).toBe(AUTOFILL_SOURCE);
     expect(body).toContain("window.__AADE_AUTOFILL__");
     expect(body).toContain("ReactNativeWebView");
+  });
+
+  it("builds a bookmark that carries its key", () => {
+    const url = bookmarkletFor("afk_abc-123");
+    expect(url.startsWith("javascript:")).toBe(true);
+    const code = decodeURIComponent(url.slice("javascript:".length));
+    expect(code.startsWith('window.__AADE_KEY__="afk_abc-123";')).toBe(true);
+    expect(() => new Function(code)).not.toThrow();
   });
 });
