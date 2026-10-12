@@ -13,7 +13,7 @@
 export const AUTOFILL_PREFIX = "AADE-AUTOFILL:";
 
 /** Shown in the progress badge and the diagnostics, to know which version ran. */
-export const AUTOFILL_VERSION = "2026-10-12.3";
+export const AUTOFILL_VERSION = "2026-10-12.4";
 
 /** Declaration fields the bookmarklet knows how to fill. */
 const AUTOFILL_KEYS = ["checkIn", "checkOut", "amount", "paymentMethod", "platform", "foreigner", "taxId", "guestName", "idNumber", "cancelAmount", "cancelDate", "bookingNumber"];
@@ -55,6 +55,26 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
   }
 
   var isControl = function (c) { return !/^(hidden|button|submit|reset|image)$/i.test(c.type || ""); };
+  // PrimeFaces lists keep the real <select> next to a hidden «_focus» field, and
+  // number fields a hidden «_hinput»: those are helpers, not the field.
+  function real(cs) {
+    var sel = cs.filter(function (c) { return c.tagName === "SELECT"; });
+    if (sel.length === 1) return sel;
+    return cs.filter(function (c) { return !/_(focus|hinput)$/.test(c.id || ""); });
+  }
+  /** The PrimeFaces widget (list, number field…) a field belongs to, when the page uses PrimeFaces. */
+  function widgetFor(c) {
+    var ws = window.PrimeFaces && window.PrimeFaces.widgets;
+    if (!ws) return null;
+    for (var k in ws) {
+      var w = ws[k], el = w && w.jq && w.jq[0];
+      if (el && (el === c || (el.contains && el.contains(c)))) return w;
+    }
+    return null;
+  }
+  // Amounts always come with decimals («425,53»), unlike ΑΦΜ and passport numbers.
+  var isAmount = function (v) { return /^\d+[.,]\d{1,2}$/.test(String(v)); };
+  var toNumber = function (v) { return parseFloat(String(v).replace(",", ".")); };
   function controlFor(label) {
     var want = norm(label);
     var cands = Array.prototype.filter.call(document.querySelectorAll("td,th,label,legend,span,div,p,dt"), function (el) {
@@ -66,7 +86,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
       var el = cands[i];
       if (el.tagName === "LABEL" && el.htmlFor && document.getElementById(el.htmlFor)) return document.getElementById(el.htmlFor);
       for (var node = el, up = 0; node && up < 5; node = node.parentElement, up++) {
-        var cs = Array.prototype.filter.call(node.querySelectorAll("input,select,textarea"), isControl);
+        var cs = real(Array.prototype.filter.call(node.querySelectorAll("input,select,textarea"), isControl));
         if (cs.length === 1) return cs[0];
         if (cs.length > 1) break;
       }
@@ -77,10 +97,36 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     ["input", "keyup", "change"].forEach(function (t) { c.dispatchEvent(new Event(t, { bubbles: true })); });
     if ($) try { $(c).trigger("change"); } catch (e) {}
   }
-  function setText(c, v) {
+  /** Types the value one key at a time, for fields that only accept what is typed. */
+  function typeText(c, v) {
+    c.focus();
+    var desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(c), "value");
+    var put = function (x) { if (desc && desc.set) desc.set.call(c, x); else c.value = x; };
+    put("");
+    String(v).split("").forEach(function (ch) {
+      var o = { key: ch, char: ch, charCode: ch.charCodeAt(0), keyCode: ch.charCodeAt(0), which: ch.charCodeAt(0), bubbles: true, cancelable: true };
+      var before = c.value;
+      var go = c.dispatchEvent(new KeyboardEvent("keydown", o)) && c.dispatchEvent(new KeyboardEvent("keypress", o));
+      if (go && c.value === before) put(before + ch);
+      c.dispatchEvent(new Event("input", { bubbles: true }));
+      c.dispatchEvent(new KeyboardEvent("keyup", o));
+    });
+    c.dispatchEvent(new Event("change", { bubbles: true }));
+    c.blur();
+    return true;
+  }
+  function setText(c, v, attempt) {
     var widget = $ && ($(c).data("kendoDatePicker") || $(c).data("kendoNumericTextBox"));
     var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
     if (widget && m && $(c).data("kendoDatePicker")) { widget.value(new Date(+m[3], +m[2] - 1, +m[1])); widget.trigger("change"); return true; }
+    if (isAmount(v)) {
+      // Number fields (PrimeFaces inputNumber / AutoNumeric) throw away values not set through them.
+      var w = widgetFor(c);
+      try { if (w && typeof w.setValue === "function") { w.setValue(toNumber(v)); fire(c); return true; } } catch (e) {}
+      try { var an = window.AutoNumeric && window.AutoNumeric.getAutoNumericElement && window.AutoNumeric.getAutoNumericElement(c); if (an) { an.set(toNumber(v)); fire(c); return true; } } catch (e) {}
+      try { if ($ && $.fn.autoNumeric && $(c).data("autoNumeric")) { $(c).autoNumeric("set", toNumber(v)); fire(c); return true; } } catch (e) {}
+      if (attempt >= 2) return typeText(c, v);
+    }
     c.focus();
     var desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(c), "value");
     if (desc && desc.set) desc.set.call(c, v); else c.value = v;
@@ -94,17 +140,50 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     return opts.filter(function (o) { return norm(o.text) === want; })[0] ||
       opts.filter(function (o) { var t = norm(o.text); return t && (t.indexOf(want) >= 0 || want.indexOf(t) >= 0); })[0];
   }
+  function click(el) {
+    ["mousedown", "mouseup", "click"].forEach(function (t) { el.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window })); });
+  }
+  /** A visible entry of an open drop-down list with this text. */
+  function listItem(v) {
+    var want = norm(v);
+    return Array.prototype.filter.call(document.querySelectorAll("li,[role=option]"), function (el) {
+      return el.offsetParent !== null && norm(el.getAttribute("data-label") || el.textContent) === want;
+    })[0];
+  }
   async function setSelect(label, c, v) {
+    var w = widgetFor(c);
     var opt = optionFor(c, v);
     if (!opt) {
-      // Some lists load their options only when opened: poke the list, wait, look again.
-      ["focus", "mousedown", "mouseup", "click"].forEach(function (t) { c.dispatchEvent(new MouseEvent(t, { bubbles: true })); });
-      try { c.focus(); } catch (e) {}
+      // Some lists load their options only when opened: open the list, wait, look again.
+      if (w && typeof w.show === "function") { try { w.show(); } catch (e) {} }
+      else {
+        ["focus", "mousedown", "mouseup", "click"].forEach(function (t) { c.dispatchEvent(new MouseEvent(t, { bubbles: true })); });
+        try { c.focus(); } catch (e) {}
+        if (c.offsetParent === null || c.offsetWidth < 2) { var box = c.parentElement; while (box && box.offsetWidth < 2) box = box.parentElement; if (box) click(box); }
+      }
       await settle();
       c = controlFor(label) || c;
+      w = widgetFor(c);
       opt = optionFor(c, v);
-      try { c.blur(); } catch (e) {}
     }
+    if (opt && w && typeof w.selectValue === "function") {
+      // PrimeFaces: choose through the list itself, so its label shows it and the server hears of it.
+      try {
+        w.selectValue(opt.value);
+        if (c.value !== opt.value && typeof w.show === "function") {
+          // The list's entries weren't loaded yet: open it, wait, choose again.
+          w.show();
+          await settle();
+          c = controlFor(label) || c;
+          w = widgetFor(c) || w;
+          w.selectValue(opt.value);
+        }
+        if (typeof w.hide === "function") w.hide();
+        if (c.value === opt.value) return true;
+      } catch (e) {}
+    }
+    var item = listItem(opt ? opt.text : v);
+    if (item) { click(item); return true; }
     if (!opt) return false;
     var widget = $ && ($(c).data("kendoDropDownList") || $(c).data("kendoComboBox"));
     if (widget) { widget.value(opt.value); widget.trigger("change"); }
@@ -116,6 +195,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
   function wanted(c, v) {
     if (c.tagName === "SELECT") { var o = c.options[c.selectedIndex]; var t = o ? norm(o.text) : ""; var w = norm(v); return !!t && (t === w || t.indexOf(w) >= 0 || w.indexOf(t) >= 0); }
     if (c.type === "checkbox") return c.checked === (v === true || v === "Ναι");
+    if (isAmount(v)) return !!c.value && toNumber(String(c.value).replace(/[^0-9,.]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "")) === toNumber(v);
     return norm(c.value) === norm(v);
   }
   /** A value and the other ways the form may want it (amounts: «425,53» or «425.53»). */
@@ -129,7 +209,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     if (c.tagName === "SELECT") return setSelect(label, c, v);
     if (c.type === "checkbox") { c.click(); return true; }
     var vs = variants(v);
-    return setText(c, vs[attempt % vs.length]);
+    return setText(c, vs[attempt % vs.length], attempt);
   }
   function isSet(label, v) {
     var c = controlFor(label);
@@ -209,7 +289,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
   alert(
     (done.length ? "Συμπληρώθηκαν: " + done.join(", ") + "." : "Δεν συμπληρώθηκε κανένα πεδίο.") +
     (failed.length ? "\nΣυμπληρώστε με το χέρι: " + failed.join(", ") + "." : "") +
-    "\n\nΕλέγξτε τα στοιχεία και κάντε εσείς την υποβολή." +
+    "\n\nΕλέγξτε τα στοιχεία και κάντε εσείς την υποβολή. (έκδοση " + VERSION + ")" +
     (report && copied ? "\n\nΑντιγράφηκαν τεχνικά στοιχεία (χωρίς προσωπικά δεδομένα): στείλτε τα στην υποστήριξη για να διορθωθεί." : "")
   );
   if (report && !copied) prompt("Τεχνικά στοιχεία για την υποστήριξη (αντιγράψτε τα):", report);
