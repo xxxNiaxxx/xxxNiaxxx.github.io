@@ -10,7 +10,6 @@ import { AADE_PORTAL_URL } from "@/lib/aade";
 import { autofillPayload } from "@/lib/aade-autofill";
 import { formatDay } from "@/lib/format";
 import { DeclareButton } from "./actions";
-import { DeclarationSteps } from "./declaration-steps";
 
 interface Field { key: string; label: string; value: string | null; optional?: boolean; hint?: string; fix?: "guest" | "reservation" | "property" }
 
@@ -134,7 +133,6 @@ export function DeclarationCard({
         >
           <Wand2 /> Αυτόματη συμπλήρωση
         </Button>
-        <DeclarationSteps fields={form.fields} reservationId={reservationId} declared={declared} canDeclare={canDeclare} fixHref={fixHref} />
         <Button
           size="sm"
           variant="ghost"
