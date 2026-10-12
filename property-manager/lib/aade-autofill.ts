@@ -13,7 +13,7 @@
 export const AUTOFILL_PREFIX = "AADE-AUTOFILL:";
 
 /** Shown in the progress badge and the diagnostics, to know which version ran. */
-export const AUTOFILL_VERSION = "2026-10-12.8";
+export const AUTOFILL_VERSION = "2026-10-12.9";
 
 /** Declaration fields the bookmarklet knows how to fill. */
 const AUTOFILL_KEYS = ["checkIn", "checkOut", "amount", "paymentMethod", "platform", "foreigner", "taxId", "guestName", "idNumber", "cancelAmount", "cancelDate", "bookingNumber"];
@@ -68,11 +68,16 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
   function widgetFor(c) {
     var ws = window.PrimeFaces && window.PrimeFaces.widgets;
     if (!ws) return null;
+    // The field's own widget has the field's id without «_input»; failing that, the innermost
+    // widget around it (not a panel or fieldset that holds the whole section).
+    var base = String(c.id || "").replace(/_(input|hinput|focus)$/, ""), best = null, bestEl = null;
     for (var k in ws) {
       var w = ws[k], el = w && w.jq && w.jq[0];
-      if (el && (el === c || (el.contains && el.contains(c)))) return w;
+      if (!el || !(el === c || (el.contains && el.contains(c)))) continue;
+      if (base && (w.id === base || el.id === base)) return w;
+      if (!bestEl || bestEl.contains(el)) { best = w; bestEl = el; }
     }
-    return null;
+    return best && bestEl.querySelectorAll("input,select,textarea").length <= 3 ? best : null;
   }
   // Amounts always come with decimals («425,53»), unlike ΑΦΜ and passport numbers.
   var isAmount = function (v) { return /^\d+[.,]\d{1,2}$/.test(String(v)); };
