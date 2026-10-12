@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/misc";
+import { AUTOFILL_VERSION } from "@/lib/aade-autofill";
 import { getPageContext } from "@/lib/auth/page";
 import { BookmarkletLink, CopyCodeButton } from "./bookmarklet-link";
 
@@ -85,6 +86,15 @@ export default async function AutofillPage() {
       </Card>
 
       <Card className="order-3 grid gap-2 p-5 text-sm">
+        <h2 className="text-base font-semibold">Έκδοση</h2>
+        <p className="text-muted-foreground">
+          Τρέχουσα έκδοση: <strong className="text-foreground">{AUTOFILL_VERSION}</strong>. Το μήνυμα στο τέλος της συμπλήρωσης γράφει ποια
+          έκδοση έτρεξε. Αν γράφει παλαιότερη, ξαναβάλτε τον σελιδοδείκτη (βήματα «μία φορά» παραπάνω): η σελίδα της ΑΑΔΕ δεν επιτρέπει
+          στον σελιδοδείκτη να ενημερώνεται μόνος του.
+        </p>
+      </Card>
+
+      <Card className="order-4 grid gap-2 p-5 text-sm">
         <h2 className="text-base font-semibold">Ασφάλεια</h2>
         <p className="text-muted-foreground">
           Το κουμπί δουλεύει μόνο μέσα στον δικό σας browser: γράφει στη φόρμα τα στοιχεία που αντιγράψατε. Δεν στέλνει τίποτα πουθενά, δεν
