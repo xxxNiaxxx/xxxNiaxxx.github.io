@@ -1,7 +1,6 @@
 import type { Prisma, TaxFilingKind } from "@prisma/client";
 import { z } from "zod";
 import { AADE_PAYMENT_OPTION, defaultPaymentMethod, isGreece, type PaymentMethod, PLATFORM_NAMES } from "@/lib/aade";
-import { type DeclarationField } from "@/lib/declaration-steps";
 import { RESERVATION_SOURCES } from "@/lib/reservation-sources";
 import { db } from "@/lib/db";
 import { addDaysISO, dateToISO, diffDaysISO, isoToDate, todayISO } from "@/lib/dates";
@@ -172,7 +171,17 @@ export type StayTaxInfo = ReturnType<typeof stayTaxInfo>;
 
 const dmy = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 
-export type { DeclarationField };
+export interface DeclarationField {
+  key: string;
+  label: string;
+  value: string | null;
+  /** Left empty on the AADE form when there is no value. */
+  optional?: boolean;
+  /** Shown instead of a value when an optional field is empty. */
+  hint?: string;
+  /** Where a missing value is filled in. */
+  fix?: "guest" | "reservation" | "property";
+}
 
 /**
  * The values to type into the AADE stay declaration, with the AADE form's
