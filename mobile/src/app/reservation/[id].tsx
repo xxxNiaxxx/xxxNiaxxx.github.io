@@ -252,11 +252,12 @@ function DeclarationCard({ tax, reservationId, guestId, onChange }: { tax: StayT
           {f.value ? <Ionicons name="copy-outline" size={18} color={colors.accent} /> : null}
         </Pressable>
       ))}
-      <Text style={[styles.rowSub, { marginTop: 4 }]}>Πατήστε ένα στοιχείο για αντιγραφή.</Text>
+      <Text style={[styles.rowSub, { marginTop: 4 }]}>Πατήστε ένα στοιχείο για αντιγραφή, ή «Αυτόματη συμπλήρωση ΑΑΔΕ» για να ανοίξει η ΑΑΔΕ εδώ και να γεμίσει μόνη της η φόρμα.</Text>
       <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
         {form.fields.some((f) => f.fix === "guest" && !f.value) && (
           <Button small variant="outline" title="Στοιχεία επισκέπτη" onPress={() => router.push(`/guest/edit/${guestId}`)} />
         )}
+        <Button small title="✨ Αυτόματη συμπλήρωση ΑΑΔΕ" onPress={() => router.push(`/declare/${reservationId}`)} />
         <Button small variant="outline" title="Άνοιγμα ΑΑΔΕ" onPress={() => Linking.openURL(AADE_PORTAL_URL)} />
         {declared ? (
           <Button small variant="ghost" title="Αναίρεση" loading={pending} onPress={() => setStatus("PENDING")} />

@@ -6,6 +6,8 @@
  * asks for them to be pasted), finds each field by its label and fills it in.
  * It never submits and never sends anything anywhere: the host checks the
  * form and submits it. The TAXISnet login stays between the host and AADE.
+ * The mobile app loads the same script from /api/aade/autofill-script and runs
+ * it in its in-app browser with the values set in window.__AADE_AUTOFILL__.
  */
 
 export const AUTOFILL_PREFIX = "AADE-AUTOFILL:";
@@ -32,17 +34,21 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^0-9a-zα-ω]+/g, " ").trim();
   };
   var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
-  var text = "";
-  try { text = (await navigator.clipboard.readText()) || ""; } catch (e) {}
-  if (text.indexOf(PREFIX) !== 0) {
-    text = prompt("Επικολλήστε τα στοιχεία που αντιγράψατε από το Βραχυχρόνια.ai με το κουμπί «Αυτόματη συμπλήρωση»:") || "";
+  // In the mobile app the values are handed over directly and the result goes back to the app.
+  var app = window.ReactNativeWebView;
+  var d = window.__AADE_AUTOFILL__;
+  if (!d) {
+    var text = "";
+    try { text = (await navigator.clipboard.readText()) || ""; } catch (e) {}
+    if (text.indexOf(PREFIX) !== 0) {
+      text = prompt("Επικολλήστε τα στοιχεία που αντιγράψατε από το Βραχυχρόνια.ai με το κουμπί «Αυτόματη συμπλήρωση»:") || "";
+    }
+    if (text.indexOf(PREFIX) !== 0) {
+      alert("Δεν βρέθηκαν στοιχεία δήλωσης. Στο Βραχυχρόνια.ai πατήστε πρώτα «Αυτόματη συμπλήρωση» στην κράτηση.");
+      return;
+    }
+    try { d = JSON.parse(text.slice(PREFIX.length)); } catch (e) { alert("Τα στοιχεία δεν διαβάστηκαν. Αντιγράψτε τα ξανά από την κράτηση."); return; }
   }
-  if (text.indexOf(PREFIX) !== 0) {
-    alert("Δεν βρέθηκαν στοιχεία δήλωσης. Στο Βραχυχρόνια.ai πατήστε πρώτα «Αυτόματη συμπλήρωση» στην κράτηση.");
-    return;
-  }
-  var d;
-  try { d = JSON.parse(text.slice(PREFIX.length)); } catch (e) { alert("Τα στοιχεία δεν διαβάστηκαν. Αντιγράψτε τα ξανά από την κράτηση."); return; }
 
   var isControl = function (c) { return !/^(hidden|button|submit|reset|image)$/i.test(c.type || ""); };
   function controlFor(label) {
@@ -125,6 +131,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     ["Ημερομηνία ακύρωσης", d.cancelDate],
     ["Σημειώσεις", d.bookingNumber ? "Αρ. κράτησης " + d.bookingNumber : null],
   ]);
+  if (app) { app.postMessage(JSON.stringify({ type: "aade-autofill", done: done, failed: failed })); return; }
   alert(
     (done.length ? "Συμπληρώθηκαν: " + done.join(", ") + "." : "Δεν συμπληρώθηκε κανένα πεδίο.") +
     (failed.length ? "\nΣυμπληρώστε με το χέρι: " + failed.join(", ") + "." : "") +
