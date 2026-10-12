@@ -31,6 +31,8 @@ export async function updateOrganization(ctx: OrgContext, input: unknown) {
 export async function signOutEverywhere(userId: string) {
   assertNotDemo((await db.user.findUnique({ where: { id: userId }, select: { email: true } }))?.email);
   await db.user.update({ where: { id: userId }, data: { sessionVersion: { increment: 1 } } });
+  // The «Συμπλήρωση ΑΑΔΕ» bookmarks carry their own keys: those stop too.
+  await db.autofillKey.deleteMany({ where: { userId } });
 }
 
 /** Records that the user accepted the current terms of service and data processing agreement. */
@@ -54,4 +56,5 @@ export async function changePassword(userId: string, input: unknown) {
     throw new AppError("VALIDATION", "Ο τωρινός κωδικός δεν είναι σωστός", [{ path: "currentPassword", message: "Λάθος κωδικός" }]);
   }
   await db.user.update({ where: { id: userId }, data: { passwordHash: await bcrypt.hash(data.newPassword, 12), sessionVersion: { increment: 1 } } });
+  await db.autofillKey.deleteMany({ where: { userId } });
 }

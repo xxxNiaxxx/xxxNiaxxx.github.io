@@ -25,6 +25,7 @@ import {
   type PropertyKind,
   type TaxRegime,
 } from "@/lib/tax/gr";
+import { autofillValues } from "@/lib/aade-autofill";
 import { label } from "@/lib/labels";
 import { toNumber } from "./serializers";
 
@@ -518,4 +519,44 @@ export async function getStayTax(ctx: OrgContext, reservationId: string, now = n
   const { effectiveTaxRate } = await getAnnualReport(ctx, year, 0, now);
   const info = stayTaxInfo(r, regime, todayISO(now), effectiveTaxRate, paymentFeeRates);
   return { regime, commissionRate: commissionRates[r.source] ?? 0, ...info, declarationForm: declarationForm(r, info) };
+}
+
+/**
+ * The stays the «Συμπλήρωση ΑΑΔΕ» bookmark offers: still to be declared and
+ * already started (a stay can be declared from the day of arrival), the most
+ * recent first, each with the values for the AADE form.
+ */
+export async function declarationsToFill(ctx: OrgContext, now = new Date(), limit = 8) {
+  const { regime, paymentFeeRates } = await getTaxContext(ctx);
+  const today = todayISO(now);
+  const rows = await db.reservation.findMany({
+    where: {
+      organizationId: ctx.organizationId,
+      declarationStatus: "PENDING",
+      complimentary: false,
+      status: { in: ["CONFIRMED", "COMPLETED", "CANCELLED"] },
+      checkIn: { lte: isoToDate(today) },
+    },
+    include: stayInclude,
+    orderBy: [{ checkIn: "desc" }, { createdAt: "desc" }],
+    take: limit * 3,
+  });
+  return rows
+    .map((r) => {
+      const info = stayTaxInfo(r, regime, today, undefined, paymentFeeRates);
+      return { info, form: declarationForm(r, info) };
+    })
+    .filter(({ info }) => info.declaration.required)
+    .slice(0, limit)
+    .map(({ info, form }) => ({
+      reservationId: info.reservationId,
+      guestName: info.guestName.replace(/\s+—$/, ""),
+      propertyName: info.propertyName,
+      checkIn: info.checkIn,
+      checkOut: info.checkOut,
+      source: info.source,
+      cancelled: form.cancelled,
+      missing: form.missing,
+      values: autofillValues(form.fields),
+    }));
 }

@@ -30,6 +30,7 @@ model User {
   updatedAt       DateTime  @updatedAt
 
   memberships     OrganizationMember[]
+  autofillKeys    AutofillKey[]
   assignedTasks   Task[]               @relation("TaskAssignee")
   conversations   AIConversation[]
   proposedActions AIAction[]           @relation("AIActionCreatedBy")
@@ -41,6 +42,22 @@ enum Role {
   OWNER
   ADMIN
   MEMBER
+}
+
+/// Key built into a «Συμπλήρωση ΑΑΔΕ» bookmark: lets the bookmark read the
+/// stays waiting for a declaration, and nothing else. Only a hash is stored.
+model AutofillKey {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  keyHash        String    @unique
+  createdAt      DateTime  @default(now())
+  lastUsedAt     DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// Link that lets someone join an organization. Only a hash of the token is stored.
@@ -116,6 +133,7 @@ model Organization {
   aiConversations   AIConversation[]
   aiActions         AIAction[]
   taxFilings        TaxFiling[]
+  autofillKeys      AutofillKey[]
   aiMemories        AIMemory[]
   invitations       Invitation[]
   calendarFeeds     CalendarFeed[]
