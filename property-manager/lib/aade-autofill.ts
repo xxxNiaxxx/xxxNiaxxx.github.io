@@ -96,14 +96,38 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     fire(c);
     return true;
   }
+  function wanted(c, v) {
+    if (c.tagName === "SELECT") { var o = c.options[c.selectedIndex]; var t = o ? norm(o.text) : ""; var w = norm(v); return !!t && (t === w || t.indexOf(w) >= 0 || w.indexOf(t) >= 0); }
+    if (c.type === "checkbox") return c.checked === (v === true || v === "Ναι");
+    return norm(c.value) === norm(v);
+  }
   function set(label, v) {
-    if (v == null || v === "") return null;
     var c = controlFor(label);
-    if (!c) return false;
-    if (c.disabled || c.readOnly) return false;
+    if (!c || c.disabled || c.readOnly) return false;
+    if (wanted(c, v)) return true;
     if (c.tagName === "SELECT") return setSelect(c, v);
-    if (c.type === "checkbox") { var on = v === true || v === "Ναι"; if (c.checked !== on) c.click(); return true; }
+    if (c.type === "checkbox") { c.click(); return true; }
     return setText(c, v);
+  }
+  function isSet(label, v) {
+    var c = controlFor(label);
+    return !!c && wanted(c, v);
+  }
+  /*
+   * The AADE form reloads parts of itself from the server when some fields
+   * change (e.g. the dates or «Αλλοδαπός"), which wipes values written in the
+   * meantime. So: one field at a time, wait until the page has stopped
+   * changing, and at the end go over everything again and re-fill what was lost.
+   */
+  function settle() {
+    return new Promise(function (resolve) {
+      var quiet, start = Date.now();
+      var obs = new MutationObserver(function () { clearTimeout(quiet); quiet = setTimeout(finish, 600); });
+      function finish() { obs.disconnect(); resolve(); }
+      obs.observe(document.body, { childList: true, subtree: true, attributes: true });
+      quiet = setTimeout(finish, 600);
+      setTimeout(function () { if (Date.now() - start >= 6000) finish(); }, 6000);
+    });
   }
 
   var steps = [
@@ -113,24 +137,32 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     ["Τρόπος πληρωμής μισθώματος", d.paymentMethod],
     ["Ηλεκτρονική πλατφόρμα", d.platform],
     ["Αλλοδαπός", d.foreigner],
-  ];
-  var done = [], failed = [];
-  var run = function (list) {
-    list.forEach(function (s) {
-      var r = set(s[0], s[1]);
-      if (r === true) done.push(s[0]); else if (r === false) failed.push(s[0]);
-    });
-  };
-  run(steps);
-  await sleep(400);
-  run(d.foreigner === "Ναι"
+  ].concat(d.foreigner === "Ναι"
     ? [["Ονοματεπώνυμο μισθωτή", d.guestName], ["Αρ. Διαβατηρίου", d.idNumber]]
-    : [["ΑΦΜ", d.taxId]]);
-  run([
+    : [["ΑΦΜ", d.taxId]]
+  ).concat([
     ["Συνολικό εισπραχθέν ποσό", d.cancelAmount],
     ["Ημερομηνία ακύρωσης", d.cancelDate],
     ["Σημειώσεις", d.bookingNumber ? "Αρ. κράτησης " + d.bookingNumber : null],
-  ]);
+  ]).filter(function (s) { return s[1] != null && s[1] !== ""; });
+
+  var badge = document.createElement("div");
+  badge.textContent = "Βραχυχρόνια.ai: συμπλήρωση…";
+  badge.style.cssText = "position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:2147483647;background:#0f766e;color:#fff;padding:8px 14px;border-radius:999px;font:600 14px sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.25)";
+  document.body.appendChild(badge);
+
+  for (var pass = 0; pass < 3; pass++) {
+    var missing = steps.filter(function (s) { return !isSet(s[0], s[1]); });
+    if (!missing.length) break;
+    for (var k = 0; k < missing.length; k++) {
+      badge.textContent = "Βραχυχρόνια.ai: " + missing[k][0] + "…";
+      if (set(missing[k][0], missing[k][1])) await settle();
+    }
+    await settle();
+  }
+  badge.remove();
+  var done = [], failed = [];
+  steps.forEach(function (s) { (isSet(s[0], s[1]) ? done : failed).push(s[0]); });
   if (app) { app.postMessage(JSON.stringify({ type: "aade-autofill", done: done, failed: failed })); return; }
   alert(
     (done.length ? "Συμπληρώθηκαν: " + done.join(", ") + "." : "Δεν συμπληρώθηκε κανένα πεδίο.") +
