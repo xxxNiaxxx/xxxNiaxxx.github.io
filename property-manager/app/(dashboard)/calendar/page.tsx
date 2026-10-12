@@ -1,12 +1,14 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MonthGrid } from "@/components/calendar/month-grid";
 import { CalendarLegend, Timeline } from "@/components/calendar/timeline";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FilterSelect } from "@/components/ui/filters";
 import { EmptyState, LinkTabs, PageHeader } from "@/components/ui/misc";
 import { getPageContext } from "@/lib/auth/page";
+import { monthGrid } from "@/lib/calendar-grid";
 import { addDaysISO, isISODate, monthRange, todayISO } from "@/lib/dates";
 import { formatDay } from "@/lib/format";
 import { getCalendar } from "@/lib/services/calendar";
@@ -22,13 +24,17 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const { ctx } = await getPageContext();
   const sp = await searchParams;
   const today = todayISO();
-  const view = sp.view === "week" ? "week" : "month";
+  // «Μήνας»: a classic month calendar (default) · «Ανά ακίνητο»: properties × days lines · «Εβδομάδα».
+  const view = sp.view === "week" ? "week" : sp.view === "timeline" ? "timeline" : "month";
   const anchor = sp.date && isISODate(sp.date) ? sp.date : today;
+  const grid = monthGrid(anchor);
   const range = view === "week" ? { from: startOfWeek(anchor), to: addDaysISO(startOfWeek(anchor), 7) } : monthRange(anchor);
   const prev = view === "week" ? addDaysISO(range.from, -7) : monthRange(addDaysISO(range.from, -1)).from;
   const next = range.to;
-  const data = await getCalendar(ctx, { ...range, propertyId: sp.propertyId });
-  const all = sp.propertyId ? await getCalendar(ctx, range) : data;
+  // The month grid also shows the days of the neighbouring months that complete its weeks.
+  const fetchRange = view === "month" ? { from: grid.from, to: grid.to } : range;
+  const data = await getCalendar(ctx, { ...fetchRange, propertyId: sp.propertyId });
+  const all = sp.propertyId ? await getCalendar(ctx, fetchRange) : data;
 
   const href = (updates: Record<string, string | undefined>) => {
     const q = new URLSearchParams(Object.entries({ ...sp, ...updates }).filter(([, v]) => v) as [string, string][]);
@@ -51,14 +57,25 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <FilterSelect param="propertyId" label="Όλα τα ακίνητα" options={all.properties.map((p) => ({ value: p.id, label: p.name }))} />
-          <LinkTabs active={view} tabs={[{ key: "month", label: "Μήνας", href: href({ view: "month" }) }, { key: "week", label: "Εβδομάδα", href: href({ view: "week" }) }]} />
+          <LinkTabs
+            active={view}
+            tabs={[
+              { key: "month", label: "Μήνας", href: href({ view: undefined }) },
+              { key: "timeline", label: "Ανά ακίνητο", href: href({ view: "timeline" }) },
+              { key: "week", label: "Εβδομάδα", href: href({ view: "week" }) },
+            ]}
+          />
         </div>
       </div>
       <Card className="overflow-hidden">
         {data.properties.length === 0 ? (
           <EmptyState title="Δεν υπάρχουν ακίνητα ακόμη" description="Προσθέστε ακίνητο για να γεμίσει το ημερολόγιο." action={<Button asChild><Link href="/properties">Μετάβαση στα ακίνητα</Link></Button>} />
         ) : (
-          <Timeline data={data} today={today} compact={view === "month"} />
+          view === "month" ? (
+            <MonthGrid data={data} weeks={grid.weeks} month={grid.month} today={today} propertyId={sp.propertyId} />
+          ) : (
+            <Timeline data={data} today={today} compact={view === "timeline"} />
+          )
         )}
       </Card>
       <div className="mt-4">
