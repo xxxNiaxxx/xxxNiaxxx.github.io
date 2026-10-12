@@ -4,7 +4,7 @@ import { APP_NAME, SUPPORT_EMAIL } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Πολιτική απορρήτου · Privacy policy" };
 
-const LAST_UPDATED = "2026-10-10";
+const LAST_UPDATED = "2026-10-12";
 
 function Contact() {
   return SUPPORT_EMAIL ? <a className="text-accent underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> : <span>τα στοιχεία επικοινωνίας στη σελίδα της εφαρμογής στο Google Play</span>;
@@ -42,6 +42,18 @@ export default function PrivacyPage() {
       </ul>
       <p>Δεν πουλάμε και δεν μοιραζόμαστε δεδομένα με τρίτους για διαφημιστικούς σκοπούς.</p>
 
+      <h2 id="extension">Επέκταση browser και σελιδοδείκτης «Δήλωση ΑΑΔΕ»</h2>
+      <p>
+        Η επέκταση «{APP_NAME} – Δήλωση ΑΑΔΕ» (Chrome/Edge) και ο σελιδοδείκτης «Συμπλήρωση ΑΑΔΕ» συμπληρώνουν τη φόρμα δήλωσης
+        βραχυχρόνιας διαμονής στον ιστότοπο της ΑΑΔΕ (www1.gsis.gr) με τα στοιχεία κρατήσεων που έχετε ήδη καταχωρίσει στο {APP_NAME}.
+      </p>
+      <ul>
+        <li><strong>Τι διαβάζουν από το {APP_NAME}:</strong> μόνο τις κρατήσεις του οργανισμού σας που έχουν ξεκινήσει και δεν έχουν δηλωθεί, με τα στοιχεία της δήλωσης (ημερομηνίες, μίσθωμα, τρόπος πληρωμής, πλατφόρμα, όνομα και ΑΦΜ ή αριθμός διαβατηρίου/ταυτότητας του επισκέπτη, αριθμός κράτησης).</li>
+        <li><strong>Πώς:</strong> με ένα κλειδί που δημιουργείτε εσείς με το «Σύνδεση επέκτασης» ή το «Αντιγραφή κουμπιού». Αποθηκεύεται μόνο στον browser σας· εμείς κρατάμε μόνο ένα hash του και την ώρα της τελευταίας χρήσης. Το κλειδί δεν δίνει πρόσβαση σε τίποτε άλλο και απενεργοποιείται από τη σελίδα «Αυτόματη συμπλήρωση», με την «Αποσύνδεση από παντού» ή με αλλαγή κωδικού.</li>
+        <li><strong>Τι κάνουν στη σελίδα της ΑΑΔΕ:</strong> γράφουν αυτά τα στοιχεία στα πεδία της φόρμας. Δεν στέλνουν πουθενά τίποτα από τη σελίδα της ΑΑΔΕ, δεν διαβάζουν και δεν αποθηκεύουν τους κωδικούς σας στο TAXISnet και δεν πατούν ποτέ υποβολή: την υποβολή την κάνετε εσείς.</li>
+        <li>Η επέκταση δεν συλλέγει ιστορικό περιήγησης, δεν τρέχει σε άλλους ιστότοπους (μόνο στις σελίδες βραχυχρόνιας μίσθωσης της ΑΑΔΕ και στη σελίδα σύνδεσης του {APP_NAME}) και δεν περιέχει διαφημίσεις ή εργαλεία παρακολούθησης. Τα δεδομένα δεν πωλούνται και δεν χρησιμοποιούνται για άλλο σκοπό.</li>
+      </ul>
+
       <h2>Πού αποθηκεύονται</h2>
       <p>
         Σε διακομιστές και βάση δεδομένων παρόχων φιλοξενίας (cloud): Vercel και Neon, σε διακομιστές στη Φρανκφούρτη (ΕΕ). Όλη η επικοινωνία γίνεται κρυπτογραφημένα
@@ -69,7 +81,11 @@ export default function PrivacyPage() {
         reservations, guests, tasks, finances, AI chats). Guest data is processed on your behalf. When you ask the AI
         assistant a question, relevant data from your organization may be sent to the configured AI provider solely to
         generate the answer. Guests who complete online check-in provide their name, contact details and tax/passport
-        number to the host, who is the controller of that data. No ads, no tracking, no sale of data. Data is kept until you delete your account, which you can
+        number to the host, who is the controller of that data. The «{APP_NAME} – Δήλωση ΑΑΔΕ» browser extension and the bookmark
+        only read the organization&apos;s started, undeclared stays (dates, rent, payment method, platform, guest name and tax or ID number, booking
+        number) with a key the user creates, stored only in the browser (the server keeps a hash), and write them into the AADE declaration
+        form on www1.gsis.gr. They send nothing from the AADE page, never read TAXISnet credentials, never submit, and run on no other sites.
+        No ads, no tracking, no sale of data. Data is kept until you delete your account, which you can
         do in the app at any time (<Link className="text-accent underline" href="/account-deletion">account deletion</Link>). Contact: <Contact />.
       </p>
     </>
