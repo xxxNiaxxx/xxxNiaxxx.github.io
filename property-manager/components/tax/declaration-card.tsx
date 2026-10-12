@@ -10,6 +10,7 @@ import { AADE_PORTAL_URL } from "@/lib/aade";
 import { autofillPayload } from "@/lib/aade-autofill";
 import { formatDay } from "@/lib/format";
 import { DeclareButton } from "./actions";
+import { DeclarationSteps } from "./declaration-steps";
 
 interface Field { key: string; label: string; value: string | null; optional?: boolean; hint?: string; fix?: "guest" | "reservation" | "property" }
 
@@ -108,9 +109,9 @@ export function DeclarationCard({
         ))}
       </ul>
 
-      <p className="hidden text-xs text-muted-foreground md:block">
-        Στον υπολογιστή: «Αυτόματη συμπλήρωση» και μετά ο σελιδοδείκτης «Συμπλήρωση ΑΑΔΕ» στη φόρμα της ΑΑΔΕ ·{" "}
-        <Link href="/tax/autofill" className="underline underline-offset-4">πώς το βάζω</Link>
+      <p className="text-xs text-muted-foreground">
+        «Αυτόματη συμπλήρωση» και μετά, στη φόρμα της ΑΑΔΕ, ο σελιδοδείκτης «Συμπλήρωση ΑΑΔΕ» ·{" "}
+        <Link href="/tax/autofill" className="underline underline-offset-4">πώς τον βάζω (κινητό ή υπολογιστής)</Link>
       </p>
 
       {form.missing.length > 0 && (
@@ -126,11 +127,14 @@ export function DeclarationCard({
           variant="outline"
           onClick={async () => {
             if (await copyText(autofillPayload(form.fields)))
-              toast.success("Έτοιμο για αυτόματη συμπλήρωση", { description: "Στη φόρμα της ΑΑΔΕ πατήστε τον σελιδοδείκτη «Συμπλήρωση ΑΑΔΕ»." });
+              toast.success("Έτοιμο για αυτόματη συμπλήρωση", {
+                description: "Στη φόρμα της ΑΑΔΕ πατήστε τον σελιδοδείκτη «Συμπλήρωση ΑΑΔΕ» (στο κινητό: γράψτε «Συμπλήρωση» στη γραμμή διευθύνσεων).",
+              });
           }}
         >
           <Wand2 /> Αυτόματη συμπλήρωση
         </Button>
+        <DeclarationSteps fields={form.fields} reservationId={reservationId} declared={declared} canDeclare={canDeclare} fixHref={fixHref} />
         <Button
           size="sm"
           variant="ghost"
