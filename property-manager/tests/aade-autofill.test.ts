@@ -21,3 +21,15 @@ describe("AADE autofill bookmarklet", () => {
     expect(AUTOFILL_SOURCE).not.toMatch(/\.submit\(|requestSubmit/);
   });
 });
+
+describe("autofill script for the mobile app", () => {
+  it("is served as JavaScript and takes values handed over by the app", async () => {
+    const { GET } = await import("@/app/api/aade/autofill-script/route");
+    const res = GET();
+    expect(res.headers.get("content-type")).toContain("javascript");
+    const body = await res.text();
+    expect(body).toBe(AUTOFILL_SOURCE);
+    expect(body).toContain("window.__AADE_AUTOFILL__");
+    expect(body).toContain("ReactNativeWebView");
+  });
+});

@@ -28,6 +28,7 @@ function RootNavigator() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="reservation/[id]" options={{ title: "Κράτηση" }} />
+      <Stack.Screen name="declare/[id]" options={{ title: "Δήλωση στην ΑΑΔΕ" }} />
       <Stack.Screen name="delete-account" options={{ title: "Διαγραφή λογαριασμού", presentation: "modal" }} />
     </Stack>
   );
