@@ -37,10 +37,11 @@ const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://aivrachychronia.ver
  * found by the start of their Greek label, as on the AADE form, and filled in
  * the form's order; «Αλλοδαπός» is ticked before the passport field it enables.
  */
-export const AUTOFILL_SOURCE = String.raw`(async function () {
+function autofillSource(app: string) {
+  return String.raw`(async function () {
   var PREFIX = ${JSON.stringify(AUTOFILL_PREFIX)};
   var VERSION = ${JSON.stringify(AUTOFILL_VERSION)};
-  var APP = ${JSON.stringify(APP_URL)};
+  var APP = ${JSON.stringify(app)};
   var $ = window.jQuery;
   var norm = function (s) {
     return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^0-9a-zα-ω]+/g, " ").trim();
@@ -450,6 +451,13 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
   );
   if (report && !copied) prompt("Τεχνικά στοιχεία για την υποστήριξη (αντιγράψτε τα):", report);
 })();`;
+}
+
+/** The script for this deployment (the bookmark and the mobile app load it from here). */
+export const AUTOFILL_SOURCE = autofillSource(APP_URL);
+
+/** The live app, for the browser extension (built on a developer's machine, not on the server). */
+const PRODUCTION_APP_URL = "https://aivrachychronia.vercel.app";
 
 export const AUTOFILL_SCRIPT_URL = `${APP_URL}/api/aade/autofill-script`;
 
@@ -466,4 +474,22 @@ export const AUTOFILL_BOOKMARKLET = `javascript:${encodeURIComponent(AUTOFILL_LO
 /** The bookmark's address with a key, so it fetches the stays itself (see /api/aade/pending). */
 export function bookmarkletFor(key: string) {
   return `javascript:${encodeURIComponent(`window.__AADE_KEY__=${JSON.stringify(key)};${AUTOFILL_LOADER}`)}`;
+}
+
+/**
+ * The autofill script as the browser extension bundles it (stores don't allow
+ * code loaded from the internet): defines window.__vrachyAutofill(values).
+ */
+export function extensionAutofillScript() {
+  return `// Generated from property-manager/lib/aade-autofill.ts by \`npm run build:extension\`. Do not edit.
+window.__vrachyAutofill = function (values) {
+  window.__AADE_AUTOFILL__ = values;
+  ${autofillSource(PRODUCTION_APP_URL)}
+};
+`;
+}
+
+/** The extension's version (Chrome wants up to four dot-separated numbers): 2026-10-12.10 → 2026.10.12.10. */
+export function extensionVersion() {
+  return AUTOFILL_VERSION.replace(/-/g, ".");
 }

@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { bookmarkletFor, AUTOFILL_BOOKMARKLET, AUTOFILL_LOADER, AUTOFILL_PREFIX, AUTOFILL_SCRIPT_URL, AUTOFILL_SOURCE, autofillPayload } from "@/lib/aade-autofill";
+import { bookmarkletFor, extensionAutofillScript, extensionVersion, AUTOFILL_BOOKMARKLET, AUTOFILL_LOADER, AUTOFILL_PREFIX, AUTOFILL_SCRIPT_URL, AUTOFILL_SOURCE, autofillPayload } from "@/lib/aade-autofill";
 
 describe("AADE autofill bookmarklet", () => {
   it("copies only the fillable values, after the prefix", () => {
@@ -44,5 +46,13 @@ describe("autofill script for the mobile app", () => {
     const code = decodeURIComponent(url.slice("javascript:".length));
     expect(code.startsWith('window.__AADE_KEY__="afk_abc-123";')).toBe(true);
     expect(() => new Function(code)).not.toThrow();
+  });
+
+  it("the browser extension carries the current autofill script and version", () => {
+    // Out of date? Run `npm run build:extension`.
+    const ext = join(process.cwd(), "..", "extension");
+    expect(readFileSync(join(ext, "autofill.js"), "utf8")).toBe(extensionAutofillScript());
+    expect(JSON.parse(readFileSync(join(ext, "manifest.json"), "utf8")).version).toBe(extensionVersion());
+    expect(extensionVersion()).toMatch(/^\d+(\.\d+){1,3}$/);
   });
 });

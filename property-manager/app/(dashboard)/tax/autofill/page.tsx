@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/misc";
 import { AUTOFILL_VERSION } from "@/lib/aade-autofill";
 import { getPageContext } from "@/lib/auth/page";
 import { BookmarkletLink, CopyCodeButton, RevokeBookmarksButton } from "./bookmarklet-link";
+import { ExtensionConnect } from "./extension-connect";
 
 export const metadata: Metadata = { title: "Αυτόματη συμπλήρωση ΑΑΔΕ" };
 
@@ -23,10 +24,19 @@ export default async function AutofillPage() {
       <PageHeader
         back={{ href: "/tax", label: "Φορολογικά" }}
         title="Αυτόματη συμπλήρωση ΑΑΔΕ"
-        description="Ένα κουμπί «Συμπλήρωση ΑΑΔΕ» στους σελιδοδείκτες σας: στη φόρμα της ΑΑΔΕ φέρνει μόνο του την κράτηση από το Βραχυχρόνια.ai και γεμίζει τα πεδία. Το βάζετε μία φορά."
+        description="Η φόρμα της δήλωσης στην ΑΑΔΕ γεμίζει μόνη της με την κράτηση από το Βραχυχρόνια.ai: στον υπολογιστή με την επέκταση, στο κινητό με τον σελιδοδείκτη «Συμπλήρωση ΑΑΔΕ». Το ρυθμίζετε μία φορά."
       />
 
-      {/* Phone first on small screens, computer first on large ones. */}
+      {/* Phone first on small screens, the extension (computer) first on large ones. */}
+      <Card className="order-2 grid gap-3 p-5 text-sm md:order-0">
+        <h2 className="text-base font-semibold">💻 Στον υπολογιστή: επέκταση για Chrome και Edge (προτείνεται)</h2>
+        <p className="text-muted-foreground">
+          Εγκαθίσταται μία φορά. Μετά, κάθε φορά που ανοίγετε τη φόρμα της ΑΑΔΕ, τη γεμίζει μόνη της με την κράτηση που περιμένει δήλωση
+          (αν περιμένουν πολλές, διαλέγετε ποια). Δεν χρειάζεται σελιδοδείκτης ούτε κανένα κουμπί.
+        </p>
+        <ExtensionConnect />
+      </Card>
+
       <Card className="order-1 grid gap-4 p-5 text-sm md:order-2">
         <h2 className="text-base font-semibold">📱 Στο κινητό (Chrome) · μία φορά</h2>
         <ol className="grid gap-4">
@@ -66,7 +76,7 @@ export default async function AutofillPage() {
       </Card>
 
       <Card className="order-2 grid gap-4 p-5 text-sm md:order-1">
-        <h2 className="text-base font-semibold">💻 Στον υπολογιστή · μία φορά</h2>
+        <h2 className="text-base font-semibold">💻 Στον υπολογιστή χωρίς επέκταση: σελιδοδείκτης · μία φορά</h2>
         <ol className="grid gap-4">
           <Step n={1}>Ανοίξτε αυτή τη σελίδα σε Chrome, Edge ή Firefox.</Step>
           <Step n={2}>Πατήστε <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (σε Mac <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>) για να φανεί η γραμμή σελιδοδεικτών.</Step>
