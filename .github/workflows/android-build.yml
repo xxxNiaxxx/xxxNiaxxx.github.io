@@ -1,0 +1,77 @@
+# Starts an Android build of the mobile app on EAS (Expo), from GitHub:
+# Actions → Android build → Run workflow (works from the GitHub app on a phone).
+#
+# Needs one repository secret (Settings → Secrets and variables → Actions):
+#   EXPO_TOKEN   an access token from expo.dev → Account settings → Access tokens
+#
+# Profiles (mobile/eas.json):
+#   preview     an APK to install straight on a phone (link and QR on expo.dev)
+#   production  an .aab for Google Play (version code goes up by itself)
+#
+# The build itself runs on Expo's servers (10–20 minutes); this job only starts
+# it and links to it. The first time it links the project to the Expo account
+# and Expo creates and keeps the Android signing key.
+name: Android build
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "preview = APK για το κινητό σας · production = για το Google Play"
+        type: choice
+        options: [preview, production]
+        default: preview
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Check secret
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Λείπει το EXPO_TOKEN. GitHub → Settings → Secrets and variables → Actions → New repository secret."
+            exit 1
+          fi
+        working-directory: .
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install
+        run: npm ci
+
+      - name: Link the Expo project (first time)
+        run: |
+          if ! grep -q '"projectId"' app.json; then
+            eas init --non-interactive --force
+          fi
+
+      - name: Start the build
+        run: |
+          eas build --platform android --profile "${{ inputs.profile }}" --non-interactive --no-wait | tee build.log
+          {
+            echo "## Android build (${{ inputs.profile }}) ξεκίνησε"
+            echo
+            echo "Ολοκληρώνεται σε 10–20 λεπτά στους servers του Expo. Θα λάβετε email."
+            echo
+            grep -Eo 'https://expo\.dev/[^ ]+' build.log | head -1 | sed 's/^/Σύνδεσμος: /'
+          } >> "$GITHUB_STEP_SUMMARY"

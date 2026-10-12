@@ -50,7 +50,7 @@ GitHub → repository → **Settings → Secrets and variables → Actions → N
 
 ### 6. Android και Google Play
 Αναλυτικά στο `mobile/PLAY_STORE.md`, βήματα 4–8 (κείμενα, γραφικά και απαντήσεις Data safety είναι έτοιμα).
-- [ ] `eas build -p android --profile production` (το νέο logo μπαίνει μόνο με νέο build)
+- [ ] Build Android: **GitHub → Actions → Android build → Run workflow** (μία φορά πριν: secret `EXPO_TOKEN`, δείτε `mobile/PLAY_STORE.md` βήμα 4) ή `eas build -p android --profile production` από υπολογιστή
 - [ ] Play Console: εφαρμογή, Store listing, Data safety, App access
 - [ ] Ανέβασμα στο Internal testing → δοκιμή στο δικό σας κινητό
 - [ ] **Closed testing** με 12+ δοκιμαστές από τη λίστα αναμονής → ξεκινά η μέτρηση των **14 ημερών**

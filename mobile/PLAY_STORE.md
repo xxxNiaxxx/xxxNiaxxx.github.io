@@ -98,6 +98,20 @@
 
 ## 4. Build με EAS
 
+### Από το κινητό, χωρίς υπολογιστή (GitHub Actions)
+1. **expo.dev** → συνδεθείτε → εικονίδιο λογαριασμού → **Account settings → Access tokens → Create token**
+   (όνομα π.χ. `github`). Αντιγράψτε το (φαίνεται μόνο μία φορά).
+2. **GitHub** → το repository → **Settings → Secrets and variables → Actions → New repository secret**:
+   όνομα `EXPO_TOKEN`, τιμή το token. Μην το στείλετε σε κανέναν.
+3. **GitHub → Actions → Android build → Run workflow** → διαλέξτε `preview` (APK για το κινητό σας) ή
+   `production` (για το Google Play) → **Run workflow**.
+4. Σε 10–20 λεπτά έρχεται email από το Expo. Στη σελίδα του build: **Install** (APK) ή **Download** (.aab).
+
+Την πρώτη φορά συνδέει μόνο του το project με τον λογαριασμό Expo και το Expo δημιουργεί και φυλάει το
+κλειδί υπογραφής (keystore).
+
+### Από υπολογιστή
+
 ```bash
 npm install -g eas-cli
 cd mobile
