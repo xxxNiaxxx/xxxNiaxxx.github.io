@@ -13,7 +13,7 @@
 export const AUTOFILL_PREFIX = "AADE-AUTOFILL:";
 
 /** Shown in the progress badge and the diagnostics, to know which version ran. */
-export const AUTOFILL_VERSION = "2026-10-12.4";
+export const AUTOFILL_VERSION = "2026-10-12.5";
 
 /** Declaration fields the bookmarklet knows how to fill. */
 const AUTOFILL_KEYS = ["checkIn", "checkOut", "amount", "paymentMethod", "platform", "foreigner", "taxId", "guestName", "idNumber", "cancelAmount", "cancelDate", "bookingNumber"];
@@ -54,6 +54,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     try { d = JSON.parse(text.slice(PREFIX.length)); } catch (e) { alert("Τα στοιχεία δεν διαβάστηκαν. Αντιγράψτε τα ξανά από την κράτηση."); return; }
   }
 
+  var hiddenOf = function (c) { return (c.id && /_input$/.test(c.id) && document.getElementById(c.id.replace(/_input$/, "_hinput"))) || null; };
   var isControl = function (c) { return !/^(hidden|button|submit|reset|image)$/i.test(c.type || ""); };
   // PrimeFaces lists keep the real <select> next to a hidden «_focus» field, and
   // number fields a hidden «_hinput»: those are helpers, not the field.
@@ -115,18 +116,35 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     c.blur();
     return true;
   }
+  /*
+   * Number fields (PrimeFaces inputNumber / AutoNumeric) throw away values not
+   * set through them, so each pass tries another way, and notes what happened
+   * (lengths and errors only, never the amount) for the diagnostics.
+   */
+  var amountLog = [];
+  var digitless = function (t) { return String(t).replace(/\d/g, "#").slice(0, 120); };
+  function setAmount(c, v, attempt) {
+    var n = toNumber(v), w = widgetFor(c), h = hiddenOf(c), how = "", err = "";
+    var an = null;
+    try { an = (w && w.autonumeric) || (window.AutoNumeric && window.AutoNumeric.getAutoNumericElement && window.AutoNumeric.getAutoNumericElement(c)) || null; } catch (e) {}
+    var plugin = !!($ && $.fn && $.fn.autoNumeric);
+    var step = attempt % 4;
+    try {
+      if (step === 0 && w && typeof w.setValue === "function") { how = "widget"; w.setValue(n); }
+      else if (step === 1 && an) { how = "autonumeric"; an.set(n); if (h) h.value = String(n); }
+      else if (step === 1 && plugin) { how = "plugin"; $(c).autoNumeric("set", n); if (h) h.value = String(n); }
+      else if (step === 3 && w && typeof w.setValue === "function") { how = "widget"; w.setValue(n); }
+      else { how = "type"; typeText(c, v); }
+    } catch (e) { err = digitless(e && e.message || e); }
+    if (how !== "type") { try { if ($) $(c).trigger("change"); else c.dispatchEvent(new Event("change", { bubbles: true })); } catch (e) { err = err || digitless(e && e.message || e); } }
+    amountLog.push("#" + attempt + " " + how + (err ? " err=" + err : "") + " shown=" + String(c.value || "").length + " sent=" + (h ? String(h.value || "").length : "-"));
+    return !err;
+  }
   function setText(c, v, attempt) {
     var widget = $ && ($(c).data("kendoDatePicker") || $(c).data("kendoNumericTextBox"));
     var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
     if (widget && m && $(c).data("kendoDatePicker")) { widget.value(new Date(+m[3], +m[2] - 1, +m[1])); widget.trigger("change"); return true; }
-    if (isAmount(v)) {
-      // Number fields (PrimeFaces inputNumber / AutoNumeric) throw away values not set through them.
-      var w = widgetFor(c);
-      try { if (w && typeof w.setValue === "function") { w.setValue(toNumber(v)); fire(c); return true; } } catch (e) {}
-      try { var an = window.AutoNumeric && window.AutoNumeric.getAutoNumericElement && window.AutoNumeric.getAutoNumericElement(c); if (an) { an.set(toNumber(v)); fire(c); return true; } } catch (e) {}
-      try { if ($ && $.fn.autoNumeric && $(c).data("autoNumeric")) { $(c).autoNumeric("set", toNumber(v)); fire(c); return true; } } catch (e) {}
-      if (attempt >= 2) return typeText(c, v);
-    }
+    if (isAmount(v)) return setAmount(c, v, attempt);
     c.focus();
     var desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(c), "value");
     if (desc && desc.set) desc.set.call(c, v); else c.value = v;
@@ -195,7 +213,13 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
   function wanted(c, v) {
     if (c.tagName === "SELECT") { var o = c.options[c.selectedIndex]; var t = o ? norm(o.text) : ""; var w = norm(v); return !!t && (t === w || t.indexOf(w) >= 0 || w.indexOf(t) >= 0); }
     if (c.type === "checkbox") return c.checked === (v === true || v === "Ναι");
-    if (isAmount(v)) return !!c.value && toNumber(String(c.value).replace(/[^0-9,.]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "")) === toNumber(v);
+    if (isAmount(v)) {
+      // Checked on the number the form sends (PrimeFaces keeps it in «_hinput»), not only on the text shown.
+      var h = hiddenOf(c);
+      if (!c.value) return false;
+      if (h) return h.value !== "" && Number(h.value) === toNumber(v);
+      return toNumber(String(c.value).replace(/[^0-9,.]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "")) === toNumber(v);
+    }
     return norm(c.value) === norm(v);
   }
   /** A value and the other ways the form may want it (amounts: «425,53» or «425.53»). */
@@ -248,12 +272,14 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     ["Σημειώσεις", d.bookingNumber ? "Αρ. κράτησης " + d.bookingNumber : null],
   ]).filter(function (s) { return s[1] != null && s[1] !== ""; });
 
+  if (window.__AADE_AUTOFILL_RUNNING__) { alert("Η συμπλήρωση τρέχει ήδη· περιμένετε να τελειώσει."); return; }
+  window.__AADE_AUTOFILL_RUNNING__ = true;
   var badge = document.createElement("div");
   badge.textContent = "Βραχυχρόνια.ai: συμπλήρωση… (" + VERSION + ")";
   badge.style.cssText = "position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:2147483647;background:#0f766e;color:#fff;padding:8px 14px;border-radius:999px;font:600 14px sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.25)";
   document.body.appendChild(badge);
 
-  for (var pass = 0; pass < 3; pass++) {
+  for (var pass = 0; pass < 4; pass++) {
     var missing = steps.filter(function (s) { return !isSet(s[0], s[1]); });
     if (!missing.length) break;
     for (var k = 0; k < missing.length; k++) {
@@ -263,11 +289,28 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     await settle();
   }
   badge.remove();
+  window.__AADE_AUTOFILL_RUNNING__ = false;
   var done = [], failed = [];
   steps.forEach(function (s) { (isSet(s[0], s[1]) ? done : failed).push(s[0]); });
+  // Never leave a wrong amount behind: empty an amount field that didn't take the right number.
+  steps.forEach(function (s) {
+    if (!isAmount(s[1]) || isSet(s[0], s[1])) return;
+    var c = controlFor(s[0]);
+    if (!c) return;
+    var w = widgetFor(c), h = hiddenOf(c);
+    try { if (w && typeof w.setValue === "function") w.setValue(""); } catch (e) {}
+    var desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(c), "value");
+    try { if (desc && desc.set) desc.set.call(c, ""); else c.value = ""; } catch (e) {}
+    if (h) h.value = "";
+  });
   // What the script found on the page, without any of the values, to fix it when a field is left empty.
   function diagnostics() {
-    var out = ["v=" + VERSION, "page=" + location.host + location.pathname, "frames=" + window.frames.length + " jquery=" + !!$ + " adf=" + !!window.AdfPage + " primefaces=" + !!window.PrimeFaces];
+    var pfw = null;
+    steps.forEach(function (s) { if (isAmount(s[1]) && !pfw) { var c = controlFor(s[0]); pfw = c && widgetFor(c); } });
+    var cfg = pfw && pfw.cfg ? ["decimalPlaces", "decimalCharacter", "decimalSeparator", "digitGroupSeparator", "thousandSeparator", "minimumValue", "maximumValue", "emptyValue", "modifyValueOnWheel"]
+      .filter(function (k) { return pfw.cfg[k] != null; }).map(function (k) { return k + "=" + String(pfw.cfg[k]).slice(0, 20); }).join(",") : "";
+    var out = ["v=" + VERSION + " pf=" + ((window.PrimeFaces && window.PrimeFaces.VERSION) || "-") + " autonumeric=" + !!window.AutoNumeric + " plugin=" + !!($ && $.fn && $.fn.autoNumeric),
+      "amount: widget=" + (pfw ? (pfw.widgetVar || "?") + " setValue=" + (typeof pfw.setValue) + " an=" + !!pfw.autonumeric : "none") + (cfg ? " cfg=" + cfg : "") + " log=" + amountLog.join(" ; "), "page=" + location.host + location.pathname, "frames=" + window.frames.length + " jquery=" + !!$ + " adf=" + !!window.AdfPage + " primefaces=" + !!window.PrimeFaces];
     steps.forEach(function (s) {
       var c = controlFor(s[0]);
       if (!c) { out.push(s[0] + ": NOT FOUND"); return; }
