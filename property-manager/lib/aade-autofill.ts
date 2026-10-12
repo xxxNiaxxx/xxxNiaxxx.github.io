@@ -13,7 +13,7 @@
 export const AUTOFILL_PREFIX = "AADE-AUTOFILL:";
 
 /** Shown in the progress badge and the diagnostics, to know which version ran. */
-export const AUTOFILL_VERSION = "2026-10-12.5";
+export const AUTOFILL_VERSION = "2026-10-12.6";
 
 /** Declaration fields the bookmarklet knows how to fill. */
 const AUTOFILL_KEYS = ["checkIn", "checkOut", "amount", "paymentMethod", "platform", "foreigner", "taxId", "guestName", "idNumber", "cancelAmount", "cancelDate", "bookingNumber"];
@@ -309,7 +309,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     steps.forEach(function (s) { if (isAmount(s[1]) && !pfw) { var c = controlFor(s[0]); pfw = c && widgetFor(c); } });
     var cfg = pfw && pfw.cfg ? ["decimalPlaces", "decimalCharacter", "decimalSeparator", "digitGroupSeparator", "thousandSeparator", "minimumValue", "maximumValue", "emptyValue", "modifyValueOnWheel"]
       .filter(function (k) { return pfw.cfg[k] != null; }).map(function (k) { return k + "=" + String(pfw.cfg[k]).slice(0, 20); }).join(",") : "";
-    var out = ["v=" + VERSION + " pf=" + ((window.PrimeFaces && window.PrimeFaces.VERSION) || "-") + " autonumeric=" + !!window.AutoNumeric + " plugin=" + !!($ && $.fn && $.fn.autoNumeric),
+    var out = ["v=" + VERSION + " loader=" + (window.__AADE_LOADER__ || (app ? "app" : "-")) + " pf=" + ((window.PrimeFaces && window.PrimeFaces.VERSION) || "-") + " autonumeric=" + !!window.AutoNumeric + " plugin=" + !!($ && $.fn && $.fn.autoNumeric),
       "amount: widget=" + (pfw ? (pfw.widgetVar || "?") + " setValue=" + (typeof pfw.setValue) + " an=" + !!pfw.autonumeric : "none") + (cfg ? " cfg=" + cfg : "") + " log=" + amountLog.join(" ; "), "page=" + location.host + location.pathname, "frames=" + window.frames.length + " jquery=" + !!$ + " adf=" + !!window.AdfPage + " primefaces=" + !!window.PrimeFaces];
     steps.forEach(function (s) {
       var c = controlFor(s[0]);
@@ -346,7 +346,7 @@ export const AUTOFILL_SCRIPT_URL = `${APP_URL}/api/aade/autofill-script`;
  * bookmarks already saved, and runs the copy built into the bookmark when the
  * page doesn't allow that (offline, or a site policy blocking it).
  */
-export const AUTOFILL_LOADER = `(function(){var builtIn=function(){${AUTOFILL_SOURCE}};fetch(${JSON.stringify(AUTOFILL_SCRIPT_URL)},{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){(0,eval)(t);}).catch(function(){builtIn();});})();`;
+export const AUTOFILL_LOADER = `(function(){var builtIn=function(){${AUTOFILL_SOURCE}};var step="fetch";fetch(${JSON.stringify(AUTOFILL_SCRIPT_URL)},{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);step="eval";return r.text();}).then(function(t){window.__AADE_LOADER__="latest";(0,eval)(t);}).catch(function(e){window.__AADE_LOADER__="built-in ("+step+": "+String(e&&e.name||e).slice(0,40)+")";builtIn();});})();`;
 
 /** The bookmark's address. */
 export const AUTOFILL_BOOKMARKLET = `javascript:${encodeURIComponent(AUTOFILL_LOADER)}`;
