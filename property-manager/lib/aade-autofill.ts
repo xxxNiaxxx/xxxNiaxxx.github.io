@@ -13,7 +13,7 @@
 export const AUTOFILL_PREFIX = "AADE-AUTOFILL:";
 
 /** Shown in the progress badge and the diagnostics, to know which version ran. */
-export const AUTOFILL_VERSION = "2026-10-12.7";
+export const AUTOFILL_VERSION = "2026-10-12.8";
 
 /** Declaration fields the bookmarklet knows how to fill. */
 const AUTOFILL_KEYS = ["checkIn", "checkOut", "amount", "paymentMethod", "platform", "foreigner", "taxId", "guestName", "idNumber", "cancelAmount", "cancelDate", "bookingNumber"];
@@ -54,6 +54,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     try { d = JSON.parse(text.slice(PREFIX.length)); } catch (e) { alert("Τα στοιχεία δεν διαβάστηκαν. Αντιγράψτε τα ξανά από την κράτηση."); return; }
   }
 
+  var labelOf = function (c) { return (c.id && /_input$/.test(c.id) && document.getElementById(c.id.replace(/_input$/, "_label"))) || null; };
   var hiddenOf = function (c) { return (c.id && /_input$/.test(c.id) && document.getElementById(c.id.replace(/_input$/, "_hinput"))) || null; };
   var isControl = function (c) { return !/^(hidden|button|submit|reset|image)$/i.test(c.type || ""); };
   // PrimeFaces lists keep the real <select> next to a hidden «_focus» field, and
@@ -168,9 +169,15 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
       return el.offsetParent !== null && norm(el.getAttribute("data-label") || el.textContent) === want;
     })[0];
   }
+  var selectLog = [];
   async function setSelect(label, c, v) {
     var w = widgetFor(c);
     var opt = optionFor(c, v);
+    var note = function (how) {
+      var lab = labelOf(c);
+      selectLog.push(label.slice(0, 12) + ":" + how + " w=" + !!w + " items=" + (w && w.items ? w.items.length : "-") + " dyn=" + !!(w && w.cfg && w.cfg.dynamic) +
+        " opt=" + !!opt + " sel=" + (opt ? c.value === opt.value : "-") + " label=" + (lab ? norm(lab.textContent).length : "none"));
+    };
     if (!opt) {
       // Some lists load their options only when opened: open the list, wait, look again.
       if (w && typeof w.show === "function") { try { w.show(); } catch (e) {} }
@@ -188,11 +195,14 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
       // PrimeFaces: click the entry in the list, as a person would, so the form tells the server.
       var entry = Array.prototype.filter.call(w.items, function (li) { return norm(li.getAttribute("data-label") || li.textContent) === norm(opt.text); })[0];
       if (entry) {
+        // Already chosen underneath but not shown: clear first, so the click counts as a change.
+        if (c.value === opt.value) { try { c.value = ""; } catch (e) {} }
         try { if (typeof w.show === "function") w.show(); } catch (e) {}
         // Only the click: an extra mousedown makes older PrimeFaces close the list and blank its label.
         entry.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
         try { if (typeof w.hide === "function") w.hide(); } catch (e) {}
         var now = controlFor(label) || c;
+        note("click");
         if (now.value === opt.value) return true;
       }
     }
@@ -210,12 +220,14 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
           w.selectValue(opt.value);
         }
         if (typeof w.hide === "function") w.hide();
+        note("selectValue");
         if (c.value === opt.value) { if ($) $(c).trigger("change"); else c.dispatchEvent(new Event("change", { bubbles: true })); return true; }
       } catch (e) {}
     }
     var item = listItem(opt ? opt.text : v);
-    if (item) { click(item); return true; }
-    if (!opt) return false;
+    if (item) { click(item); note("visible-item"); return true; }
+    if (!opt) { note("no-option"); return false; }
+    note("plain");
     var widget = $ && ($(c).data("kendoDropDownList") || $(c).data("kendoComboBox"));
     if (widget) { widget.value(opt.value); widget.trigger("change"); }
     c.value = opt.value;
@@ -223,8 +235,15 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     fire(c);
     return true;
   }
+  function sameText(a, b) { var t = norm(a), w = norm(b); return !!t && (t === w || t.indexOf(w) >= 0 || w.indexOf(t) >= 0); }
   function wanted(c, v) {
-    if (c.tagName === "SELECT") { var o = c.options[c.selectedIndex]; var t = o ? norm(o.text) : ""; var w = norm(v); return !!t && (t === w || t.indexOf(w) >= 0 || w.indexOf(t) >= 0); }
+    if (c.tagName === "SELECT") {
+      var o = c.options[c.selectedIndex];
+      if (!o || !sameText(o.text, v)) return false;
+      // PrimeFaces lists show their choice in a separate label: it has to show it too.
+      var lab = labelOf(c);
+      return !lab || sameText(lab.textContent, v);
+    }
     if (c.type === "checkbox") return c.checked === (v === true || v === "Ναι");
     if (isAmount(v)) {
       // Checked on the number the form sends (PrimeFaces keeps it in «_hinput»), not only on the text shown.
@@ -294,8 +313,11 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     ["Σημειώσεις", d.bookingNumber ? "Αρ. κράτησης " + d.bookingNumber : null],
   ]).filter(function (s) { return s[1] != null && s[1] !== ""; });
 
+  // Counts the form's requests to the server during the fill, for the diagnostics.
+  var ajax = { sent: 0, done: 0 };
   if (window.__AADE_AUTOFILL_RUNNING__) { alert("Η συμπλήρωση τρέχει ήδη· περιμένετε να τελειώσει."); return; }
   window.__AADE_AUTOFILL_RUNNING__ = true;
+  if ($) { try { $(document).on("ajaxSend.aadeAutofill", function () { ajax.sent++; }).on("ajaxComplete.aadeAutofill", function () { ajax.done++; }); } catch (e) {} }
   var badge = document.createElement("div");
   badge.textContent = "Βραχυχρόνια.ai: συμπλήρωση… (" + VERSION + ")";
   badge.style.cssText = "position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:2147483647;background:#0f766e;color:#fff;padding:8px 14px;border-radius:999px;font:600 14px sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.25)";
@@ -312,6 +334,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
   }
   badge.remove();
   window.__AADE_AUTOFILL_RUNNING__ = false;
+  if ($) { try { $(document).off(".aadeAutofill"); } catch (e) {} }
   var done = [], failed = [];
   steps.forEach(function (s) { (isSet(s[0], s[1]) ? done : failed).push(s[0]); });
   // Never leave a wrong amount behind: empty an amount field that didn't take the right number.
@@ -332,6 +355,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     var cfg = pfw && pfw.cfg ? ["decimalPlaces", "decimalCharacter", "decimalSeparator", "digitGroupSeparator", "thousandSeparator", "minimumValue", "maximumValue", "emptyValue", "modifyValueOnWheel"]
       .filter(function (k) { return pfw.cfg[k] != null; }).map(function (k) { return k + "=" + String(pfw.cfg[k]).slice(0, 20); }).join(",") : "";
     var out = ["v=" + VERSION + " loader=" + (window.__AADE_LOADER__ || (app ? "app" : "-")) + " pf=" + ((window.PrimeFaces && window.PrimeFaces.VERSION) || "-") + " autonumeric=" + !!window.AutoNumeric + " plugin=" + !!($ && $.fn && $.fn.autoNumeric),
+      "ajax=" + ajax.sent + "/" + ajax.done + " lists: " + selectLog.join(" ; "),
       "amount: widget=" + (pfw ? (pfw.widgetVar || "?") + " setValue=" + (typeof pfw.setValue) + " an=" + !!pfw.autonumeric : "none") + (cfg ? " cfg=" + cfg : "") + " log=" + amountLog.join(" ; "), "page=" + location.host + location.pathname, "frames=" + window.frames.length + " jquery=" + !!$ + " adf=" + !!window.AdfPage + " primefaces=" + !!window.PrimeFaces];
     steps.forEach(function (s) {
       var c = controlFor(s[0]);
@@ -339,7 +363,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
       var info = s[0] + ": " + c.tagName + "/" + (c.type || "") + " id=" + String(c.id || "").slice(-40) + " name=" + String(c.name || "").slice(-30) +
         " class=" + String(c.className || "").slice(0, 40) + (c.disabled ? " disabled" : "") + (c.readOnly ? " readonly" : "") +
         " hidden=" + (c.offsetParent === null) + " ok=" + isSet(s[0], s[1]);
-      if (c.tagName === "SELECT") info += " options=" + Array.prototype.map.call(c.options, function (o) { return o.text; }).slice(0, 12).join("|");
+      if (c.tagName === "SELECT") info += " label=" + (labelOf(c) ? norm(labelOf(c).textContent).length : "none") + " onchange=" + !!c.getAttribute("onchange") + " options=" + Array.prototype.map.call(c.options, function (o) { return o.text; }).slice(0, 12).join("|");
       else if (c.type !== "checkbox") info += " length=" + String(c.value || "").length + " maxlength=" + c.maxLength;
       out.push(info);
     });
