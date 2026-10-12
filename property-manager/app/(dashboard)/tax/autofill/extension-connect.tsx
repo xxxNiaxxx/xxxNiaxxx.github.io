@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Download, PlugZap } from "lucide-react";
+import { Check, Copy, Download, PlugZap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -93,15 +93,52 @@ export function ExtensionConnect() {
           </div>
         </>
       ) : (
-        <p className="text-muted-foreground">
-          Η επέκταση έρχεται σύντομα στο Chrome Web Store. Για δοκιμή:{" "}
-          <a className="font-medium text-primary underline" href="/vrachychronia-extension.zip" download>
-            κατεβάστε την
-          </a>
-          , αποσυμπιέστε τη, και στο chrome://extensions ενεργοποιήστε «Λειτουργία προγραμματιστή» → «Φόρτωση μη συσκευασμένης» → τον
-          φάκελο. Μετά ανανεώστε αυτή τη σελίδα.
-        </p>
+        <>
+          <p className="text-muted-foreground">Η επέκταση έρχεται σύντομα στο Chrome Web Store. Μέχρι τότε, για δοκιμή:</p>
+          <ol className="grid list-decimal gap-2 pl-5 text-muted-foreground">
+            <li>
+              <a className="font-medium text-primary underline" href="/vrachychronia-extension.zip" download>
+                Κατεβάστε την επέκταση
+              </a>{" "}
+              και αποσυμπιέστε το αρχείο (δεξί κλικ → «Εξαγωγή όλων»).
+            </li>
+            <li>
+              Πατήστε αυτό το κουμπί, μετά κάντε κλικ στη γραμμή διευθύνσεων του Chrome, επικόλληση (Ctrl+V) και Enter. Ο Chrome δεν επιτρέπει
+              σε σελίδες να ανοίγουν αυτή τη διεύθυνση με σύνδεσμο.
+              <div className="mt-2">
+                <CopyExtensionsAddress />
+              </div>
+            </li>
+            <li>
+              Ενεργοποιήστε πάνω δεξιά τη <strong>«Λειτουργία προγραμματιστή»</strong>, πατήστε <strong>«Φόρτωση μη συσκευασμένης»</strong>{" "}
+              και διαλέξτε τον φάκελο που αποσυμπιέσατε.
+            </li>
+            <li>Γυρίστε σε αυτή τη σελίδα και ανανεώστε τη: θα εμφανιστεί το κουμπί «Σύνδεση επέκτασης».</li>
+          </ol>
+        </>
       )}
     </div>
+  );
+}
+
+/** chrome://extensions can't be opened from a web page: copy it for the address bar. */
+function CopyExtensionsAddress() {
+  const [done, setDone] = useState(false);
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText("chrome://extensions");
+          setDone(true);
+          toast.success("Αντιγράφηκε· επικολλήστε το στη γραμμή διευθύνσεων");
+        } catch {
+          toast.error("Η αντιγραφή απέτυχε· γράψτε chrome://extensions στη γραμμή διευθύνσεων");
+        }
+      }}
+    >
+      {done ? <Check /> : <Copy />} chrome://extensions
+    </Button>
   );
 }
