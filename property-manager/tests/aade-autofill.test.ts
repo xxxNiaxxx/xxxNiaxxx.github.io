@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AUTOFILL_BOOKMARKLET, AUTOFILL_PREFIX, AUTOFILL_SOURCE, autofillPayload } from "@/lib/aade-autofill";
+import { AUTOFILL_BOOKMARKLET, AUTOFILL_LOADER, AUTOFILL_PREFIX, AUTOFILL_SCRIPT_URL, AUTOFILL_SOURCE, autofillPayload } from "@/lib/aade-autofill";
 
 describe("AADE autofill bookmarklet", () => {
   it("copies only the fillable values, after the prefix", () => {
@@ -15,8 +15,12 @@ describe("AADE autofill bookmarklet", () => {
 
   it("is valid JavaScript and a javascript: bookmark", () => {
     expect(() => new Function(AUTOFILL_SOURCE)).not.toThrow();
+    expect(() => new Function(AUTOFILL_LOADER)).not.toThrow();
     expect(AUTOFILL_BOOKMARKLET.startsWith("javascript:")).toBe(true);
-    expect(decodeURIComponent(AUTOFILL_BOOKMARKLET.slice("javascript:".length))).toBe(AUTOFILL_SOURCE);
+    // The bookmark loads the latest script, with its own copy as fallback.
+    const bookmark = decodeURIComponent(AUTOFILL_BOOKMARKLET.slice("javascript:".length));
+    expect(bookmark).toContain(AUTOFILL_SCRIPT_URL);
+    expect(bookmark).toContain(AUTOFILL_SOURCE);
     // It never submits the form.
     expect(AUTOFILL_SOURCE).not.toMatch(/\.submit\(|requestSubmit/);
   });
@@ -27,6 +31,7 @@ describe("autofill script for the mobile app", () => {
     const { GET } = await import("@/app/api/aade/autofill-script/route");
     const res = GET();
     expect(res.headers.get("content-type")).toContain("javascript");
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
     const body = await res.text();
     expect(body).toBe(AUTOFILL_SOURCE);
     expect(body).toContain("window.__AADE_AUTOFILL__");

@@ -12,6 +12,9 @@
 
 export const AUTOFILL_PREFIX = "AADE-AUTOFILL:";
 
+/** Shown in the progress badge and the diagnostics, to know which version ran. */
+export const AUTOFILL_VERSION = "2026-10-12.3";
+
 /** Declaration fields the bookmarklet knows how to fill. */
 const AUTOFILL_KEYS = ["checkIn", "checkOut", "amount", "paymentMethod", "platform", "foreigner", "taxId", "guestName", "idNumber", "cancelAmount", "cancelDate", "bookingNumber"];
 
@@ -29,6 +32,7 @@ export function autofillPayload(fields: { key: string; value: string | null }[])
  */
 export const AUTOFILL_SOURCE = String.raw`(async function () {
   var PREFIX = ${JSON.stringify(AUTOFILL_PREFIX)};
+  var VERSION = ${JSON.stringify(AUTOFILL_VERSION)};
   var $ = window.jQuery;
   var norm = function (s) {
     return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^0-9a-zα-ω]+/g, " ").trim();
@@ -84,15 +88,28 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     c.blur();
     return true;
   }
-  function setSelect(c, v) {
+  function optionFor(c, v) {
     var want = norm(v);
     var opts = Array.prototype.slice.call(c.options);
-    var opt = opts.filter(function (o) { return norm(o.text) === want; })[0] ||
+    return opts.filter(function (o) { return norm(o.text) === want; })[0] ||
       opts.filter(function (o) { var t = norm(o.text); return t && (t.indexOf(want) >= 0 || want.indexOf(t) >= 0); })[0];
+  }
+  async function setSelect(label, c, v) {
+    var opt = optionFor(c, v);
+    if (!opt) {
+      // Some lists load their options only when opened: poke the list, wait, look again.
+      ["focus", "mousedown", "mouseup", "click"].forEach(function (t) { c.dispatchEvent(new MouseEvent(t, { bubbles: true })); });
+      try { c.focus(); } catch (e) {}
+      await settle();
+      c = controlFor(label) || c;
+      opt = optionFor(c, v);
+      try { c.blur(); } catch (e) {}
+    }
     if (!opt) return false;
     var widget = $ && ($(c).data("kendoDropDownList") || $(c).data("kendoComboBox"));
     if (widget) { widget.value(opt.value); widget.trigger("change"); }
     c.value = opt.value;
+    opt.selected = true;
     fire(c);
     return true;
   }
@@ -101,17 +118,22 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     if (c.type === "checkbox") return c.checked === (v === true || v === "Ναι");
     return norm(c.value) === norm(v);
   }
-  function set(label, v) {
+  /** A value and the other ways the form may want it (amounts: «425,53» or «425.53»). */
+  function variants(v) {
+    return /^\d+,\d{1,2}$/.test(v) ? [v, v.replace(",", ".")] : [v];
+  }
+  async function set(label, v, attempt) {
     var c = controlFor(label);
     if (!c || c.disabled || c.readOnly) return false;
     if (wanted(c, v)) return true;
-    if (c.tagName === "SELECT") return setSelect(c, v);
+    if (c.tagName === "SELECT") return setSelect(label, c, v);
     if (c.type === "checkbox") { c.click(); return true; }
-    return setText(c, v);
+    var vs = variants(v);
+    return setText(c, vs[attempt % vs.length]);
   }
   function isSet(label, v) {
     var c = controlFor(label);
-    return !!c && wanted(c, v);
+    return !!c && variants(v).some(function (x) { return wanted(c, x); });
   }
   /*
    * The AADE form reloads parts of itself from the server when some fields
@@ -147,7 +169,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
   ]).filter(function (s) { return s[1] != null && s[1] !== ""; });
 
   var badge = document.createElement("div");
-  badge.textContent = "Βραχυχρόνια.ai: συμπλήρωση…";
+  badge.textContent = "Βραχυχρόνια.ai: συμπλήρωση… (" + VERSION + ")";
   badge.style.cssText = "position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:2147483647;background:#0f766e;color:#fff;padding:8px 14px;border-radius:999px;font:600 14px sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.25)";
   document.body.appendChild(badge);
 
@@ -156,20 +178,52 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
     if (!missing.length) break;
     for (var k = 0; k < missing.length; k++) {
       badge.textContent = "Βραχυχρόνια.ai: " + missing[k][0] + "…";
-      if (set(missing[k][0], missing[k][1])) await settle();
+      if (await set(missing[k][0], missing[k][1], pass)) await settle();
     }
     await settle();
   }
   badge.remove();
   var done = [], failed = [];
   steps.forEach(function (s) { (isSet(s[0], s[1]) ? done : failed).push(s[0]); });
-  if (app) { app.postMessage(JSON.stringify({ type: "aade-autofill", done: done, failed: failed })); return; }
+  // What the script found on the page, without any of the values, to fix it when a field is left empty.
+  function diagnostics() {
+    var out = ["v=" + VERSION, "page=" + location.host + location.pathname, "frames=" + window.frames.length + " jquery=" + !!$ + " adf=" + !!window.AdfPage + " primefaces=" + !!window.PrimeFaces];
+    steps.forEach(function (s) {
+      var c = controlFor(s[0]);
+      if (!c) { out.push(s[0] + ": NOT FOUND"); return; }
+      var info = s[0] + ": " + c.tagName + "/" + (c.type || "") + " id=" + String(c.id || "").slice(-40) + " name=" + String(c.name || "").slice(-30) +
+        " class=" + String(c.className || "").slice(0, 40) + (c.disabled ? " disabled" : "") + (c.readOnly ? " readonly" : "") +
+        " hidden=" + (c.offsetParent === null) + " ok=" + isSet(s[0], s[1]);
+      if (c.tagName === "SELECT") info += " options=" + Array.prototype.map.call(c.options, function (o) { return o.text; }).slice(0, 12).join("|");
+      else if (c.type !== "checkbox") info += " length=" + String(c.value || "").length + " maxlength=" + c.maxLength;
+      out.push(info);
+    });
+    out.push("controls=" + Array.prototype.filter.call(document.querySelectorAll("input,select,textarea"), isControl).slice(0, 40)
+      .map(function (c) { return c.tagName.charAt(0) + ":" + (c.type || "") + ":" + String(c.id || c.name || "").slice(-30); }).join(", "));
+    return out.join("\n");
+  }
+  var report = failed.length ? diagnostics() : "";
+  if (app) { app.postMessage(JSON.stringify({ type: "aade-autofill", done: done, failed: failed, diagnostics: report })); return; }
+  var copied = false;
+  if (report) { try { await navigator.clipboard.writeText(report); copied = true; } catch (e) {} }
   alert(
     (done.length ? "Συμπληρώθηκαν: " + done.join(", ") + "." : "Δεν συμπληρώθηκε κανένα πεδίο.") +
     (failed.length ? "\nΣυμπληρώστε με το χέρι: " + failed.join(", ") + "." : "") +
-    "\n\nΕλέγξτε τα στοιχεία και κάντε εσείς την υποβολή."
+    "\n\nΕλέγξτε τα στοιχεία και κάντε εσείς την υποβολή." +
+    (report && copied ? "\n\nΑντιγράφηκαν τεχνικά στοιχεία (χωρίς προσωπικά δεδομένα): στείλτε τα στην υποστήριξη για να διορθωθεί." : "")
   );
+  if (report && !copied) prompt("Τεχνικά στοιχεία για την υποστήριξη (αντιγράψτε τα):", report);
 })();`;
 
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://aivrachychronia.vercel.app").replace(/\/$/, "");
+export const AUTOFILL_SCRIPT_URL = `${APP_URL}/api/aade/autofill-script`;
+
+/**
+ * The bookmark: loads the latest script from the server, so fixes reach
+ * bookmarks already saved, and runs the copy built into the bookmark when the
+ * page doesn't allow that (offline, or a site policy blocking it).
+ */
+export const AUTOFILL_LOADER = `(function(){var builtIn=function(){${AUTOFILL_SOURCE}};fetch(${JSON.stringify(AUTOFILL_SCRIPT_URL)},{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){(0,eval)(t);}).catch(function(){builtIn();});})();`;
+
 /** The bookmark's address. */
-export const AUTOFILL_BOOKMARKLET = `javascript:${encodeURIComponent(AUTOFILL_SOURCE)}`;
+export const AUTOFILL_BOOKMARKLET = `javascript:${encodeURIComponent(AUTOFILL_LOADER)}`;
