@@ -13,7 +13,7 @@
 export const AUTOFILL_PREFIX = "AADE-AUTOFILL:";
 
 /** Shown in the progress badge and the diagnostics, to know which version ran. */
-export const AUTOFILL_VERSION = "2026-10-12.6";
+export const AUTOFILL_VERSION = "2026-10-12.7";
 
 /** Declaration fields the bookmarklet knows how to fill. */
 const AUTOFILL_KEYS = ["checkIn", "checkOut", "amount", "paymentMethod", "platform", "foreigner", "taxId", "guestName", "idNumber", "cancelAmount", "cancelDate", "bookingNumber"];
@@ -184,8 +184,21 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
       w = widgetFor(c);
       opt = optionFor(c, v);
     }
+    if (opt && w && w.items && w.items.length) {
+      // PrimeFaces: click the entry in the list, as a person would, so the form tells the server.
+      var entry = Array.prototype.filter.call(w.items, function (li) { return norm(li.getAttribute("data-label") || li.textContent) === norm(opt.text); })[0];
+      if (entry) {
+        try { if (typeof w.show === "function") w.show(); } catch (e) {}
+        // Only the click: an extra mousedown makes older PrimeFaces close the list and blank its label.
+        entry.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+        try { if (typeof w.hide === "function") w.hide(); } catch (e) {}
+        var now = controlFor(label) || c;
+        if (now.value === opt.value) return true;
+      }
+    }
     if (opt && w && typeof w.selectValue === "function") {
-      // PrimeFaces: choose through the list itself, so its label shows it and the server hears of it.
+      // PrimeFaces: choose through the list itself, so its label shows it; the change
+      // event afterwards is what tells the server (newer PrimeFaces chooses silently).
       try {
         w.selectValue(opt.value);
         if (c.value !== opt.value && typeof w.show === "function") {
@@ -197,7 +210,7 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
           w.selectValue(opt.value);
         }
         if (typeof w.hide === "function") w.hide();
-        if (c.value === opt.value) return true;
+        if (c.value === opt.value) { if ($) $(c).trigger("change"); else c.dispatchEvent(new Event("change", { bubbles: true })); return true; }
       } catch (e) {}
     }
     var item = listItem(opt ? opt.text : v);
@@ -247,12 +260,21 @@ export const AUTOFILL_SOURCE = String.raw`(async function () {
    */
   function settle() {
     return new Promise(function (resolve) {
-      var quiet, start = Date.now();
+      var quiet, start = Date.now(), over = false;
       var obs = new MutationObserver(function () { clearTimeout(quiet); quiet = setTimeout(finish, 600); });
-      function finish() { obs.disconnect(); resolve(); }
+      // Also wait for the form's requests to the server (PrimeFaces ajax / jQuery) to come back.
+      function busy() {
+        try { var q = window.PrimeFaces && window.PrimeFaces.ajax && window.PrimeFaces.ajax.Queue; if (q && q.isEmpty && !q.isEmpty()) return true; } catch (e) {}
+        return !!($ && $.active);
+      }
+      function finish() {
+        if (over) return;
+        if (busy() && Date.now() - start < 10000) { quiet = setTimeout(finish, 300); return; }
+        over = true; obs.disconnect(); resolve();
+      }
       obs.observe(document.body, { childList: true, subtree: true, attributes: true });
       quiet = setTimeout(finish, 600);
-      setTimeout(function () { if (Date.now() - start >= 6000) finish(); }, 6000);
+      setTimeout(function () { busy = function () { return false; }; finish(); }, 10000);
     });
   }
 
