@@ -206,7 +206,15 @@ export function WaitlistAdmin({
                           <MessageCircle /> Μήνυμα
                         </Button>
                       )}
-                      <Button size="sm" disabled={pending} onClick={() => approve(e)}>
+                      <Button
+                        size="sm"
+                        disabled={pending}
+                        onClick={() => {
+                          // A new link replaces the one already sent (and emails again): ask first.
+                          if (e.status === "APPROVED" && !confirm(`Νέος σύνδεσμος για ${e.name};\n\nΟ σύνδεσμος που έχει ήδη σταλεί θα σταματήσει να ισχύει και θα σταλεί νέο email στο ${e.email}. Μετά στείλτε τον νέο σύνδεσμο με Messenger/Viber από το παράθυρο που θα ανοίξει.`)) return;
+                          approve(e);
+                        }}
+                      >
                         <Check /> {e.status === "APPROVED" ? "Νέος σύνδεσμος" : "Έγκριση"}
                       </Button>
                       {e.status !== "REJECTED" && (

@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Δημιουργία λογαρια�
 const ACCESS_MESSAGES = {
   EXPIRED: "Ο σύνδεσμος εγγραφής σας έχει λήξει. Απαντήστε στο email που λάβατε για να σας στείλουμε νέο.",
   USED: "Αυτός ο σύνδεσμος έχει ήδη χρησιμοποιηθεί. Συνδεθείτε με τον λογαριασμό σας.",
-  INVALID: "Ο σύνδεσμος εγγραφής δεν είναι έγκυρος.",
+  INVALID: "Αυτός ο σύνδεσμος εγγραφής δεν ισχύει πια. Αν σας στείλαμε περισσότερα email ή μηνύματα, ανοίξτε τον σύνδεσμο από το πιο πρόσφατο· αλλιώς γράψτε μας για να σας στείλουμε νέο.",
 } as const;
 
 export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ invite?: string; access?: string }> }) {
