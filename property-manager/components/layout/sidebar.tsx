@@ -7,7 +7,7 @@ import { logoutAction } from "@/app/(auth)/actions";
 import { cn } from "@/lib/utils";
 import { FeedbackDialog } from "./feedback-dialog";
 import { Logo } from "./logo";
-import { adminActivityNav, adminErrorsNav, adminFeedbackNav, adminNav, adminOrgsNav, billingNav, helpNav, isActive, mainNav, settingsNav, type NavItem } from "./nav";
+import { adminActivityNav, adminErrorsNav, adminFeedbackNav, adminNav, adminOrgsNav, adminTemplatesNav, billingNav, helpNav, isActive, mainNav, settingsNav, type NavItem } from "./nav";
 
 function NavLink({ item, pathname, badge }: { item: NavItem; pathname: string; badge?: number }) {
   const active = isActive(pathname, item.href);
@@ -57,6 +57,7 @@ export function Sidebar({
       </nav>
       <div className="mt-4 flex flex-col gap-0.5 border-t border-border pt-4">
         {waitlistAdmin && <NavLink item={adminNav} pathname={pathname} badge={waitlistAdmin.pending} />}
+        {waitlistAdmin && <NavLink item={adminTemplatesNav} pathname={pathname} />}
         {waitlistAdmin && <NavLink item={adminFeedbackNav} pathname={pathname} />}
         {waitlistAdmin && <NavLink item={adminErrorsNav} pathname={pathname} badge={waitlistAdmin.errors} />}
         {waitlistAdmin && <NavLink item={adminActivityNav} pathname={pathname} />}
