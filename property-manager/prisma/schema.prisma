@@ -675,6 +675,9 @@ model WaitlistEntry {
   approvedAt        DateTime?
   /// When the approval email went out (null: not sent, share the link by hand).
   approvalEmailedAt DateTime?
+  /// When the sign-up link was first opened, and how many times (reset with each new link).
+  linkOpenedAt      DateTime?
+  linkOpenCount     Int            @default(0)
   registeredAt      DateTime?
   userId            String?
   createdAt         DateTime       @default(now())
