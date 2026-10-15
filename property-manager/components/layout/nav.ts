@@ -3,6 +3,7 @@ import {
   CircleHelp,
   Inbox,
   MessagesSquare,
+  MessageSquareText,
   CalendarDays,
   ClipboardList,
   Landmark,
@@ -41,6 +42,7 @@ export const helpNav: NavItem = { href: "/help", label: "Βοήθεια", icon: 
 
 /** Only for the app's administrators (ADMIN_EMAILS). */
 export const adminNav: NavItem = { href: "/admin/waitlist", label: "Λίστα αναμονής", icon: Inbox };
+export const adminTemplatesNav: NavItem = { href: "/admin/messages", label: "Πρότυπα μηνυμάτων", icon: MessageSquareText };
 export const adminFeedbackNav: NavItem = { href: "/admin/feedback", label: "Σχόλια χρηστών", icon: MessagesSquare };
 export const adminOrgsNav: NavItem = { href: "/admin/organizations", label: "Οργανισμοί", icon: Building2 };
 export const billingNav: NavItem = { href: "/billing", label: "Συνδρομή", icon: CreditCard };
