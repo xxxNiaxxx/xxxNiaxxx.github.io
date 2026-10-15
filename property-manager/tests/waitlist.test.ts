@@ -122,6 +122,30 @@ describe("waitlist", () => {
     expect(await getWaitlistAccess(fresh)).toBeNull();
   });
 
+  it("notes when the sign-up page opens the link, and starts over with a new link", async () => {
+    const data = form();
+    await joinWaitlist(data, ORIGIN);
+    const entry = await db.waitlistEntry.findUniqueOrThrow({ where: { email: data.email } });
+    const token = tokenOf((await approveEntry(entry.id, ORIGIN)).path);
+    const row = async () => (await listWaitlist()).find((e) => e.id === entry.id)!;
+    expect(await row()).toMatchObject({ linkOpenedAt: null, linkOpenCount: 0 });
+
+    // Only the sign-up page counts (registering checks the link too, without counting).
+    await getWaitlistAccess(token);
+    expect((await row()).linkOpenCount).toBe(0);
+    const first = new Date("2026-10-14T08:00:00Z");
+    await getWaitlistAccess(token, first, { recordOpen: true });
+    await getWaitlistAccess(token, new Date("2026-10-14T09:00:00Z"), { recordOpen: true });
+    expect(await row()).toMatchObject({ linkOpenedAt: first.toISOString(), linkOpenCount: 2 });
+
+    const fresh = tokenOf((await approveEntry(entry.id, ORIGIN)).path);
+    expect(await row()).toMatchObject({ linkOpenedAt: null, linkOpenCount: 0 });
+    await getWaitlistAccess(token, new Date(), { recordOpen: true });
+    expect((await row()).linkOpenCount).toBe(0);
+    await getWaitlistAccess(fresh, new Date(), { recordOpen: true });
+    expect((await row()).linkOpenCount).toBe(1);
+  });
+
   it("exports a CSV that Excel opens safely, and deletes on request", async () => {
     const data = form({ name: "=HYPERLINK(\"x\")", message: "Γεια, σας" });
     await joinWaitlist(data, ORIGIN);

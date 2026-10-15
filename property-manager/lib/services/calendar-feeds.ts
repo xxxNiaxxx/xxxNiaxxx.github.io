@@ -149,7 +149,7 @@ export async function syncFeed(feed: CalendarFeed, now = new Date(), fetchText: 
       seen.add(e.uid);
       eventKeys.push({ uid: e.uid, start: e.start, end: e.end });
       try {
-        await syncEvent(ctx, feed, e, code, phoneLast4, result);
+        await syncEvent(ctx, feed, e, code, phoneLast4, result, today);
       } catch {
         result.skipped++;
       }
@@ -173,7 +173,7 @@ export async function syncFeed(feed: CalendarFeed, now = new Date(), fetchText: 
   return result;
 }
 
-async function syncEvent(ctx: OrgContext, feed: CalendarFeed, e: IcsEvent, code: string | null, phoneLast4: string | null, result: SyncResult) {
+async function syncEvent(ctx: OrgContext, feed: CalendarFeed, e: IcsEvent, code: string | null, phoneLast4: string | null, result: SyncResult, today: string) {
   let existing = await db.reservation.findFirst({ where: { calendarFeedId: feed.id, icalUid: e.uid } });
   if (!existing && code) {
     // Already imported from the platform's export file: just link it to the calendar.
@@ -206,7 +206,7 @@ async function syncEvent(ctx: OrgContext, feed: CalendarFeed, e: IcsEvent, code:
     guestsCount: 1,
     totalAmount: 0,
     source: feed.source,
-    status: e.end <= todayISO() ? "COMPLETED" : "CONFIRMED",
+    status: e.end <= today ? "COMPLETED" : "CONFIRMED",
     confirmationCode: code ?? undefined,
     externalId: code ?? undefined,
     notes: [`Από το ημερολόγιο ${label(feed.source)} — συμπληρώστε ποσό και επισκέπτη (ή κάντε εισαγωγή του αρχείου κρατήσεων).`, phoneLast4 ? `Τηλέφωνο: …${phoneLast4}` : null].filter(Boolean).join("\n"),

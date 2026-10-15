@@ -122,6 +122,8 @@ function serialize(e: WaitlistEntry, now: Date) {
     linkExpired: e.status === "APPROVED" && !!e.tokenExpiresAt && e.tokenExpiresAt <= now,
     approvedAt: e.approvedAt?.toISOString() ?? null,
     approvalEmailedAt: e.approvalEmailedAt?.toISOString() ?? null,
+    linkOpenedAt: e.linkOpenedAt?.toISOString() ?? null,
+    linkOpenCount: e.linkOpenCount,
     registeredAt: e.registeredAt?.toISOString() ?? null,
     createdAt: e.createdAt.toISOString(),
   };
@@ -151,7 +153,7 @@ export async function approveEntry(id: string, origin: string, now = new Date())
   const expiresAt = new Date(now.getTime() + ACCESS_DAYS * 86_400_000);
   await db.waitlistEntry.update({
     where: { id },
-    data: { status: "APPROVED", tokenHash: hashToken(token), tokenExpiresAt: expiresAt, approvedAt: now, approvalEmailedAt: null },
+    data: { status: "APPROVED", tokenHash: hashToken(token), tokenExpiresAt: expiresAt, approvedAt: now, approvalEmailedAt: null, linkOpenedAt: null, linkOpenCount: 0 },
   });
   const url = `${origin}${accessPath(token)}`;
   const playUrl = process.env.PLAY_TESTING_URL;
@@ -186,11 +188,19 @@ export type AccessStatus = "VALID" | "EXPIRED" | "USED";
 const accessStatus = (e: WaitlistEntry, now: Date): AccessStatus | null =>
   e.status === "REGISTERED" ? "USED" : e.status !== "APPROVED" ? null : e.tokenExpiresAt && e.tokenExpiresAt <= now ? "EXPIRED" : "VALID";
 
-/** Details shown on the sign-up page for a waitlist link, or null for an unknown or withdrawn link. */
-export async function getWaitlistAccess(token: string, now = new Date()) {
+/**
+ * Details shown on the sign-up page for a waitlist link, or null for an unknown or withdrawn link.
+ * With `recordOpen` (the sign-up page itself) it also notes that the link was opened, for the admin list.
+ */
+export async function getWaitlistAccess(token: string, now = new Date(), { recordOpen = false } = {}) {
   const entry = await db.waitlistEntry.findUnique({ where: { tokenHash: hashToken(token) } });
   if (!entry) return null;
   const status = accessStatus(entry, now);
+  if (recordOpen && status && status !== "USED") {
+    await db.waitlistEntry
+      .update({ where: { id: entry.id }, data: { linkOpenedAt: entry.linkOpenedAt ?? now, linkOpenCount: { increment: 1 } } })
+      .catch(() => {}); // best effort: never block the sign-up page
+  }
   return status ? { name: entry.name, email: entry.email, status } : null;
 }
 

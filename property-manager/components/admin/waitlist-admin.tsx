@@ -10,7 +10,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import { EmptyState, Stat } from "@/components/ui/misc";
 import { api } from "@/lib/client/api";
 import { useMutation } from "@/lib/client/use-mutation";
-import { formatDay } from "@/lib/format";
+import { formatDateTime, formatDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { WaitlistEntryDTO } from "@/lib/services/waitlist";
 import { approvalMessage, interestMessage, internationalPhone, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
@@ -173,6 +173,7 @@ export function WaitlistAdmin({
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5">
                       {e.linkExpired && <Badge tone="danger">Ο σύνδεσμος έληξε</Badge>}
+                      {e.status === "APPROVED" && <Badge tone={e.linkOpenedAt ? "success" : "neutral"}>{e.linkOpenedAt ? "Άνοιξε τον σύνδεσμο" : "Δεν τον άνοιξε ακόμα"}</Badge>}
                       <Badge tone={STATUS[e.status].tone}>{STATUS[e.status].label}</Badge>
                     </div>
                   </div>
@@ -185,7 +186,13 @@ export function WaitlistAdmin({
                     {e.regime && <span>{REGIMES[e.regime] ?? e.regime}</span>}
                     {e.device && <span>{DEVICES[e.device] ?? e.device}{e.playEmail && e.playEmail !== e.email ? ` · Play: ${e.playEmail}` : ""}</span>}
                     {e.status === "APPROVED" && e.approvedAt && (
-                      <span>{e.approvalEmailedAt ? "Ο σύνδεσμος στάλθηκε με email" : "Ο σύνδεσμος δεν στάλθηκε με email"} · δεν έχει φτιάξει λογαριασμό: «Νέος σύνδεσμος» και στείλτε τον με Messenger/Viber</span>
+                      <span>
+                        {e.approvalEmailedAt ? `Email στάλθηκε ${formatDateTime(e.approvalEmailedAt)}` : "Ο σύνδεσμος δεν στάλθηκε με email"}
+                        {" · "}
+                        {e.linkOpenedAt
+                          ? `άνοιξε τον σύνδεσμο ${formatDateTime(e.linkOpenedAt)}${e.linkOpenCount > 1 ? ` (${e.linkOpenCount} φορές)` : ""} αλλά δεν έφτιαξε λογαριασμό: στείλτε του μήνυμα αν χρειάζεται βοήθεια`
+                          : "δεν έχει ανοίξει ακόμα τον σύνδεσμο: «Νέος σύνδεσμος» και στείλτε τον με Messenger/Viber"}
+                      </span>
                     )}
                   </div>
                   {e.message && <p className="rounded-lg bg-muted px-3 py-2 text-sm whitespace-pre-line">{e.message}</p>}

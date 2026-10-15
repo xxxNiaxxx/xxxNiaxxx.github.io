@@ -19,7 +19,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   const { invite, access } = await searchParams;
   const invitation = invite ? await getInvitationByToken(invite) : null;
   const joining = invitation?.status === "VALID" ? { token: invite!, ...invitation } : null;
-  const approved = !joining && access ? await getWaitlistAccess(access) : null;
+  const approved = !joining && access ? await getWaitlistAccess(access, new Date(), { recordOpen: true }) : null;
   const accessOk = approved?.status === "VALID";
 
   if (!joining && !accessOk && !(await isRegistrationOpen())) {
