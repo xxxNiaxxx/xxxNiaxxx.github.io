@@ -95,6 +95,13 @@ export function PricingSettings({ commissionRates, paymentFeeRates, businessTaxR
       {COMMISSION_SOURCES.map((s) => (
         <span key={s}>{field(SOURCE_LABELS[s], commissionRates[s] ?? 0, (v) => save({ commissionRates: { [s]: Number(v) || 0 } }))}</span>
       ))}
+      <span className="w-full text-xs text-muted-foreground">
+        Airbnb: 15,5% είναι η ενιαία προμήθεια οικοδεσπότη από 13/10/2026.{" "}
+        {business
+          ? "Με ΑΦΜ για ΦΠΑ η προμήθεια χρεώνεται χωρίς ΦΠΑ (αντίστροφη επιβάρυνση)."
+          : "Χωρίς ΑΦΜ για ΦΠΑ οι πλατφόρμες προσθέτουν 24% ΦΠΑ στην προμήθεια: βάλτε το ποσοστό μαζί με τον ΦΠΑ (π.χ. Airbnb 19,22%)."}{" "}
+        Η αλλαγή ισχύει για νέες κρατήσεις.
+      </span>
       <span className="w-full text-[13px] font-medium">Χρέωση υπηρεσίας πληρωμών <span className="font-normal text-muted-foreground">(όταν η πλατφόρμα εισπράττει από τον επισκέπτη· 0 αν πληρώνεστε απευθείας)</span></span>
       {field(SOURCE_LABELS.BOOKING_COM, paymentFeeRates.BOOKING_COM ?? 0, (v) => save({ paymentFeeRates: { BOOKING_COM: Number(v) || 0 } }))}
       {business && field("Δικός σας συντελεστής φόρου", businessTaxRate ?? "", (v) => save({ businessTaxRate: v === "" ? null : Number(v) }), "κλίμακα")}
