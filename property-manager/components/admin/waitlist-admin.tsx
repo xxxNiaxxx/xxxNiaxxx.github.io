@@ -137,7 +137,15 @@ export function WaitlistAdmin({
         </CardContent>
       </Card>
 
-      {link && <AccessLink {...link} onClose={() => setLink(null)} />}
+      {link && (
+        // Over the page, wherever it is scrolled to: on a phone the list is long, and an
+        // approved entry leaves the «Σε αναμονή» tab, so a panel in the page would be out of sight.
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center" role="dialog" aria-modal="true" aria-label={`Σύνδεσμος για ${link.name}`} onClick={() => setLink(null)}>
+          <div className="max-h-[85vh] w-full max-w-lg overflow-auto rounded-2xl bg-surface shadow-xl" onClick={(ev) => ev.stopPropagation()}>
+            <AccessLink {...link} onClose={() => setLink(null)} />
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Φίλτρο κατάστασης">
         {(["PENDING", "APPROVED", "REGISTERED", "REJECTED", "ALL"] as const).map((s) => (
