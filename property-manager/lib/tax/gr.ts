@@ -225,8 +225,12 @@ export function businessIncomeTax(year: number, profit: number) {
 
 // ─── Platform commission ─────────────────────────────────────────────
 
-/** Default commission rates (%) by booking source; editable per organization. */
-export const DEFAULT_COMMISSION_RATES: Record<string, number> = { BOOKING_COM: 15, AIRBNB: 15 };
+/**
+ * Default commission rates (%) by booking source; editable per organization.
+ * Airbnb: the single host-only fee for EU hosts from 13.10.2026 (15,5%; the guest
+ * no longer pays a service fee). Bookings made before keep their own commission.
+ */
+export const DEFAULT_COMMISSION_RATES: Record<string, number> = { BOOKING_COM: 15, AIRBNB: 15.5 };
 /**
  * Payment service charge (%) of the guest's total, when the platform takes the
  * guest's payment and pays out the rest ("Πληρωμές από το Booking.com": about

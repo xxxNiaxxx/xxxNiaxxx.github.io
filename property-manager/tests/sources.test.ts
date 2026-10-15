@@ -21,7 +21,7 @@ describe("booking sources beyond Booking.com and Airbnb", () => {
     await updateTaxSettings(ctx, { commissionRates: { VRBO: 8 } });
     await updateTaxSettings(ctx, { commissionRates: { EXPEDIA: 18 } });
     const { commissionRates } = await getTaxContext(ctx);
-    expect(commissionRates).toMatchObject({ BOOKING_COM: 15, AIRBNB: 15, VRBO: 8, EXPEDIA: 18 });
+    expect(commissionRates).toMatchObject({ BOOKING_COM: 15, AIRBNB: 15.5, VRBO: 8, EXPEDIA: 18 });
     await expect(updateTaxSettings(ctx, { commissionRates: { MYSPACE: 5 } })).rejects.toMatchObject({ name: "ZodError" });
   });
 
