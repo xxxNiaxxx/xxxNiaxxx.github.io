@@ -1,22 +1,23 @@
 import {
-  Bot, CalendarCheck2, CalendarX2, Check, ClipboardList, FileSpreadsheet, Globe, Landmark, Minus, Smartphone, UserCheck, BellRing,
+  Bot, CalendarCheck2, CalendarX2, Check, ClipboardList, FileSpreadsheet, FileCheck2, Globe, Minus, Smartphone, UserCheck, BellRing,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Logo } from "@/components/layout/logo";
+import { PublicFooter } from "@/components/layout/public-footer";
 import { APP_NAME, FREE_UNTIL_NOTE } from "@/lib/brand";
 
 const FEATURES = [
   { icon: CalendarCheck2, title: "Όλες οι κρατήσεις μαζί", text: "Booking, Airbnb, Vrbo και άλλες πλατφόρμες στο ίδιο ημερολόγιο — με iCal και εισαγωγή του αρχείου κρατήσεων." },
   { icon: CalendarX2, title: "Ειδοποίηση διπλοκράτησης", text: "Αν δύο πλατφόρμες κλείσουν τις ίδιες μέρες, το μαθαίνετε αμέσως, με email." },
-  { icon: Landmark, title: "ΑΑΔΕ χωρίς άγχος", text: "Η δήλωση κάθε διαμονής έτοιμη για αντιγραφή, προθεσμίες, ΤΑΚΚ ανά μήνα, ΦΠΑ και τέλος 0,5% για επιχειρήσεις." },
+  { icon: FileCheck2, title: "ΑΑΔΕ χωρίς άγχος", text: "Η δήλωση κάθε διαμονής έτοιμη για αντιγραφή, προθεσμίες, ΤΑΚΚ ανά μήνα, ΦΠΑ και τέλος 0,5% για επιχειρήσεις." },
   { icon: UserCheck, title: "Online check-in", text: "Ο επισκέπτης δίνει μόνος του ΑΦΜ ή διαβατήριο, ώρα άφιξης και αποδέχεται τους κανόνες — στη γλώσσα του." },
   { icon: Bot, title: "Βοηθός AI", text: "Γράφει απαντήσεις στους επισκέπτες στη γλώσσα τους, από όσα του μάθατε για το σπίτι, και απαντά για τα δεδομένα σας." },
   { icon: Globe, title: "Απευθείας κρατήσεις", text: "Δική σας σελίδα κρατήσεων και οδηγός επισκέπτη — χωρίς προμήθεια πλατφόρμας." },
   { icon: BellRing, title: "Υπενθυμίσεις", text: "Ένα email το πρωί, μόνο όταν κάτι λήγει. Και ο μήνας σας με μια ματιά στην αρχή κάθε μήνα." },
   { icon: FileSpreadsheet, title: "Φάκελος για τον λογιστή", text: "Όλη η χρονιά ανά ΑΜΑ σε PDF και Excel: έσοδα, ΤΑΚΚ, διαμονές, έξοδα." },
   { icon: ClipboardList, title: "Καθαρισμοί και ομάδα", text: "Εργασίες ανά κατάλυμα, ανάθεση στο συνεργείο, ρόλοι για κάθε μέλος της ομάδας." },
-  { icon: Smartphone, title: "Και στο κινητό", text: "Εφαρμογή Android με όλα τα παραπάνω, για να τα έχετε μαζί σας." },
+  { icon: Smartphone, title: "Και στο κινητό", text: "Όλα δουλεύουν από τον browser του κινητού. Η εφαρμογή Android έρχεται σύντομα." },
 ];
 
 const COMPARE: [string, string, string][] = [
@@ -160,15 +161,9 @@ export function Landing() {
       </main>
 
       <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground sm:px-6">
-          <span>© {new Date().getFullYear()} {APP_NAME}</span>
-          <nav className="flex gap-4">
-            <Link href="/help" className="hover:text-foreground">Βοήθεια</Link>
-            <Link href="/privacy" className="hover:text-foreground">Απόρρητο</Link>
-            <Link href="/terms" className="hover:text-foreground">Όροι χρήσης</Link>
-            <Link href="/dpa" className="hover:text-foreground">GDPR</Link>
-            <Link href="/login" className="hover:text-foreground">Σύνδεση</Link>
-          </nav>
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+          <PublicFooter />
+          <Link href="/login" className="mt-2 inline-block text-xs text-muted-foreground hover:text-foreground">Σύνδεση</Link>
         </div>
       </footer>
     </div>

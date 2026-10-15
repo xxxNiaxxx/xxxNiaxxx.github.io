@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Πολιτική απορρήτου 
 const LAST_UPDATED = "2026-10-12";
 
 function Contact() {
-  return SUPPORT_EMAIL ? <a className="text-accent underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> : <span>τα στοιχεία επικοινωνίας στη σελίδα της εφαρμογής στο Google Play</span>;
+  return SUPPORT_EMAIL ? <a className="text-accent underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> : <span>το κουμπί «Στείλτε σχόλιο» μέσα στην εφαρμογή</span>;
 }
 
 export default function PrivacyPage() {
