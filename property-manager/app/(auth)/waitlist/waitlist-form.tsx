@@ -56,7 +56,7 @@ export function WaitlistForm({ source }: { source?: string | null }) {
           label="Gmail για το Google Play (αν διαφέρει)"
           htmlFor="playEmail"
           error={err.playEmail}
-          hint="Η εφαρμογή Android είναι σε δοκιμαστική έκδοση στο Google Play και σας προσθέτουμε ως δοκιμαστή με τον λογαριασμό Google του κινητού σας."
+          hint="Η εφαρμογή Android ετοιμάζεται. Μόλις βγει, σας προσθέτουμε ως δοκιμαστή με τον λογαριασμό Google του κινητού σας. Μέχρι τότε όλα δουλεύουν από τον browser."
         >
           <Input id="playEmail" name="playEmail" type="email" defaultValue={v.playEmail} placeholder="…@gmail.com" aria-invalid={!!err.playEmail} />
         </Field>

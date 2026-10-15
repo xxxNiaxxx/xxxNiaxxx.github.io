@@ -1,4 +1,4 @@
-import { Bot, CalendarCheck2, Landmark, UserCheck, Wallet } from "lucide-react";
+import { Bot, CalendarCheck2, FileCheck2, UserCheck, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BENEFITS } from "@/lib/marketing";
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Η εφαρμογή για Έλληνες οικοδεσπότες βραχυχρόνιας μίσθωσης: κρατήσεις από όλες τις πλατφόρμες, ΑΑΔΕ, φόροι, check-in και βοηθός AI. Δωρεάν έως το τέλος του 2026.",
 };
 
-const ICONS = { calendar: CalendarCheck2, net: Wallet, aade: Landmark, checkin: UserCheck, ai: Bot } as const;
+const ICONS = { calendar: CalendarCheck2, net: Wallet, aade: FileCheck2, checkin: UserCheck, ai: Bot } as const;
 
 /** Where the visitor came from: utm_source, or an ad click (gclid / fbclid). */
 function sourceOf(params: Record<string, string | string[] | undefined>) {

@@ -1,4 +1,5 @@
 import { Logo } from "@/components/layout/logo";
+import { PublicFooter } from "@/components/layout/public-footer";
 import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
 import { BENEFITS } from "@/lib/marketing";
 
@@ -10,7 +11,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <Logo /> {APP_NAME}
         </div>
         <div className="mx-auto w-full max-w-sm py-10">{children}</div>
-        <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} {APP_NAME}</p>
+        <PublicFooter />
       </div>
       <div className="relative hidden overflow-hidden bg-primary lg:block">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(45,212,191,0.25),transparent_45%),radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.08),transparent_40%)]" />
