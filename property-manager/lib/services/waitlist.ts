@@ -104,8 +104,12 @@ export async function joinWaitlist(input: unknown, origin: string, now = new Dat
   return { joined: true };
 }
 
-function serialize(e: WaitlistEntry, now: Date) {
+type Usage = { properties: number; reservations: number; lastSeenAt: string | null; lastSeenClient: string | null };
+
+function serialize(e: WaitlistEntry, now: Date, usage: Usage | null = null) {
   return {
+    /** For those who made an account: what they did in the app (all their organizations). */
+    usage,
     id: e.id,
     name: e.name,
     email: e.email,
@@ -132,7 +136,27 @@ export type WaitlistEntryDTO = ReturnType<typeof serialize>;
 
 export async function listWaitlist(now = new Date()) {
   const rows = await db.waitlistEntry.findMany({ orderBy: { createdAt: "desc" } });
-  return rows.map((r) => serialize(r, now));
+  const usage = await usageByUser(rows.flatMap((r) => (r.userId ? [r.userId] : [])));
+  return rows.map((r) => serialize(r, now, (r.userId && usage.get(r.userId)) || null));
+}
+
+/** Properties, reservations and last visit of these users, across the organizations they belong to. */
+async function usageByUser(ids: string[]) {
+  const map = new Map<string, Usage>();
+  if (!ids.length) return map;
+  const users = await db.user.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, lastSeenAt: true, lastSeenClient: true, memberships: { select: { organizationId: true } } },
+  });
+  for (const u of users) {
+    const orgs = u.memberships.map((m) => m.organizationId);
+    const [properties, reservations] = await Promise.all([
+      db.property.count({ where: { organizationId: { in: orgs } } }),
+      db.reservation.count({ where: { organizationId: { in: orgs } } }),
+    ]);
+    map.set(u.id, { properties, reservations, lastSeenAt: u.lastSeenAt?.toISOString() ?? null, lastSeenClient: u.lastSeenClient });
+  }
+  return map;
 }
 
 async function findEntry(id: string) {

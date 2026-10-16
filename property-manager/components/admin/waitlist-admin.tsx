@@ -203,6 +203,7 @@ export function WaitlistAdmin({
                       </span>
                     )}
                   </div>
+                  {e.usage && <UsageLine usage={e.usage} />}
                   {e.message && <p className="rounded-lg bg-muted px-3 py-2 text-sm whitespace-pre-line">{e.message}</p>}
 
                   {messageFor === e.id && <InterestMessage entry={e} onClose={() => setMessageFor(null)} />}
@@ -339,6 +340,23 @@ function InterestMessage({ entry, onClose }: { entry: WaitlistEntryDTO; onClose:
       </div>
       <Textarea value={message} onChange={(ev) => setMessage(ev.target.value)} rows={9} className="text-sm" aria-label="Μήνυμα" />
       <ShareButtons message={message} phone={entry.phone} />
+    </div>
+  );
+}
+
+/** What someone who made an account has done in the app, with a hint when they look stuck. */
+function UsageLine({ usage }: { usage: NonNullable<WaitlistEntryDTO["usage"]> }) {
+  const stuck = usage.properties === 0 || usage.reservations === 0;
+  return (
+    <div className={cn("rounded-lg px-3 py-2 text-sm", stuck ? "bg-warning-soft" : "bg-success-soft")}>
+      <span className="font-medium">Στην εφαρμογή:</span> {usage.properties} {usage.properties === 1 ? "κατάλυμα" : "καταλύματα"} · {usage.reservations}{" "}
+      {usage.reservations === 1 ? "κράτηση" : "κρατήσεις"} · τελευταία είσοδος{" "}
+      {usage.lastSeenAt ? `${formatDateTime(usage.lastSeenAt)}${usage.lastSeenClient === "mobile" ? " (κινητό)" : ""}` : "ποτέ"}
+      {stuck && (
+        <span className="block text-[13px] text-muted-foreground">
+          {usage.properties === 0 ? "Δεν πρόσθεσε ακόμα κατάλυμα" : "Δεν πέρασε ακόμα κρατήσεις"}: στείλτε το πρότυπο «Τα πρώτα βήματα» (Πρότυπα μηνυμάτων).
+        </span>
+      )}
     </div>
   );
 }
