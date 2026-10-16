@@ -104,6 +104,15 @@ describe("waitlist", () => {
     expect(await db.waitlistEntry.findUniqueOrThrow({ where: { id: entry.id } })).toMatchObject({ status: "REGISTERED", userId });
     expect(await getWaitlistAccess(token)).toMatchObject({ status: "USED" });
     await expect(approveEntry(entry.id, ORIGIN)).rejects.toMatchObject({ code: "CONFLICT" });
+
+    // The list shows what they did in the app.
+    let row = (await listWaitlist()).find((e) => e.id === entry.id)!;
+    expect(row.usage).toEqual({ properties: 0, reservations: 0, lastSeenAt: null, lastSeenClient: null });
+    await db.property.create({ data: { organizationId, name: "Σπίτι", city: "Χανιά", country: "Ελλάδα", basePrice: 80 } });
+    await db.user.update({ where: { id: userId }, data: { lastSeenAt: new Date("2026-10-16T10:00:00Z"), lastSeenClient: "web" } });
+    row = (await listWaitlist()).find((e) => e.id === entry.id)!;
+    expect(row.usage).toMatchObject({ properties: 1, reservations: 0, lastSeenAt: "2026-10-16T10:00:00.000Z" });
+    expect((await listWaitlist()).find((e) => e.status === "PENDING")?.usage ?? null).toBeNull();
   });
 
   it("links expire, a new link replaces the old one and rejection withdraws it", async () => {
