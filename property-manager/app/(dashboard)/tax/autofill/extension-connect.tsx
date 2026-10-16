@@ -6,8 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/client/api";
 
-/** Chrome Web Store page of the extension, once it is published. */
-const STORE_URL = process.env.NEXT_PUBLIC_EXTENSION_URL;
+/** Chrome Web Store page of the extension (unlisted: reachable by this link). */
+const STORE_URL = process.env.NEXT_PUBLIC_EXTENSION_URL || "https://chromewebstore.google.com/detail/edbgkhingmgkdgidcbnnpbgkakkihaag";
 
 type State = "checking" | "absent" | "ready" | "connected";
 

@@ -90,7 +90,8 @@ On the AADE form the extension shows a small panel (bottom right) and fills the 
 
 ## 7. Μετά την έγκριση
 
-Συνήθως εγκρίνεται σε λίγες ημέρες. Στείλτε τον σύνδεσμο της επέκτασης στο Claude: μπαίνει στο Vercel ως
-`NEXT_PUBLIC_EXTENSION_URL` και η σελίδα «Αυτόματη συμπλήρωση» δείχνει κουμπί «Εγκατάσταση επέκτασης».
+Εγκρίθηκε (Οκτώβριος 2026) ως **μη καταχωρισμένη**: https://chromewebstore.google.com/detail/edbgkhingmgkdgidcbnnpbgkakkihaag
+Ο σύνδεσμος είναι μέσα στην εφαρμογή (η σελίδα «Αυτόματη συμπλήρωση» δείχνει «Εγκατάσταση επέκτασης»).
+Με `NEXT_PUBLIC_EXTENSION_URL` στο Vercel αλλάζει, αν χρειαστεί.
 
 Κάθε διόρθωση στη συμπλήρωση χρειάζεται νέα έκδοση: `npm run build:extension` → ανέβασμα του νέου zip → Submit for review.
