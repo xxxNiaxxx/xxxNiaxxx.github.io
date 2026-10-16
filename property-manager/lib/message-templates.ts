@@ -149,6 +149,18 @@ export const MESSAGE_TEMPLATE_GROUPS: { title: string; templates: MessageTemplat
         ].join("\n\n"),
       },
       {
+        id: "tour-caption",
+        title: "Λεζάντα για το βίντεο tour της εφαρμογής",
+        when: "Με το βίντεο «Ένα γρήγορο tour» (marketing/tour/tour-app.mp4), ως reel στο Facebook και στο Instagram.",
+        text: [
+          "45 δευτερόλεπτα μέσα στο Βραχυχρόνια.ai 👀",
+          "📅 Όλες οι κρατήσεις Airbnb και Booking σε ένα ημερολόγιο\n💶 Πόσα σας μένουν καθαρά μετά από προμήθεια, ΤΑΚΚ και φόρο\n📝 Η δήλωση στην ΑΑΔΕ γεμίζει μόνη της\n📱 Online check-in από τον επισκέπτη, στη γλώσσα του\n🤖 Βοηθός AI για τα δεδομένα σας",
+          `Δωρεάν μέχρι το τέλος του 2026 👉 ${LINK}`,
+          "Από την ομάδα του Βραχυχρόνια.ai",
+          "#airbnbgreece #βραχυχρόνιαμίσθωση #airbnbhost #bookinghost",
+        ].join("\n\n"),
+      },
+      {
         id: "comment-reply",
         title: "Απάντηση σε σχόλιο ενδιαφέροντος",
         when: "Σε όποιον σχολιάσει «ενδιαφέρομαι», «πώς;», «πόσο κοστίζει;» κ.λπ.",
