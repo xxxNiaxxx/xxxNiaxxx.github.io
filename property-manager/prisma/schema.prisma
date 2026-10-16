@@ -714,9 +714,14 @@ model Feedback {
   /// Web or the mobile app.
   client         String?
   resolvedAt     DateTime?
+  /// The team's answer: emailed to the user and shown on their home page until they close it.
+  reply          String?
+  repliedAt      DateTime?
+  replySeenAt    DateTime?
   createdAt      DateTime     @default(now())
 
   @@index([resolvedAt, createdAt])
+  @@index([userId, repliedAt])
 }
 
 /// Attempts per key and time window (login, public forms), shared by all server instances.

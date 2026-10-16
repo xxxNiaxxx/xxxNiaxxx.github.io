@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AIPreview } from "@/components/dashboard/ai-preview";
 import { AttentionList } from "@/components/dashboard/attention-list";
 import { GettingStarted } from "@/components/dashboard/getting-started";
+import { FeedbackReplies } from "@/components/dashboard/feedback-replies";
 import { PriceSurvey } from "@/components/dashboard/price-survey";
 import { SavingsCard } from "@/components/dashboard/savings-card";
 import { PriceSuggestionList } from "@/components/properties/price-suggestions";
@@ -15,6 +16,7 @@ import { getPageContext } from "@/lib/auth/page";
 import { formatDay, formatMoney, formatPercent } from "@/lib/format";
 import { getDashboard } from "@/lib/services/dashboard";
 import { getOnboarding } from "@/lib/services/onboarding";
+import { unseenReplies } from "@/lib/services/feedback";
 import { surveyAnswered } from "@/lib/services/surveys";
 import { PRICE_SURVEY } from "@/lib/surveys";
 
@@ -27,7 +29,7 @@ function greeting(now: Date) {
 
 export default async function DashboardPage() {
   const { ctx, organization } = await getPageContext();
-  const [d, onboarding, answered] = await Promise.all([getDashboard(ctx), getOnboarding(ctx), surveyAnswered(ctx.userId, PRICE_SURVEY.id)]);
+  const [d, onboarding, answered, replies] = await Promise.all([getDashboard(ctx), getOnboarding(ctx), surveyAnswered(ctx.userId, PRICE_SURVEY.id), unseenReplies(ctx.userId)]);
   const s = d.summary;
   return (
     <>
@@ -45,6 +47,8 @@ export default async function DashboardPage() {
           </>
         }
       />
+
+      {replies.length > 0 && <FeedbackReplies items={replies} />}
 
       {!answered && !organization.isDemo && <PriceSurvey />}
 
