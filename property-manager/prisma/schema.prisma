@@ -184,6 +184,8 @@ model Property {
   ama              String?
   kind             PropertyKind   @default(APARTMENT)
   areaSqm          Int?
+  /// Rooms rented separately under this registry number (ενοικιαζόμενα δωμάτια); 1 for a whole apartment or house. Billing: +3 € per extra room.
+  rentalUnits      Int            @default(1)
   /// Safety checklist and insurance: { fireExtinguisher: true, …, insuranceExpiresOn: "YYYY-MM-DD" }
   compliance       Json           @default("{}")
   /// Secret token of the property's public iCal export (for Airbnb/Booking to block dates).

@@ -23,6 +23,7 @@ export function PropertyForm({ property }: { property?: Property }) {
     ama: property?.ama ?? "",
     kind: property?.kind ?? "APARTMENT",
     areaSqm: property?.areaSqm ? String(property.areaSqm) : "",
+    rentalUnits: String(property?.rentalUnits ?? 1),
     description: property?.description ?? "",
     checkInTime: property?.checkInTime ?? "15:00",
     checkOutTime: property?.checkOutTime ?? "11:00",
@@ -38,6 +39,7 @@ export function PropertyForm({ property }: { property?: Property }) {
       maxGuests: num(f.maxGuests),
       basePrice: num(f.basePrice),
       areaSqm: f.areaSqm.trim() === "" ? null : Number(f.areaSqm),
+      rentalUnits: Number(f.rentalUnits) || 1,
     };
     await run(() => api<Property>(editing ? `/api/properties/${property!.id}` : "/api/properties", { method: editing ? "PATCH" : "POST", body }), {
       onSuccess: (p) => (editing ? goBack(`/property/${p.id}`) : router.replace(`/property/${p.id}`)),
@@ -63,6 +65,7 @@ export function PropertyForm({ property }: { property?: Property }) {
         <SelectField label="Τύπος" value={f.kind} onChange={set("kind")}
           options={[{ value: "APARTMENT", label: "Διαμέρισμα" }, { value: "DETACHED_HOUSE", label: "Μονοκατοικία" }]}
           hint="Μονοκατοικίες άνω των 80 m² έχουν υψηλότερο ΤΑΚΚ" />
+        <NumberField label="Δωμάτια προς ενοικίαση (ίδιος ΑΜΑ)" value={f.rentalUnits} onChange={set("rentalUnits")} keyboardType="number-pad" error={err.rentalUnits} />
         <NumberField label="Εμβαδόν (m²)" value={f.areaSqm} onChange={set("areaSqm")} keyboardType="number-pad" error={err.areaSqm} />
         <TextField label="Περιγραφή" value={f.description} onChangeText={set("description")} multiline hint="Εμφανίζεται και στη σελίδα απευθείας κρατήσεων" />
       </Card>

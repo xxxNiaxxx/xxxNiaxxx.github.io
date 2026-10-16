@@ -73,6 +73,9 @@ export function PropertyFormDialog({ property, trigger }: { property?: PropertyD
               <option value="DETACHED_HOUSE">Μονοκατοικία</option>
             </Select>
           </Field>
+          <Field label="Δωμάτια προς ενοικίαση" htmlFor="rentalUnits" error={err.rentalUnits} hint="Συνήθως 1. Μόνο αν πολλά δωμάτια νοικιάζονται χωριστά με αυτόν τον έναν αριθμό μητρώου. Δωμάτιο με δικό του ΑΜΑ: χωριστό κατάλυμα." className="sm:col-span-2">
+            <Input id="rentalUnits" name="rentalUnits" type="number" min={1} max={200} defaultValue={property?.rentalUnits ?? 1} aria-invalid={!!err.rentalUnits} />
+          </Field>
           <Field label="Εμβαδόν (m²)" htmlFor="areaSqm" error={err.areaSqm} className="sm:col-span-2">
             <Input id="areaSqm" name="areaSqm" type="number" min={5} defaultValue={property?.areaSqm ?? ""} />
           </Field>

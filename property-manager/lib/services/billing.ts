@@ -6,16 +6,28 @@ import { hasRole, type OrgContext } from "@/lib/permissions";
 import { assertNotDemo } from "@/lib/demo";
 
 /**
- * Subscriptions: a monthly price per active property, paid by card through
- * Stripe Checkout; cards, invoices and cancellation in the Stripe customer
- * portal. Everyone uses the app free until the end of 2026; subscribing
- * earlier starts the first charge on 1 January 2027.
+ * Subscriptions, paid by card through Stripe Checkout; cards, invoices and
+ * cancellation in the Stripe customer portal. Everyone uses the app free
+ * until the end of 2026; subscribing earlier starts the first charge on
+ * 1 January 2027.
  *
- * Environment: STRIPE_SECRET_KEY, STRIPE_PRICE_ID (monthly, per unit),
- * STRIPE_WEBHOOK_SECRET; NEXT_PUBLIC_PRICE_PER_PROPERTY is the price shown.
+ * Price: 12 € a month per property, only for the months it has stays, plus
+ * 3 € for every extra room rented separately under the same registry number
+ * (ενοικιαζόμενα δωμάτια). A property marked «Ανενεργό» is never charged.
+ * Stripe bills each period in advance, so the daily job sets the quantities
+ * from the stays of the coming period (the one after currentPeriodEnd).
+ *
+ * Environment: STRIPE_SECRET_KEY, STRIPE_PRICE_ID (12 €, monthly, per unit),
+ * STRIPE_ROOM_PRICE_ID (3 €, monthly, per unit), STRIPE_WEBHOOK_SECRET;
+ * NEXT_PUBLIC_PRICE_PER_PROPERTY and NEXT_PUBLIC_PRICE_PER_EXTRA_ROOM are the
+ * prices shown.
  */
 export const FREE_UNTIL = new Date("2027-01-01T00:00:00+02:00");
 export const PRICE_PER_PROPERTY = Number(process.env.NEXT_PUBLIC_PRICE_PER_PROPERTY || 12);
+export const PRICE_PER_EXTRA_ROOM = Number(process.env.NEXT_PUBLIC_PRICE_PER_EXTRA_ROOM || 3);
+
+/** Monthly price of one property with stays that month. */
+export const propertyMonthlyPrice = (rentalUnits: number) => PRICE_PER_PROPERTY + Math.max(0, rentalUnits - 1) * PRICE_PER_EXTRA_ROOM;
 /** Statuses that keep access: past_due while Stripe retries the card. */
 const PAID_STATUSES = new Set(["active", "trialing", "past_due"]);
 
@@ -67,10 +79,43 @@ export async function assertAccess(organizationId: string, now = new Date()) {
 
 const activeProperties = (organizationId: string) => db.property.count({ where: { organizationId, status: "ACTIVE" } });
 
+const addMonth = (d: Date) => {
+  const r = new Date(d);
+  r.setUTCMonth(r.getUTCMonth() + 1);
+  return r;
+};
+
+const athensDay = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Athens" }).format(d);
+
+/** The period the next charge pays for: after the current period, else from 1 January 2027 (free period) or from now. */
+export function nextBillingPeriod(org: { currentPeriodEnd: Date | null }, now = new Date()) {
+  const start = org.currentPeriodEnd && org.currentPeriodEnd > now ? org.currentPeriodEnd : now < FREE_UNTIL ? FREE_UNTIL : now;
+  return { start, end: addMonth(start) };
+}
+
+/** Active properties with at least one night (not cancelled) in [start, end), with their price. */
+export async function billableProperties(organizationId: string, start: Date, end: Date) {
+  const rows = await db.property.findMany({
+    where: { organizationId, status: "ACTIVE", reservations: { some: { status: { not: "CANCELLED" }, checkIn: { lt: end }, checkOut: { gt: start } } } },
+    select: { id: true, name: true, rentalUnits: true },
+    orderBy: { name: "asc" },
+  });
+  return rows.map((p) => ({ ...p, price: propertyMonthlyPrice(p.rentalUnits) }));
+}
+
+/** Stripe quantities for those properties: one 12 € unit per property, one 3 € unit per extra room. */
+export function quantitiesFor(properties: { rentalUnits: number }[]) {
+  return {
+    properties: properties.length,
+    extraRooms: properties.reduce((a, p) => a + Math.max(0, p.rentalUnits - 1), 0),
+  };
+}
+
 /** What the billing page shows. */
 export async function billingState(ctx: OrgContext, now = new Date()) {
   const org = await db.organization.findUniqueOrThrow({ where: { id: ctx.organizationId } });
-  const [properties, adminOwned] = await Promise.all([activeProperties(org.id), ownedByPlatformAdmin(org.id)]);
+  const period = nextBillingPeriod(org, now);
+  const [properties, adminOwned, billable] = await Promise.all([activeProperties(org.id), ownedByPlatformAdmin(org.id), billableProperties(org.id, period.start, period.end)]);
   const paid = !!org.subscriptionStatus && PAID_STATUSES.has(org.subscriptionStatus);
   return {
     configured: billingConfigured(),
@@ -87,7 +132,11 @@ export async function billingState(ctx: OrgContext, now = new Date()) {
     hasCustomer: !!org.stripeCustomerId,
     activeProperties: properties,
     pricePerProperty: PRICE_PER_PROPERTY,
-    monthlyTotal: Math.max(1, properties) * PRICE_PER_PROPERTY,
+    pricePerExtraRoom: PRICE_PER_EXTRA_ROOM,
+    /** What the next charge would be, from the stays already booked for that period. */
+    nextPeriod: { from: athensDay(period.start), to: athensDay(new Date(period.end.getTime() - 1)) },
+    nextProperties: billable,
+    nextTotal: billable.reduce((a, p) => a + p.price, 0),
   };
 }
 export type BillingState = Awaited<ReturnType<typeof billingState>>;
@@ -96,7 +145,14 @@ function requireManager(ctx: OrgContext) {
   if (!hasRole(ctx, "ADMIN")) throw new AppError("FORBIDDEN", "Τη συνδρομή τη διαχειρίζονται ο ιδιοκτήτης και οι διαχειριστές");
 }
 
-/** Stripe Checkout for a new subscription: one unit per active property (at least one). */
+/** Stripe line items for the properties with stays in the coming period (Checkout needs at least one unit). */
+function lineItems(q: { properties: number; extraRooms: number }) {
+  const items = [{ price: process.env.STRIPE_PRICE_ID!, quantity: Math.max(1, q.properties) }];
+  if (q.extraRooms > 0 && process.env.STRIPE_ROOM_PRICE_ID) items.push({ price: process.env.STRIPE_ROOM_PRICE_ID, quantity: q.extraRooms });
+  return items;
+}
+
+/** Stripe Checkout for a new subscription, sized from the stays of the first paid period. */
 export async function startCheckout(ctx: OrgContext, user: { email: string; name?: string | null }, origin: string, now = new Date()) {
   requireManager(ctx);
   assertNotDemo(user.email);
@@ -108,11 +164,12 @@ export async function startCheckout(ctx: OrgContext, user: { email: string; name
     customer = (await stripe().customers.create({ email: user.email, name: org.name, metadata: { organizationId: org.id } })).id;
     await db.organization.update({ where: { id: org.id }, data: { stripeCustomerId: customer } });
   }
+  const first = nextBillingPeriod(org, now);
   const session = await stripe().checkout.sessions.create({
     mode: "subscription",
     customer,
     client_reference_id: org.id,
-    line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: Math.max(1, await activeProperties(org.id)) }],
+    line_items: lineItems(quantitiesFor(await billableProperties(org.id, first.start, first.end))),
     subscription_data: {
       metadata: { organizationId: org.id },
       // During the free period the first charge is on 1 January (Stripe needs a trial end at least 48 hours ahead;
@@ -202,19 +259,33 @@ export async function handleStripeEvent(event: Stripe.Event) {
 
 // ─── Daily jobs ──────────────────────────────────────────────────────
 
-/** Keeps the paid quantity equal to the active properties; the change applies from the next invoice. */
-export async function syncSubscriptionQuantities() {
+/**
+ * Sets the quantities of the next charge from the stays of the coming period
+ * (no proration: the current period is already paid). A month without stays
+ * costs nothing.
+ */
+export async function syncSubscriptionQuantities(now = new Date()) {
   if (!billingConfigured() && !stripeOverride) return { skipped: true };
   const orgs = await db.organization.findMany({ where: { stripeSubscriptionId: { not: null }, subscriptionStatus: { in: [...PAID_STATUSES] } } });
+  const roomPrice = process.env.STRIPE_ROOM_PRICE_ID;
   let updated = 0;
   for (const org of orgs) {
-    const quantity = Math.max(1, await activeProperties(org.id));
-    if (quantity === org.subscriptionQuantity) continue;
+    const period = nextBillingPeriod(org, now);
+    const q = quantitiesFor(await billableProperties(org.id, period.start, period.end));
     const sub = await stripe().subscriptions.retrieve(org.stripeSubscriptionId!);
-    const item = sub.items.data[0];
-    if (!item) continue;
-    await stripe().subscriptions.update(sub.id, { items: [{ id: item.id, quantity }], proration_behavior: "none" });
-    await db.organization.update({ where: { id: org.id }, data: { subscriptionQuantity: quantity } });
+    const main = sub.items.data.find((i) => i.price?.id === process.env.STRIPE_PRICE_ID) ?? sub.items.data[0];
+    if (!main) continue;
+    const rooms = roomPrice ? sub.items.data.find((i) => i.price?.id === roomPrice) : undefined;
+    const items: Stripe.SubscriptionUpdateParams.Item[] = [];
+    if (main.quantity !== q.properties) items.push({ id: main.id, quantity: q.properties });
+    if (roomPrice) {
+      if (rooms && q.extraRooms === 0) items.push({ id: rooms.id, deleted: true });
+      else if (rooms && rooms.quantity !== q.extraRooms) items.push({ id: rooms.id, quantity: q.extraRooms });
+      else if (!rooms && q.extraRooms > 0) items.push({ price: roomPrice, quantity: q.extraRooms });
+    }
+    if (!items.length) continue;
+    await stripe().subscriptions.update(sub.id, { items, proration_behavior: "none" });
+    await db.organization.update({ where: { id: org.id }, data: { subscriptionQuantity: q.properties } });
     updated++;
   }
   return { updated };
@@ -243,14 +314,17 @@ export async function sendFreePeriodReminders(origin: string, now = new Date()) 
   for (const org of orgs) {
     const emails = org.members.map((m) => m.user.email);
     if (emails.some((e) => isPlatformAdmin(e)) || !emails.length) continue;
-    const properties = Math.max(1, await activeProperties(org.id));
+    const units = await db.property.findMany({ where: { organizationId: org.id, status: "ACTIVE" }, select: { rentalUnits: true } });
+    const properties = Math.max(1, units.length);
+    const fullMonth = units.length ? units.reduce((a, p) => a + propertyMonthlyPrice(p.rentalUnits), 0) : PRICE_PER_PROPERTY;
     await sendEmail({
       to: emails,
       subject: "Η δωρεάν περίοδος λήγει στις 31 Δεκεμβρίου",
       text:
         `Η εφαρμογή είναι δωρεάν για το «${org.name}» μέχρι τις 31 Δεκεμβρίου 2026.\n\n` +
-        `Από 1 Ιανουαρίου 2027 η συνδρομή είναι ${PRICE_PER_PROPERTY} € ανά κατάλυμα τον μήνα — για τα ${properties} ` +
-        `${properties === 1 ? "κατάλυμά" : "καταλύματά"} σας ${properties * PRICE_PER_PROPERTY} € τον μήνα. Δεν χρεώνεστε τίποτα αν δεν ` +
+        `Από 1 Ιανουαρίου 2027 η συνδρομή είναι ${PRICE_PER_PROPERTY} € ανά κατάλυμα τον μήνα, μόνο για τους μήνες που έχει κρατήσεις ` +
+        `(+${PRICE_PER_EXTRA_ROOM} € για κάθε επιπλέον δωμάτιο στον ίδιο ΑΜΑ). Για τα ${properties} ` +
+        `${properties === 1 ? "κατάλυμά" : "καταλύματά"} σας, έναν μήνα με κρατήσεις σε όλα: ${fullMonth} €. Δεν χρεώνεστε τίποτα αν δεν ` +
         "ενεργοποιήσετε συνδρομή· αν την ενεργοποιήσετε τώρα, η πρώτη χρέωση γίνεται 1 Ιανουαρίου.\n\n" +
         "Χωρίς συνδρομή, από 1 Ιανουαρίου βλέπετε μόνο τη σελίδα συνδρομής και μπορείτε να εξαγάγετε όλα τα δεδομένα σας.",
       action: { label: "Συνδρομή", url: `${origin}/billing` },
