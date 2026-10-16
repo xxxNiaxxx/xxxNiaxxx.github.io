@@ -141,6 +141,7 @@ export interface Property {
   ama: string | null;
   kind: "APARTMENT" | "DETACHED_HOUSE";
   areaSqm: number | null;
+  rentalUnits: number;
   compliance: Record<string, boolean | string | null>;
   checkInTime: string | null;
   checkOutTime: string | null;

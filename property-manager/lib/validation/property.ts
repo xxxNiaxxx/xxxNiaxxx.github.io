@@ -18,6 +18,7 @@ const fields = z.object({
   currency: currency.unwrap(),
   ama: optionalText(20).refine((v) => !v || /^\d{6,15}$/.test(v), "Ο ΑΜΑ είναι ο αριθμητικός κωδικός από το Μητρώο της ΑΑΔΕ"),
   kind: z.enum(["APARTMENT", "DETACHED_HOUSE"]),
+  rentalUnits: positiveInt("Δωμάτια που νοικιάζονται χωριστά", 200).pipe(z.number().min(1, "Τουλάχιστον 1")),
   areaSqm: z.preprocess((v) => (v === "" || v == null ? null : v), z.coerce.number().int().min(5).max(5000).nullable()).optional(),
   checkInTime: optionalText(5).refine((v) => !v || /^([01]\d|2[0-3]):[0-5]\d$/.test(v), "Ώρα σε μορφή ΩΩ:ΛΛ, π.χ. 15:00"),
   checkOutTime: optionalText(5).refine((v) => !v || /^([01]\d|2[0-3]):[0-5]\d$/.test(v), "Ώρα σε μορφή ΩΩ:ΛΛ, π.χ. 11:00"),
@@ -44,6 +45,7 @@ export const propertyCreateSchema = fields.extend({
   status: propertyStatus.default("ACTIVE"),
   currency,
   kind: fields.shape.kind.default("APARTMENT"),
+  rentalUnits: fields.shape.rentalUnits.default(1),
   directBooking: fields.shape.directBooking.default(false),
 });
 

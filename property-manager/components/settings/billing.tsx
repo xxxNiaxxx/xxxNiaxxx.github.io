@@ -53,16 +53,32 @@ export function BillingPanel({ state, justSubscribed }: { state: BillingState; j
             <p className="text-sm">Ο λογαριασμός σας είναι δωρεάν, χωρίς χρέωση.</p>
           ) : (
             <>
-              <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
+              <div>
                 <p className="text-3xl font-semibold tracking-tight">{euro(state.pricePerProperty)}<span className="text-base font-normal text-muted-foreground"> / κατάλυμα / μήνα</span></p>
-                <p className="text-sm text-muted-foreground">
-                  {state.activeProperties} {state.activeProperties === 1 ? "ενεργό κατάλυμα" : "ενεργά καταλύματα"} → <strong className="text-foreground">{euro(state.monthlyTotal)} τον μήνα</strong>
+                <p className="mt-1 text-sm text-muted-foreground">Μόνο για τους μήνες που το κατάλυμα έχει κρατήσεις. Ενοικιαζόμενα δωμάτια με έναν ΑΜΑ: +{euro(state.pricePerExtraRoom)} για κάθε επιπλέον δωμάτιο.</p>
+              </div>
+              <div className="rounded-lg border border-border p-3 text-sm">
+                <p className="font-medium">
+                  {state.freePeriod && !state.subscribed ? "Η πρώτη χρέωση" : "Η επόμενη χρέωση"} ({formatDate(state.nextPeriod.from)} – {formatDate(state.nextPeriod.to)}), με τις κρατήσεις που έχετε ως τώρα:
                 </p>
+                {state.nextProperties.length ? (
+                  <ul className="mt-2 grid gap-1">
+                    {state.nextProperties.map((p) => (
+                      <li key={p.id} className="flex justify-between gap-3">
+                        <span className="min-w-0 truncate">{p.name}{p.rentalUnits > 1 ? ` · ${p.rentalUnits} δωμάτια` : ""}</span>
+                        <span className="shrink-0">{euro(p.price)}</span>
+                      </li>
+                    ))}
+                    <li className="mt-1 flex justify-between gap-3 border-t border-border pt-1 font-semibold"><span>Σύνολο</span><span>{euro(state.nextTotal)}</span></li>
+                  </ul>
+                ) : (
+                  <p className="mt-1 text-muted-foreground">Καμία κράτηση ακόμη για αυτόν τον μήνα: 0 €.</p>
+                )}
               </div>
               <ul className="grid gap-1.5 text-sm text-muted-foreground">
                 <li>• Όλες οι λειτουργίες, χωρίς όριο κρατήσεων και μελών ομάδας.</li>
-                <li>• Πληρώνετε μόνο τα ενεργά καταλύματα· η ποσότητα ενημερώνεται αυτόματα από τον επόμενο μήνα.</li>
-                <li>• Πληρωμή με κάρτα μέσω Stripe. Ακύρωση με ένα κλικ, χωρίς δέσμευση.</li>
+                <li>• Μήνας χωρίς κρατήσεις σε ένα κατάλυμα δεν χρεώνεται, αυτόματα. Ένα κατάλυμα «Ανενεργό» δεν χρεώνεται ποτέ.</li>
+                <li>• Πληρωμή με κάρτα μέσω Stripe, στην αρχή κάθε μήνα. Ακύρωση με ένα κλικ, χωρίς δέσμευση.</li>
               </ul>
               {state.freePeriod && !state.subscribed && (
                 <p className="rounded-lg bg-accent-soft p-3 text-sm text-accent">
@@ -72,7 +88,7 @@ export function BillingPanel({ state, justSubscribed }: { state: BillingState; j
               {state.subscribed && (
                 <DefinitionList
                   items={[
-                    { label: "Καταλύματα στη συνδρομή", value: state.quantity ?? "—" },
+                    { label: "Καταλύματα με κρατήσεις στην τρέχουσα χρέωση", value: state.quantity ?? "—" },
                     ...(state.currentPeriodEnd
                       ? [{ label: state.cancelAtPeriodEnd ? "Λήγει στις" : state.status === "trialing" ? "Πρώτη χρέωση" : "Επόμενη χρέωση", value: formatDate(state.currentPeriodEnd.slice(0, 10)) }]
                       : []),

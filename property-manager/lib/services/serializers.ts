@@ -24,6 +24,7 @@ export function serializeProperty(p: Property) {
     ama: p.ama,
     kind: p.kind,
     areaSqm: p.areaSqm,
+    rentalUnits: p.rentalUnits,
     compliance: (p.compliance ?? {}) as Record<string, boolean | string | null>,
     checkInTime: p.checkInTime,
     checkOutTime: p.checkOutTime,
