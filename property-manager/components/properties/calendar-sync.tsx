@@ -34,6 +34,7 @@ export function CalendarSync({ propertyId, feeds, exportPath, canEdit }: { prope
           Οι νέες κρατήσεις έρχονται μόνες τους (κάθε φορά που ανοίγετε την εφαρμογή και μία φορά τη νύχτα). Το iCal δεν έχει ποσά ούτε ονόματα:
           συμπληρώστε τα ή κάντε <Link href="/reservations/import" className="underline">εισαγωγή του αρχείου κρατήσεων</Link> — θα ενημερωθούν οι ίδιες κρατήσεις.
         </p>
+        <Link href="/help#airbnb-booking" className="text-[13px] font-medium text-accent underline-offset-4 hover:underline">Πώς παίρνω τον σύνδεσμο από το Airbnb και τη Booking →</Link>
         {feeds.length > 0 && (
           <ul className="divide-y divide-border rounded-xl border border-border">
             {feeds.map((f) => (
