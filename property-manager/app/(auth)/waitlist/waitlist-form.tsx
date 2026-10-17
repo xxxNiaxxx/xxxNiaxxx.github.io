@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Copy, Share2 } from "lucide-react";
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/input";
@@ -25,6 +25,7 @@ export function WaitlistForm({ source }: { source?: string | null }) {
         <p className="mt-1 text-sm text-muted-foreground">
           Μόλις ανοίξει θέση θα λάβετε email με τον σύνδεσμο εγγραφής. Ελέγξτε και τα ανεπιθύμητα (spam).
         </p>
+        <ShareWithFriend />
       </div>
     );
   }
@@ -123,5 +124,48 @@ export function WaitlistForm({ source }: { source?: string | null }) {
         Θέλω να το δοκιμάσω
       </Button>
     </form>
+  );
+}
+
+const SHARE_URL = "https://aivrachychronia.vercel.app/waitlist?utm_source=share";
+const SHARE_TEXT = "Βρήκα μια εφαρμογή για Airbnb και Booking που συμπληρώνει μόνη της τη δήλωση στην ΑΑΔΕ και δείχνει πόσα σου μένουν καθαρά. Είναι δωρεάν μέχρι το τέλος του 2026, ρίξε μια ματιά:";
+
+/** After joining: send the page to another host (Viber, WhatsApp, Messenger, or the phone's share sheet). */
+function ShareWithFriend() {
+  const [copied, setCopied] = useState(false);
+  const full = `${SHARE_TEXT} ${SHARE_URL}`;
+  const canShare = typeof navigator !== "undefined" && "share" in navigator;
+  const links = [
+    ["Viber", `viber://forward?text=${encodeURIComponent(full)}`],
+    ["WhatsApp", `https://wa.me/?text=${encodeURIComponent(full)}`],
+    ["Messenger", `fb-messenger://share?link=${encodeURIComponent(SHARE_URL)}`],
+  ] as const;
+  return (
+    <div className="mt-5 border-t border-border pt-4">
+      <p className="text-sm font-medium">Ξέρετε κι άλλον οικοδεσπότη που παιδεύεται με τις δηλώσεις;</p>
+      <p className="mt-0.5 text-[13px] text-muted-foreground">Στείλτε του τη σελίδα· θα σας ευχαριστεί.</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {canShare && (
+          <Button type="button" size="sm" onClick={() => navigator.share({ text: SHARE_TEXT, url: SHARE_URL }).catch(() => {})}>
+            <Share2 /> Αποστολή
+          </Button>
+        )}
+        {links.map(([label, href]) => (
+          <Button key={label} asChild size="sm" variant="outline">
+            <a href={href} target="_blank" rel="noreferrer">{label}</a>
+          </Button>
+        ))}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            void navigator.clipboard?.writeText(full).then(() => setCopied(true));
+          }}
+        >
+          <Copy /> {copied ? "Αντιγράφηκε" : "Αντιγραφή"}
+        </Button>
+      </div>
+    </div>
   );
 }
