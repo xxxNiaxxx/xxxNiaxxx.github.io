@@ -60,6 +60,21 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
         })}
       </ul>
 
+      <h2 className="mt-8 text-lg font-semibold tracking-tight">Η δήλωση στην ΑΑΔΕ, σε 20 δευτερόλεπτα</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Πατάτε ένα κουμπί και η φόρμα της ΑΑΔΕ γεμίζει από την κράτηση. Εσείς ελέγχετε και υποβάλλετε.</p>
+      <video
+        className="mx-auto mt-3 aspect-[9/16] w-full max-w-[260px] rounded-2xl bg-muted shadow-md"
+        src="/media/aade.mp4"
+        poster="/media/aade-poster.jpg"
+        autoPlay
+        muted
+        loop
+        playsInline
+        controls
+        preload="metadata"
+        aria-label="Βίντεο 20 δευτερολέπτων: η δήλωση στην ΑΑΔΕ γεμίζει μόνη της"
+      />
+
       <p className="mt-5 rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent">Δωρεάν μέχρι το τέλος του 2026. Χωρίς κάρτα.</p>
 
       <h2 className="mt-8 text-lg font-semibold tracking-tight">Θέλω να το δοκιμάσω</h2>
