@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DeleteAccount } from "@/components/settings/delete-account";
 import { NameForm } from "@/components/settings/name-form";
+import { PushNotifications } from "@/components/settings/push-notifications";
 import { OrgSwitcher } from "@/components/settings/org-switcher";
 import { RemindersToggle } from "@/components/settings/reminders-toggle";
 import { ChangePassword, SignOutEverywhere } from "@/components/settings/security";
@@ -9,6 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DefinitionList, PageHeader } from "@/components/ui/misc";
 import { getPageContext } from "@/lib/auth/page";
 import { db } from "@/lib/db";
+import { isPlatformAdmin } from "@/lib/email";
 import { humanize } from "@/lib/format";
 import { hasRole } from "@/lib/permissions";
 import { listInvitations } from "@/lib/services/invitations";
@@ -36,6 +38,8 @@ export default async function SettingsPage() {
             <DefinitionList items={[{ label: "Email", value: user.email }, { label: "Ρόλος", value: humanize(role) }]} />
           </CardContent>
         </Card>
+        {isPlatformAdmin(user.email) && <PushNotifications description="Σας ειδοποιεί αμέσως για νέες αιτήσεις στη λίστα αναμονής και νέα σχόλια χρηστών. Ενεργοποιήστε το σε κάθε κινητό ή υπολογιστή που θέλετε." />}
+
         <Card id="security">
           <CardHeader title="Ασφάλεια" description="Αν χάσατε ένα κινητό ή συνδεθήκατε σε ξένο υπολογιστή, αποσυνδεθείτε παντού. Η αλλαγή κωδικού αποσυνδέει επίσης όλες τις συσκευές." />
           <CardContent className="grid gap-5">
