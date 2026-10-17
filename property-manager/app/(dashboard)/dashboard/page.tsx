@@ -1,4 +1,4 @@
-import { BedDouble, Building2, Euro, LogIn, LogOut, Percent } from "lucide-react";
+import { BedDouble, BellRing, Building2, Euro, LogIn, LogOut, Percent } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AIPreview } from "@/components/dashboard/ai-preview";
@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { PageHeader, Stat } from "@/components/ui/misc";
 import { getPageContext } from "@/lib/auth/page";
+import { db } from "@/lib/db";
+import { isPlatformAdmin } from "@/lib/email";
 import { formatDay, formatMoney, formatPercent } from "@/lib/format";
 import { getDashboard } from "@/lib/services/dashboard";
 import { getOnboarding } from "@/lib/services/onboarding";
@@ -28,8 +30,14 @@ function greeting(now: Date) {
 }
 
 export default async function DashboardPage() {
-  const { ctx, organization } = await getPageContext();
-  const [d, onboarding, answered, replies] = await Promise.all([getDashboard(ctx), getOnboarding(ctx), surveyAnswered(ctx.userId, PRICE_SURVEY.id), unseenReplies(ctx.userId)]);
+  const { ctx, organization, user } = await getPageContext();
+  const [d, onboarding, answered, replies, newSignups] = await Promise.all([
+    getDashboard(ctx),
+    getOnboarding(ctx),
+    surveyAnswered(ctx.userId, PRICE_SURVEY.id),
+    unseenReplies(ctx.userId),
+    isPlatformAdmin(user.email) ? db.waitlistEntry.count({ where: { status: "PENDING" } }) : 0,
+  ]);
   const s = d.summary;
   return (
     <>
@@ -47,6 +55,16 @@ export default async function DashboardPage() {
           </>
         }
       />
+
+      {newSignups > 0 && (
+        <Link href="/admin/waitlist" className="mb-6 flex items-center gap-3 rounded-xl border border-accent/40 bg-accent-soft p-4 text-sm hover:bg-accent-soft/70">
+          <BellRing className="size-5 shrink-0 text-accent" />
+          <span className="flex-1">
+            <strong>{newSignups === 1 ? "1 νέα αίτηση" : `${newSignups} νέες αιτήσεις`}</strong> στη λίστα αναμονής περιμένουν έγκριση.
+          </span>
+          <span className="font-medium text-accent">Άνοιγμα →</span>
+        </Link>
+      )}
 
       {replies.length > 0 && <FeedbackReplies items={replies} />}
 

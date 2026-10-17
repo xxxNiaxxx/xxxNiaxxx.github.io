@@ -38,7 +38,7 @@ export function MobileTopBar({ appName, orgName }: { appName: string; orgName: s
   );
 }
 
-export function MobileBottomNav({ pendingActions, waitlistAdmin = false }: { pendingActions: number; waitlistAdmin?: boolean }) {
+export function MobileBottomNav({ pendingActions, waitlistAdmin = false, waitlistPending = 0 }: { pendingActions: number; waitlistAdmin?: boolean; waitlistPending?: number }) {
   const pathname = usePathname();
   const more = [...mainNav.filter((n) => !mobileNav.some((m) => m.href === n.href)), ...(waitlistAdmin ? [adminNav, adminTemplatesNav, adminActivityNav, adminFeedbackNav, adminErrorsNav, adminOrgsNav] : []), settingsNav, billingNav, helpNav];
   return (
@@ -63,9 +63,14 @@ export function MobileBottomNav({ pendingActions, waitlistAdmin = false }: { pen
         );
       })}
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-muted-foreground outline-none">
+        <DropdownMenuTrigger className="relative flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-muted-foreground outline-none">
           <Menu className="size-5" />
           Περισσότερα
+          {waitlistPending > 0 && (
+            <span className="absolute top-1 right-[calc(50%-22px)] min-w-4 rounded-full bg-accent px-1 text-[10px] leading-4 font-semibold text-white" aria-label={`${waitlistPending} νέες αιτήσεις`}>
+              {waitlistPending}
+            </span>
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent side="top" className="mb-2 w-56">
           <DropdownMenuLabel>Μετάβαση</DropdownMenuLabel>
@@ -73,6 +78,9 @@ export function MobileBottomNav({ pendingActions, waitlistAdmin = false }: { pen
             <DropdownMenuItem key={item.href} asChild>
               <Link href={item.href}>
                 <item.icon /> {item.label}
+                {item.href === adminNav.href && waitlistPending > 0 && (
+                  <span className="ml-auto rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white">{waitlistPending}</span>
+                )}
               </Link>
             </DropdownMenuItem>
           ))}
