@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, Copy, Share2 } from "lucide-react";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/input";
 import { WAITLIST_PLATFORM_GROUPS } from "@/lib/waitlist-options";
@@ -16,6 +16,23 @@ export function WaitlistForm({ source }: { source?: string | null }) {
   const err = state.fieldErrors ?? {};
   const v = state.values ?? {};
   const [device, setDevice] = useState(v.device ?? "");
+
+  // Approved at once: on to the sign-up page with the personal link.
+  useEffect(() => {
+    if (state.next) window.location.assign(state.next);
+  }, [state.next]);
+
+  if (state.done && state.next) {
+    return (
+      <div className="mt-8 rounded-xl border border-border bg-surface p-5" role="status">
+        <CheckCircle2 className="size-6 text-success" />
+        <p className="mt-3 font-medium">Εγκρίθηκε! Πάμε να φτιάξετε τον λογαριασμό σας…</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Αν δεν ανοίξει μόνο του, <a href={state.next} className="font-medium text-foreground underline">πατήστε εδώ</a>.
+        </p>
+      </div>
+    );
+  }
 
   if (state.done) {
     return (

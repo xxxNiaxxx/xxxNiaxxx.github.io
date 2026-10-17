@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { setEmailSenderForTests } from "@/lib/email";
 import { submitFeedback } from "@/lib/services/feedback";
 import { removePushSubscription, savePushSubscription, sendPush, sendTestPush, setPushSenderForTests, vapidKeys } from "@/lib/services/push";
-import { joinWaitlist } from "@/lib/services/waitlist";
+import { joinWaitlist, setAutoApprove } from "@/lib/services/waitlist";
 import { createTenant, resetDatabase } from "./helpers";
 
 const sub = (n: number) => ({ endpoint: `https://push.example.test/send/${n}`, keys: { p256dh: "BPublicKeyOfTheBrowser0123456789", auth: "authsecret123" } });
@@ -58,6 +58,7 @@ describe("push notifications", () => {
     process.env.ADMIN_EMAILS = email;
     await savePushSubscription(admin.userId, sub(3), null);
     sent.length = 0;
+    await setAutoApprove(false);
     await joinWaitlist({ name: "Νέα Οικοδέσποινα", email: "new-host@test.local", city: "Χανιά", consent: true }, "https://app.test");
     expect(sent).toHaveLength(1);
     expect(sent[0].payload).toMatchObject({ title: "Νέα αίτηση στη λίστα αναμονής", url: "/admin/waitlist" });

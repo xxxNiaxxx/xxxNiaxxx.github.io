@@ -39,11 +39,13 @@ async function copy(text: string, done: string) {
 export function WaitlistAdmin({
   entries,
   registrationOpen,
+  autoApprove,
   emailReady,
   playTestingUrl,
 }: {
   entries: WaitlistEntryDTO[];
   registrationOpen: boolean;
+  autoApprove: boolean;
   emailReady: boolean;
   playTestingUrl: string | null;
 }) {
@@ -97,6 +99,27 @@ export function WaitlistAdmin({
       <Card>
         <CardHeader title="Ρυθμίσεις" />
         <CardContent className="grid gap-4">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 accent-[var(--color-accent)]"
+              checked={autoApprove}
+              disabled={pending}
+              onChange={(ev) =>
+                run(() => api("/api/admin/settings", { method: "PATCH", body: { autoApprove: ev.target.checked } }), {
+                  success: ev.target.checked ? "Αυτόματη έγκριση: ενεργή" : "Αυτόματη έγκριση: ανενεργή",
+                })
+              }
+            />
+            <span className="text-sm">
+              <span className="font-medium">Αυτόματη έγκριση</span>
+              <span className="block text-muted-foreground">
+                {autoApprove
+                  ? "Όποιος συμπληρώνει τη φόρμα εγκρίνεται αμέσως και πηγαίνει κατευθείαν στη δημιουργία λογαριασμού (παίρνει και email με τον σύνδεσμο). Κλείστε το αν έρθουν ψεύτικες εγγραφές."
+                  : "Οι αιτήσεις περιμένουν να τις εγκρίνετε εσείς."}
+              </span>
+            </span>
+          </label>
           <label className="flex items-start gap-3">
             <input
               type="checkbox"

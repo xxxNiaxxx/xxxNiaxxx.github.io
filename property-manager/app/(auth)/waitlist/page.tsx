@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BENEFITS } from "@/lib/marketing";
 import { PRICE_PER_PROPERTY } from "@/lib/services/billing";
+import { isAutoApprove } from "@/lib/services/waitlist";
 import { WaitlistForm } from "./waitlist-form";
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ function sourceOf(params: Record<string, string | string[] | undefined>) {
 }
 
 export default async function WaitlistPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const source = sourceOf(await searchParams);
+  const [source, auto] = [sourceOf(await searchParams), await isAutoApprove()];
   return (
     <>
       <h1 className="text-2xl font-semibold tracking-tight">Η δήλωση στην ΑΑΔΕ γεμίζει μόνη της.</h1>
@@ -78,7 +79,9 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
       <p className="mt-5 rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent">Δωρεάν μέχρι το τέλος του 2026. Χωρίς κάρτα.</p>
 
       <h2 className="mt-8 text-lg font-semibold tracking-tight">Θέλω να το δοκιμάσω</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Θα σας στείλουμε email με τον σύνδεσμο εγγραφής.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {auto ? "Συμπληρώστε όνομα και email: στο επόμενο βήμα φτιάχνετε αμέσως τον λογαριασμό σας." : "Θα σας στείλουμε email με τον σύνδεσμο εγγραφής."}
+      </p>
       <WaitlistForm source={source} />
       <h2 className="mt-10 text-lg font-semibold tracking-tight">Συχνές ερωτήσεις</h2>
       <div className="mt-2 divide-y divide-border rounded-xl border border-border bg-surface">
