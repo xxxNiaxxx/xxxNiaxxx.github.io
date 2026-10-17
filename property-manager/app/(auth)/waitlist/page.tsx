@@ -1,10 +1,8 @@
 import { Bot, CalendarCheck2, FileCheck2, UserCheck, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { BENEFITS } from "@/lib/marketing";
 import { PRICE_PER_PROPERTY } from "@/lib/services/billing";
-import { demoLoginAction } from "../actions";
 import { WaitlistForm } from "./waitlist-form";
 
 export const metadata: Metadata = {
@@ -63,12 +61,6 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
       </ul>
 
       <p className="mt-5 rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent">Δωρεάν μέχρι το τέλος του 2026. Χωρίς κάρτα.</p>
-
-      <form action={demoLoginAction} className="mt-4 rounded-xl border border-border bg-surface p-4">
-        <p className="text-sm font-medium">Θέλετε πρώτα να τη δείτε;</p>
-        <p className="mt-0.5 text-[13px] text-muted-foreground">Μπείτε σε δοκιμαστικό λογαριασμό με έτοιμες κρατήσεις, χωρίς email και χωρίς εγγραφή.</p>
-        <Button type="submit" variant="outline" className="mt-3 w-full">Δοκιμάστε τώρα, χωρίς εγγραφή →</Button>
-      </form>
 
       <h2 className="mt-8 text-lg font-semibold tracking-tight">Θέλω να το δοκιμάσω</h2>
       <p className="mt-1 text-sm text-muted-foreground">Θα σας στείλουμε email με τον σύνδεσμο εγγραφής.</p>
