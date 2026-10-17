@@ -5,6 +5,7 @@ import { APP_NAME, FREE_UNTIL_NOTE } from "@/lib/brand";
 import { db } from "@/lib/db";
 import { platformAdminEmails, sendEmail } from "@/lib/email";
 import { pushToAdmins } from "@/lib/services/push";
+import { lastTeamMessageAt } from "@/lib/services/team-messages";
 import { AppError, conflict } from "@/lib/errors";
 import { email, optionalEmail, optionalText, requiredText } from "@/lib/validation/common";
 import { ACCESS_DAYS, WAITLIST_PLATFORM_VALUES, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
@@ -111,7 +112,7 @@ export async function joinWaitlist(input: unknown, origin: string, now = new Dat
   return { joined: true };
 }
 
-type Usage = { properties: number; reservations: number; lastSeenAt: string | null; lastSeenClient: string | null };
+type Usage = { userId: string; properties: number; reservations: number; lastSeenAt: string | null; lastSeenClient: string | null; lastMessageAt: string | null };
 
 function serialize(e: WaitlistEntry, now: Date, usage: Usage | null = null) {
   return {
@@ -155,13 +156,14 @@ async function usageByUser(ids: string[]) {
     where: { id: { in: ids } },
     select: { id: true, lastSeenAt: true, lastSeenClient: true, memberships: { select: { organizationId: true } } },
   });
+  const messaged = await lastTeamMessageAt(users.map((u) => u.id));
   for (const u of users) {
     const orgs = u.memberships.map((m) => m.organizationId);
     const [properties, reservations] = await Promise.all([
       db.property.count({ where: { organizationId: { in: orgs } } }),
       db.reservation.count({ where: { organizationId: { in: orgs } } }),
     ]);
-    map.set(u.id, { properties, reservations, lastSeenAt: u.lastSeenAt?.toISOString() ?? null, lastSeenClient: u.lastSeenClient });
+    map.set(u.id, { userId: u.id, properties, reservations, lastSeenAt: u.lastSeenAt?.toISOString() ?? null, lastSeenClient: u.lastSeenClient, lastMessageAt: messaged.get(u.id)?.toISOString() ?? null });
   }
   return map;
 }

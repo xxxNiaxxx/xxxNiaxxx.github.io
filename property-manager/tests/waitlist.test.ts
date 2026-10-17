@@ -107,7 +107,7 @@ describe("waitlist", () => {
 
     // The list shows what they did in the app.
     let row = (await listWaitlist()).find((e) => e.id === entry.id)!;
-    expect(row.usage).toEqual({ properties: 0, reservations: 0, lastSeenAt: null, lastSeenClient: null });
+    expect(row.usage).toEqual({ userId, properties: 0, reservations: 0, lastSeenAt: null, lastSeenClient: null, lastMessageAt: null });
     await db.property.create({ data: { organizationId, name: "Σπίτι", city: "Χανιά", country: "Ελλάδα", basePrice: 80 } });
     await db.user.update({ where: { id: userId }, data: { lastSeenAt: new Date("2026-10-16T10:00:00Z"), lastSeenClient: "web" } });
     row = (await listWaitlist()).find((e) => e.id === entry.id)!;

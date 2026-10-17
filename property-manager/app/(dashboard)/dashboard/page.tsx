@@ -19,6 +19,7 @@ import { formatDay, formatMoney, formatPercent } from "@/lib/format";
 import { getDashboard } from "@/lib/services/dashboard";
 import { getOnboarding } from "@/lib/services/onboarding";
 import { unseenReplies } from "@/lib/services/feedback";
+import { unseenTeamMessages } from "@/lib/services/team-messages";
 import { surveyAnswered } from "@/lib/services/surveys";
 import { PRICE_SURVEY } from "@/lib/surveys";
 
@@ -31,12 +32,13 @@ function greeting(now: Date) {
 
 export default async function DashboardPage() {
   const { ctx, organization, user } = await getPageContext();
-  const [d, onboarding, answered, replies, newSignups] = await Promise.all([
+  const [d, onboarding, answered, replies, newSignups, teamMessages] = await Promise.all([
     getDashboard(ctx),
     getOnboarding(ctx),
     surveyAnswered(ctx.userId, PRICE_SURVEY.id),
     unseenReplies(ctx.userId),
     isPlatformAdmin(user.email) ? db.waitlistEntry.count({ where: { status: "PENDING" } }) : 0,
+    unseenTeamMessages(ctx.userId),
   ]);
   const s = d.summary;
   return (
@@ -66,7 +68,7 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      {replies.length > 0 && <FeedbackReplies items={replies} />}
+      {replies.length + teamMessages.length > 0 && <FeedbackReplies items={replies} messages={teamMessages} />}
 
       {!answered && !organization.isDemo && <PriceSurvey />}
 

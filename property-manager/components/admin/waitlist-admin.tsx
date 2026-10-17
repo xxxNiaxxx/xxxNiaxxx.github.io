@@ -16,6 +16,7 @@ import type { WaitlistEntryDTO } from "@/lib/services/waitlist";
 import { approvalMessage, interestMessage, internationalPhone, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
 
 type Status = WaitlistEntryDTO["status"];
+type Filter = Status | "ALL" | "NO_PROPERTY" | "INACTIVE";
 
 const STATUS: Record<Status, { label: string; tone: BadgeTone }> = {
   PENDING: { label: "Σε αναμονή", tone: "warning" },
@@ -47,12 +48,20 @@ export function WaitlistAdmin({
   playTestingUrl: string | null;
 }) {
   const { run, pending } = useMutation();
-  const [filter, setFilter] = useState<Status | "ALL">("PENDING");
+  const [filter, setFilter] = useState<Filter>("PENDING");
+  const [compose, setCompose] = useState<{ ids: string[]; label: string; body: string } | null>(null);
   const [messageFor, setMessageFor] = useState<string | null>(null);
   const [link, setLink] = useState<{ name: string; email: string; phone: string | null; url: string; emailed: boolean } | null>(null);
 
   const count = (s: Status) => entries.filter((e) => e.status === s).length;
-  const shown = filter === "ALL" ? entries : entries.filter((e) => e.status === filter);
+  const now = Date.now();
+  const noProperty = entries.filter((e) => e.usage && e.usage.properties === 0);
+  const inactive = entries.filter((e) => e.usage && (!e.usage.lastSeenAt || now - Date.parse(e.usage.lastSeenAt) > 2 * 86_400_000));
+  const shown =
+    filter === "ALL" ? entries : filter === "NO_PROPERTY" ? noProperty : filter === "INACTIVE" ? inactive : entries.filter((e) => e.status === filter);
+  const group = filter === "NO_PROPERTY" ? noProperty : filter === "INACTIVE" ? inactive : null;
+  const openCompose = (list: WaitlistEntryDTO[], template: string, label: string) =>
+    setCompose({ ids: list.map((e) => e.usage!.userId), label, body: template });
   // Testers to add on Google Play: Android users who got access.
   const playEmails = entries
     .filter((e) => e.device === "ANDROID" && e.playEmail && (e.status === "APPROVED" || e.status === "REGISTERED"))
@@ -162,7 +171,40 @@ export function WaitlistAdmin({
             {s === "ALL" ? `Όλοι (${entries.length})` : `${STATUS[s].label} (${count(s)})`}
           </button>
         ))}
+        {([["NO_PROPERTY", "Χωρίς κατάλυμα", noProperty.length], ["INACTIVE", "Δεν μπήκαν 2+ μέρες", inactive.length]] as const).map(([s, label, n]) => (
+          <button
+            key={s}
+            role="tab"
+            aria-selected={filter === s}
+            onClick={() => setFilter(s)}
+            className={cn(
+              "rounded-full px-3 py-1 text-[13px] font-medium ring-1",
+              filter === s ? "bg-warning text-white ring-warning" : "bg-warning-soft text-warning ring-warning/30 hover:ring-warning",
+            )}
+          >
+            {label} ({n})
+          </button>
+        ))}
       </div>
+
+      {group && group.length > 0 && !compose && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning-soft p-4 text-sm">
+          <span>
+            {filter === "NO_PROPERTY" ? "Έφτιαξαν λογαριασμό αλλά δεν πρόσθεσαν κατάλυμα" : "Δεν έχουν μπει στην εφαρμογή τις τελευταίες 2 μέρες"}: {group.length}{" "}
+            {group.length === 1 ? "άτομο" : "άτομα"}.
+          </span>
+          <Button size="sm" onClick={() => openCompose(group, filter === "NO_PROPERTY" ? NO_PROPERTY_TEMPLATE : INACTIVE_TEMPLATE, `${group.length} ${group.length === 1 ? "άτομο" : "άτομα"}`)}>
+            <MessageSquare /> Μήνυμα σε όλους
+          </Button>
+        </div>
+      )}
+
+      {compose && (
+        <TeamMessageComposer
+          {...compose}
+          onClose={() => setCompose(null)}
+        />
+      )}
 
       {shown.length === 0 ? (
         <EmptyState title="Καμία αίτηση εδώ" description="Οι νέες αιτήσεις από τη σελίδα «Θέλω να δοκιμάσω» εμφανίζονται εδώ." />
@@ -204,6 +246,17 @@ export function WaitlistAdmin({
                     )}
                   </div>
                   {e.usage && <UsageLine usage={e.usage} />}
+                  {e.usage && !compose && (
+                    <div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openCompose([e], e.usage!.properties === 0 ? NO_PROPERTY_TEMPLATE : INACTIVE_TEMPLATE, e.name)}
+                      >
+                        <MessageSquare /> Μήνυμα
+                      </Button>
+                    </div>
+                  )}
                   {e.message && <p className="rounded-lg bg-muted px-3 py-2 text-sm whitespace-pre-line">{e.message}</p>}
 
                   {messageFor === e.id && <InterestMessage entry={e} onClose={() => setMessageFor(null)} />}
@@ -352,11 +405,59 @@ function UsageLine({ usage }: { usage: NonNullable<WaitlistEntryDTO["usage"]> })
       <span className="font-medium">Στην εφαρμογή:</span> {usage.properties} {usage.properties === 1 ? "κατάλυμα" : "καταλύματα"} · {usage.reservations}{" "}
       {usage.reservations === 1 ? "κράτηση" : "κρατήσεις"} · τελευταία είσοδος{" "}
       {usage.lastSeenAt ? `${formatDateTime(usage.lastSeenAt)}${usage.lastSeenClient === "mobile" ? " (κινητό)" : ""}` : "ποτέ"}
+      {usage.lastMessageAt && <span className="block text-[13px] text-muted-foreground">Τελευταίο μήνυμα από εμάς: {formatDateTime(usage.lastMessageAt)}</span>}
       {stuck && (
         <span className="block text-[13px] text-muted-foreground">
           {usage.properties === 0 ? "Δεν πρόσθεσε ακόμα κατάλυμα" : "Δεν πέρασε ακόμα κρατήσεις"}: στείλτε το πρότυπο «Τα πρώτα βήματα» (Πρότυπα μηνυμάτων).
         </span>
       )}
     </div>
+  );
+}
+
+const NO_PROPERTY_TEMPLATE = [
+  "Γεια σας [Όνομα]! 🙂",
+  "Είδαμε ότι φτιάξατε λογαριασμό στο Βραχυχρόνια.ai, αλλά δεν έχετε προσθέσει ακόμα το κατάλυμά σας. Είναι 2 λεπτά: «Ακίνητα» → «Νέο ακίνητο», και μετά ανεβάζετε το αρχείο κρατήσεων από τη Booking ή την Airbnb.",
+  "Αν θέλετε, το κάνουμε μαζί: πατήστε «Απάντηση» και πείτε μας πότε σας βολεύει.",
+  "Από την ομάδα του Βραχυχρόνια.ai",
+].join("\n\n");
+
+const INACTIVE_TEMPLATE = [
+  "Γεια σας [Όνομα]! 🙂",
+  "Πώς πάει με το Βραχυχρόνια.ai; Κολλήσατε κάπου ή σας λείπει κάτι;",
+  "Πατήστε «Απάντηση» και γράψτε μας, ακόμα και με μια φράση. Ό,τι μας πείτε, το φτιάχνουμε.",
+  "Από την ομάδα του Βραχυχρόνια.ai",
+].join("\n\n");
+
+/** Message from the team to the chosen users: email, phone notification and a card on their home page. */
+function TeamMessageComposer({ ids, label, body: initial, onClose }: { ids: string[]; label: string; body: string; onClose: () => void }) {
+  const [body, setBody] = useState(initial);
+  const { run, pending } = useMutation();
+  return (
+    <Card className="border-accent/40">
+      <CardHeader title={`Μήνυμα σε: ${label}`} description="Φεύγει με email, ως ειδοποίηση στο κινητό (αν την έχουν ενεργοποιήσει) και εμφανίζεται στην αρχική τους, όπου μπορούν να απαντήσουν. Το «[Όνομα]» γίνεται το μικρό όνομα του καθενός." />
+      <CardContent>
+        <form
+          className="grid gap-3"
+          onSubmit={(ev) => {
+            ev.preventDefault();
+            void run(() => api<{ sent: number; emailed: number }>("/api/admin/team-messages", { body: { userIds: ids, body } }), {
+              onSuccess: (r) => {
+                toast.success(`Στάλθηκε σε ${r.sent} ${r.sent === 1 ? "άτομο" : "άτομα"}${r.emailed < r.sent ? ` (email: ${r.emailed})` : ""}`);
+                onClose();
+              },
+            });
+          }}
+        >
+          <Textarea value={body} onChange={(ev) => setBody(ev.target.value)} rows={9} aria-label="Μήνυμα" />
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" loading={pending} disabled={body.trim().length < 5}>
+              <MessageSquare /> Αποστολή ({ids.length})
+            </Button>
+            <Button type="button" variant="ghost" onClick={onClose}>Ακύρωση</Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
