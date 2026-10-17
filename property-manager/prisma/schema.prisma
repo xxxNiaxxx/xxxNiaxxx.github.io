@@ -31,6 +31,7 @@ model User {
 
   memberships       OrganizationMember[]
   pushSubscriptions PushSubscription[]
+  teamMessages      TeamMessage[]
   autofillKeys      AutofillKey[]
   assignedTasks     Task[]               @relation("TaskAssignee")
   conversations     AIConversation[]
@@ -702,6 +703,19 @@ model PushSubscription {
   lastSentAt DateTime?
 
   @@index([userId])
+}
+
+/// A message from the team to a user: emailed and shown on their home page until they close it.
+model TeamMessage {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  emailed   Boolean   @default(false)
+  seenAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, seenAt])
 }
 
 /// Settings of the whole installation (not of an organization).
