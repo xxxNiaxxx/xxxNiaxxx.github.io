@@ -34,6 +34,20 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
       <h1 className="text-2xl font-semibold tracking-tight">Η δήλωση στην ΑΑΔΕ γεμίζει μόνη της.</h1>
       <p className="mt-2 text-[15px] text-muted-foreground">Και ξέρετε πόσα σας μένουν καθαρά από κάθε κράτηση Airbnb και Booking.</p>
 
+      {/* 45-second tour of the real app: muted, loops, plays inline on phones. */}
+      <video
+        className="mx-auto mt-5 aspect-[9/16] w-full max-w-[260px] rounded-2xl bg-muted shadow-md"
+        src="/media/tour.mp4"
+        poster="/media/tour-poster.jpg"
+        autoPlay
+        muted
+        loop
+        playsInline
+        controls
+        preload="metadata"
+        aria-label="Βίντεο 45 δευτερολέπτων: η εφαρμογή Βραχυχρόνια.ai στο κινητό"
+      />
+
       <ul className="mt-5 grid gap-3" aria-label="Τι κάνει για εσάς">
         {BENEFITS.map((b) => {
           const Icon = ICONS[b.key];
