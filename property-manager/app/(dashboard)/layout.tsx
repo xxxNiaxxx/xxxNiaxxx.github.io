@@ -33,7 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           {children}
         </main>
       </div>
-      <MobileBottomNav pendingActions={pendingActions} waitlistAdmin={admin} />
+      <MobileBottomNav pendingActions={pendingActions} waitlistAdmin={admin} waitlistPending={waitlistPending} />
       <CalendarAutoSync />
     </div>
   );
