@@ -13,6 +13,7 @@ import { ACCESS_DAYS, WAITLIST_PLATFORM_VALUES, WAITLIST_PLATFORMS } from "@/lib
 export { ACCESS_DAYS };
 
 const REGISTRATION_KEY = "registrationOpen";
+const AUTO_APPROVE_KEY = "waitlistAutoApprove";
 
 export const WAITLIST_REGIMES = { INDIVIDUAL: "Ιδιώτης", BUSINESS: "Επιχείρηση (με έναρξη)" } as const;
 export const WAITLIST_DEVICES = { ANDROID: "Android", IPHONE: "iPhone", NONE: "Μόνο υπολογιστής" } as const;
@@ -57,9 +58,28 @@ export async function setRegistrationOpen(open: boolean) {
 }
 
 /**
+ * Whether new applications are approved at once: the visitor goes straight
+ * to the sign-up page with their personal link (on unless switched off in
+ * the admin page).
+ */
+export async function isAutoApprove() {
+  const row = await db.appSetting.findUnique({ where: { key: AUTO_APPROVE_KEY } });
+  return row?.value !== false;
+}
+
+export async function setAutoApprove(on: boolean) {
+  await db.appSetting.upsert({ where: { key: AUTO_APPROVE_KEY }, create: { key: AUTO_APPROVE_KEY, value: on }, update: { value: on } });
+  return { autoApprove: on };
+}
+
+/**
  * Adds someone to the waitlist. Asking again with the same email updates the
  * details instead of making a second entry; the reply is the same either
  * way, so the form does not reveal who is already on the list.
+ *
+ * With automatic approval the entry is approved at once and `path` is the
+ * personal sign-up link to send the visitor to (not for rejected entries or
+ * those who already have an account).
  */
 export async function joinWaitlist(input: unknown, origin: string, now = new Date()) {
   // Consent is required by the schema; its time is stored as consentAt.
@@ -73,17 +93,22 @@ export async function joinWaitlist(input: unknown, origin: string, now = new Dat
     if (existing.status === "PENDING" || existing.status === "REJECTED") {
       await db.waitlistEntry.update({ where: { id: existing.id }, data: { ...data, source: existing.source ?? data.source, consentAt: now } });
     }
+    if ((existing.status === "PENDING" || existing.status === "APPROVED") && (await isAutoApprove())) {
+      return { joined: true, path: (await approveEntry(existing.id, origin, now, { instant: true })).path };
+    }
     return { joined: true };
   }
   const entry = await db.waitlistEntry.create({ data: { ...data, consentAt: now } });
+  const auto = await isAutoApprove();
 
-  await sendEmail({
+  // With automatic approval the approval email (with the link) is the only one they get.
+  if (!auto) await sendEmail({
     to: entry.email,
     subject: `Είστε στη λίστα αναμονής του ${APP_NAME}`,
     text: `Γεια σας ${entry.name},\n\nευχαριστούμε για το ενδιαφέρον σας να δοκιμάσετε το ${APP_NAME}. Σας καταχωρίσαμε στη λίστα αναμονής και θα σας στείλουμε email με τον προσωπικό σας σύνδεσμο εγγραφής μόλις ανοίξει θέση.\n\n${FREE_UNTIL_NOTE}\n\nΑν δεν κάνατε εσείς αυτή την αίτηση, απλώς αγνοήστε αυτό το μήνυμα και τα στοιχεία σας θα διαγραφούν κατόπιν αιτήματος.`,
   });
   await pushToAdmins({
-    title: "Νέα αίτηση στη λίστα αναμονής",
+    title: auto ? "Νέα εγγραφή (αυτόματη έγκριση)" : "Νέα αίτηση στη λίστα αναμονής",
     body: [entry.name, entry.city, entry.propertiesCount ? `${entry.propertiesCount} ακίνητα` : null].filter(Boolean).join(" · "),
     url: "/admin/waitlist",
     tag: "waitlist",
@@ -109,6 +134,7 @@ export async function joinWaitlist(input: unknown, origin: string, now = new Dat
       action: { label: "Άνοιγμα λίστας αναμονής", url: `${origin}/admin/waitlist` },
     });
   }
+  if (auto) return { joined: true, path: (await approveEntry(entry.id, origin, now, { instant: true })).path };
   return { joined: true };
 }
 
@@ -179,7 +205,7 @@ async function findEntry(id: string) {
  * and emails it. The link is returned too, to share by hand when email is
  * not set up or did not go out.
  */
-export async function approveEntry(id: string, origin: string, now = new Date()) {
+export async function approveEntry(id: string, origin: string, now = new Date(), { instant = false }: { instant?: boolean } = {}) {
   const entry = await findEntry(id);
   if (entry.status === "REGISTERED") throw conflict("Έχει ήδη φτιάξει λογαριασμό");
   const token = randomBytes(24).toString("base64url");
@@ -197,7 +223,7 @@ export async function approveEntry(id: string, origin: string, now = new Date())
   const emailed = await sendEmail({
     to: entry.email,
     subject: `Η πρόσβασή σας στο ${APP_NAME} είναι έτοιμη`,
-    text: `Γεια σας ${entry.name},\n\nσας ευχαριστούμε που περιμένατε! Μπορείτε τώρα να δημιουργήσετε τον λογαριασμό σας και να δοκιμάσετε την εφαρμογή. ${FREE_UNTIL_NOTE}\n\nΟ σύνδεσμος είναι προσωπικός, λειτουργεί μόνο με το ${entry.email} και ισχύει για ${ACCESS_DAYS} ημέρες.${android}\n\nΘα χαρούμε πολύ να ακούσουμε τη γνώμη σας: απλώς απαντήστε σε αυτό το email.`,
+    text: `Γεια σας ${entry.name},\n\n${instant ? "καλώς ήρθατε! Αν δεν ολοκληρώσατε ήδη την εγγραφή, με αυτόν τον σύνδεσμο φτιάχνετε τον λογαριασμό σας." : "σας ευχαριστούμε που περιμένατε! Μπορείτε τώρα να δημιουργήσετε τον λογαριασμό σας και να δοκιμάσετε την εφαρμογή."} ${FREE_UNTIL_NOTE}\n\nΟ σύνδεσμος είναι προσωπικός, λειτουργεί μόνο με το ${entry.email} και ισχύει για ${ACCESS_DAYS} ημέρες.${android}\n\nΘα χαρούμε πολύ να ακούσουμε τη γνώμη σας: απλώς απαντήστε σε αυτό το email.`,
     action: { label: "Δημιουργία λογαριασμού", url },
   });
   if (emailed) await db.waitlistEntry.update({ where: { id }, data: { approvalEmailedAt: now } });

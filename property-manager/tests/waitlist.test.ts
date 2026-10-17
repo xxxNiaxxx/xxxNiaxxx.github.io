@@ -4,6 +4,8 @@ import { type EmailMessage, setEmailSenderForTests } from "@/lib/email";
 import { registerAccount } from "@/lib/services/accounts";
 import {
   approveEntry,
+  isAutoApprove,
+  setAutoApprove,
   deleteEntry,
   getWaitlistAccess,
   isRegistrationOpen,
@@ -41,6 +43,8 @@ describe("waitlist", () => {
     setEmailSenderForTests(async (m) => void sent.push(m));
     await db.waitlistEntry.deleteMany();
     await db.appSetting.deleteMany();
+    // These tests are about approving by hand; automatic approval has its own test.
+    await setAutoApprove(false);
   });
   afterAll(() => {
     setEmailSenderForTests(null);
@@ -75,6 +79,30 @@ describe("waitlist", () => {
     expect(await db.waitlistEntry.count({ where: { email: data.email } })).toBe(1);
     expect((await db.waitlistEntry.findUniqueOrThrow({ where: { email: data.email } })).city).toBe("Ρέθυμνο");
     expect(sent).toHaveLength(0);
+  });
+
+  it("automatic approval: straight to the sign-up page, and the same link by email", async () => {
+    await setAutoApprove(true);
+    expect(await isAutoApprove()).toBe(true);
+    sent = [];
+    const data = form({ device: "IPHONE" });
+    const { path } = await joinWaitlist(data, ORIGIN);
+    expect(path).toMatch(/^\/register\?access=/);
+    const entry = await db.waitlistEntry.findUniqueOrThrow({ where: { email: data.email } });
+    expect(entry.status).toBe("APPROVED");
+    // One email to the applicant, the approval with the same link; one to the admins.
+    const mine = sent.filter((m) => m.to === data.email);
+    expect(mine).toHaveLength(1);
+    expect(mine[0].action?.url).toBe(`${ORIGIN}${path}`);
+    expect(mine[0].text).toContain("καλώς ήρθατε");
+    expect(await getWaitlistAccess(tokenOf(path!))).toMatchObject({ email: data.email, status: "VALID" });
+
+    // Filling the form again gives a fresh link; switched off, it waits for approval again.
+    expect((await joinWaitlist(data, ORIGIN)).path).toMatch(/^\/register\?access=/);
+    await setAutoApprove(false);
+    const other = form();
+    expect((await joinWaitlist(other, ORIGIN)).path).toBeUndefined();
+    expect((await db.waitlistEntry.findUniqueOrThrow({ where: { email: other.email } })).status).toBe("PENDING");
   });
 
   it("remembers where each sign-up came from (first visit wins)", async () => {

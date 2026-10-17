@@ -11,6 +11,8 @@ import { joinWaitlist } from "@/lib/services/waitlist";
 export interface AuthFormState {
   error?: string;
   done?: boolean;
+  /** After joining the waitlist with automatic approval: the personal sign-up link. */
+  next?: string;
   fieldErrors?: Record<string, string>;
   values?: Record<string, string>;
 }
@@ -80,11 +82,11 @@ export async function waitlistAction(_prev: AuthFormState, form: FormData): Prom
     return { error: "Πολλές αιτήσεις σε λίγο χρόνο. Δοκιμάστε ξανά σε λίγα λεπτά.", values };
   }
   try {
-    await joinWaitlist(
+    const { path } = await joinWaitlist(
       { ...values, platforms, consent: values.consent === "on" },
       await appOrigin(),
     );
-    return { done: true };
+    return { done: true, next: path };
   } catch (e) {
     if (e instanceof ZodError) return { error: "Διορθώστε τα σημειωμένα πεδία.", fieldErrors: fieldErrorsOf(e), values };
     if (e instanceof AppError) return { error: e.message, values };
