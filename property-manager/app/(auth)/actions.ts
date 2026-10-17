@@ -1,8 +1,10 @@
 "use server";
 
 import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
 import { ZodError } from "zod";
 import { signIn, signOut } from "@/lib/auth/config";
+import { DEMO_EMAIL_DOMAIN } from "@/lib/demo-domain";
 import { AppError } from "@/lib/errors";
 import { appOrigin, clientIp, rateLimited } from "@/lib/request";
 import { registerAccount } from "@/lib/services/accounts";
@@ -89,6 +91,17 @@ export async function waitlistAction(_prev: AuthFormState, form: FormData): Prom
     if (e instanceof ZodError) return { error: "Διορθώστε τα σημειωμένα πεδία.", fieldErrors: fieldErrorsOf(e), values };
     if (e instanceof AppError) return { error: e.message, values };
     throw e;
+  }
+}
+
+/** «Δοκιμάστε τώρα, χωρίς εγγραφή»: signs in to the shared demo account (data reset every night). */
+export async function demoLoginAction() {
+  if (await rateLimited(`demo:${await clientIp()}`, 20, 60 * 60_000)) redirect("/login");
+  try {
+    await signIn("credentials", { email: `demo@${DEMO_EMAIL_DOMAIN}`, password: process.env.DEMO_PASSWORD || "demo1234", redirectTo: "/dashboard" });
+  } catch (e) {
+    if (e instanceof AuthError) redirect("/login");
+    throw e; // NEXT_REDIRECT must propagate
   }
 }
 
