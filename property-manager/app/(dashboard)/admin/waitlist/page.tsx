@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { WaitlistAdmin } from "@/components/admin/waitlist-admin";
+import { PushNotifications } from "@/components/settings/push-notifications";
 import { PageHeader } from "@/components/ui/misc";
 import { getPageContext } from "@/lib/auth/page";
 import { emailConfigured, isPlatformAdmin } from "@/lib/email";
@@ -15,6 +16,9 @@ export default async function WaitlistAdminPage() {
   return (
     <>
       <PageHeader title="Λίστα αναμονής" description="Ποιοι ζήτησαν να δοκιμάσουν την εφαρμογή και ποιοι έχουν πρόσβαση" />
+      <div className="mb-6 max-w-3xl">
+        <PushNotifications description="Σας ειδοποιεί αμέσως για νέες αιτήσεις στη λίστα αναμονής και νέα σχόλια χρηστών. Ενεργοποιήστε το σε κάθε κινητό ή υπολογιστή που θέλετε." />
+      </div>
       <WaitlistAdmin
         entries={entries}
         registrationOpen={registrationOpen}

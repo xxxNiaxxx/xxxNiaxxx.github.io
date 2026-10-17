@@ -29,13 +29,14 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  memberships     OrganizationMember[]
-  autofillKeys    AutofillKey[]
-  assignedTasks   Task[]               @relation("TaskAssignee")
-  conversations   AIConversation[]
-  proposedActions AIAction[]           @relation("AIActionCreatedBy")
-  reviewedActions AIAction[]           @relation("AIActionReviewedBy")
-  sentInvitations Invitation[]         @relation("InvitationSentBy")
+  memberships       OrganizationMember[]
+  pushSubscriptions PushSubscription[]
+  autofillKeys      AutofillKey[]
+  assignedTasks     Task[]               @relation("TaskAssignee")
+  conversations     AIConversation[]
+  proposedActions   AIAction[]           @relation("AIActionCreatedBy")
+  reviewedActions   AIAction[]           @relation("AIActionReviewedBy")
+  sentInvitations   Invitation[]         @relation("InvitationSentBy")
 }
 
 enum Role {
@@ -686,6 +687,21 @@ model WaitlistEntry {
   updatedAt         DateTime       @updatedAt
 
   @@index([status, createdAt])
+}
+
+/// A browser that accepts push notifications for a user (Web Push).
+model PushSubscription {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+  lastSentAt DateTime?
+
+  @@index([userId])
 }
 
 /// Settings of the whole installation (not of an organization).

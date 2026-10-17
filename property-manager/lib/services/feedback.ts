@@ -2,6 +2,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { platformAdminEmails, sendEmail } from "@/lib/email";
 import { AppError } from "@/lib/errors";
+import { pushToAdmins } from "@/lib/services/push";
 
 const KIND_LABELS = { BUG: "Πρόβλημα", IDEA: "Ιδέα", OTHER: "Σχόλιο" } as const;
 
@@ -18,6 +19,9 @@ export async function submitFeedback(user: { id: string; email: string; name?: s
   const row = await db.feedback.create({
     data: { userId: user.id, email: user.email, organizationId, kind: data.kind, message: data.message, page: data.page ?? null, client: data.client },
   });
+  await pushToAdmins({ title: `${KIND_LABELS[data.kind]} από ${user.name ?? user.email}`, body: data.message.slice(0, 140), url: "/admin/feedback", tag: "feedback" }).catch((e) =>
+    console.error("feedback push", e),
+  );
   const admins = platformAdminEmails();
   if (admins.length) {
     await sendEmail({

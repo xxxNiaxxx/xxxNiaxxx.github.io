@@ -4,6 +4,7 @@ import { z } from "zod";
 import { APP_NAME, FREE_UNTIL_NOTE } from "@/lib/brand";
 import { db } from "@/lib/db";
 import { platformAdminEmails, sendEmail } from "@/lib/email";
+import { pushToAdmins } from "@/lib/services/push";
 import { AppError, conflict } from "@/lib/errors";
 import { email, optionalEmail, optionalText, requiredText } from "@/lib/validation/common";
 import { ACCESS_DAYS, WAITLIST_PLATFORM_VALUES, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
@@ -80,6 +81,12 @@ export async function joinWaitlist(input: unknown, origin: string, now = new Dat
     subject: `Είστε στη λίστα αναμονής του ${APP_NAME}`,
     text: `Γεια σας ${entry.name},\n\nευχαριστούμε για το ενδιαφέρον σας να δοκιμάσετε το ${APP_NAME}. Σας καταχωρίσαμε στη λίστα αναμονής και θα σας στείλουμε email με τον προσωπικό σας σύνδεσμο εγγραφής μόλις ανοίξει θέση.\n\n${FREE_UNTIL_NOTE}\n\nΑν δεν κάνατε εσείς αυτή την αίτηση, απλώς αγνοήστε αυτό το μήνυμα και τα στοιχεία σας θα διαγραφούν κατόπιν αιτήματος.`,
   });
+  await pushToAdmins({
+    title: "Νέα αίτηση στη λίστα αναμονής",
+    body: [entry.name, entry.city, entry.propertiesCount ? `${entry.propertiesCount} ακίνητα` : null].filter(Boolean).join(" · "),
+    url: "/admin/waitlist",
+    tag: "waitlist",
+  }).catch((e) => console.error("waitlist push", e));
   const admins = platformAdminEmails();
   if (admins.length) {
     const platforms = entry.platforms.map((p) => WAITLIST_PLATFORMS[p] ?? p).join(", ");
