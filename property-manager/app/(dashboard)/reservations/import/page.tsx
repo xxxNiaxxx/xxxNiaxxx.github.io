@@ -27,7 +27,7 @@ export default async function ImportPage() {
       <PageHeader
         back={{ href: "/reservations", label: "Κρατήσεις" }}
         title="Εισαγωγή κρατήσεων"
-        description={<>Από το αρχείο εξαγωγής του Booking.com, του Airbnb ή άλλης πλατφόρμας — με τιμές, προμήθειες και ΤΑΚΚ · <Link href="/help#booking-arxeio" className="text-accent underline-offset-4 hover:underline">Τα νούμερα του Booking</Link></>}
+        description={<>Από το αρχείο εξαγωγής του Booking.com, του Airbnb ή άλλης πλατφόρμας — με τιμές, προμήθειες και ΤΑΚΚ · <Link href="/help#airbnb-booking" className="text-accent underline-offset-4 hover:underline">Πώς κατεβάζω το αρχείο</Link> · <Link href="/help#booking-arxeio" className="text-accent underline-offset-4 hover:underline">Τα νούμερα του Booking</Link></>}
       />
       <div className="max-w-5xl">
         {properties.length === 0 ? (

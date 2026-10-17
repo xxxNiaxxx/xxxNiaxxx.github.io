@@ -74,7 +74,9 @@ export function GettingStarted({
                 <strong>Airbnb:</strong> Πίνακας οικοδεσπότη → <em>Κρατήσεις</em> → <em>Όλες</em> → <em>Εξαγωγή</em> (CSV)
               </li>
             </ul>
-            <p className="mt-2 text-xs">Καλύτερα από υπολογιστή: στο κινητό οι πλατφόρμες συνήθως δεν δίνουν το αρχείο.</p>
+            <p className="mt-2 text-xs">
+              Καλύτερα από υπολογιστή: στο κινητό οι πλατφόρμες συνήθως δεν δίνουν το αρχείο. <Link href="/help#airbnb-booking" className="underline">Αναλυτικά βήματα</Link>
+            </p>
             <div className="mt-3">
               <Button size="sm" asChild><Link href="/reservations/import"><FileSpreadsheet /> Ανέβασμα αρχείου</Link></Button>
             </div>
@@ -82,7 +84,10 @@ export function GettingStarted({
 
           <Step n={3} done={steps.calendars} active={current === "calendars"} icon={<CalendarSync />} title="Συνδέστε τα ημερολόγια (iCal)">
             <p>Οι νέες κρατήσεις έρχονται μόνες τους κάθε πρωί και η εφαρμογή σας προειδοποιεί για διπλές κρατήσεις.</p>
-            <p className="mt-1">Αντιγράψτε τον σύνδεσμο «Εξαγωγή ημερολογίου» από τη Booking και το Airbnb και επικολλήστε τον στο κατάλυμα.</p>
+            <p className="mt-1">
+              Αντιγράψτε τον σύνδεσμο «Εξαγωγή ημερολογίου» από τη Booking και το Airbnb και επικολλήστε τον στο κατάλυμα.{" "}
+              <Link href="/help#airbnb-booking" className="underline">Πώς τον βρίσκω</Link>
+            </p>
             {firstPropertyId && (
               <div className="mt-3">
                 <Button size="sm" asChild><Link href={`/properties/${firstPropertyId}#calendars`}><CalendarSync /> Σύνδεση ημερολογίων</Link></Button>
