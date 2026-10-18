@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { formatGuestDate } from "@/lib/i18n/guest-messages";
 import { guestPageText } from "@/lib/i18n/guest-pages";
 import { getCheckin } from "@/lib/services/guest-pages";
@@ -41,6 +41,9 @@ export default async function CheckinPage({ params, searchParams }: { params: Pr
       ) : (
         <>
           <p className="mt-6 text-sm">{t.hello} {data.guestFirstName}! {t.checkinIntro}</p>
+          <p className="mt-3 flex gap-2 rounded-xl border border-border bg-muted/60 p-3 text-[13px] text-muted-foreground">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> {t.safety}
+          </p>
           <CheckinForm token={token} t={t} houseRules={data.houseRules} prefill={data.prefill} />
         </>
       )}

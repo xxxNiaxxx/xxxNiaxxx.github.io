@@ -27,7 +27,7 @@ import {
 } from "@/lib/tax/gr";
 import { autofillValues } from "@/lib/aade-autofill";
 import { label } from "@/lib/labels";
-import { toNumber } from "./serializers";
+import { canSeeGuestDetails, toNumber } from "./serializers";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -189,10 +189,12 @@ export interface DeclarationField {
  * labels and in its order. The amount is the agreed rent: without ΤΑΚΚ, and
  * for a business also without VAT and the 0,5% fee.
  */
-export function declarationForm(r: StayRow, info: StayTaxInfo) {
+export function declarationForm(r: StayRow, info: StayTaxInfo, showId = true) {
   const method = (r.paymentMethod ?? defaultPaymentMethod(r.source)) as PaymentMethod | null;
   const name = [r.guest.firstName, r.guest.lastName === "—" ? "" : r.guest.lastName].join(" ").trim();
-  const { idType, idNumber } = r.guest;
+  const idType = r.guest.idType;
+  // Team members do not see the guest's ID/ΑΦΜ (canSeeGuestDetails).
+  const idNumber = showId ? r.guest.idNumber : null;
   // Greek tenants are declared by ΑΦΜ; everyone else ticks «Αλλοδαπός» and gives a passport or EU ID.
   const greek = idType === "TAX_ID" || (idType !== "PASSPORT" && idType !== "ID_CARD" && isGreece(r.guest.country));
   const taxId = idType === "TAX_ID" || (!idType && /^\d{9}$/.test(idNumber ?? "")) ? idNumber : null;
@@ -518,7 +520,7 @@ export async function getStayTax(ctx: OrgContext, reservationId: string, now = n
   const year = Number(dateToISO(r.checkOut).slice(0, 4));
   const { effectiveTaxRate } = await getAnnualReport(ctx, year, 0, now);
   const info = stayTaxInfo(r, regime, todayISO(now), effectiveTaxRate, paymentFeeRates);
-  return { regime, commissionRate: commissionRates[r.source] ?? 0, ...info, declarationForm: declarationForm(r, info) };
+  return { regime, commissionRate: commissionRates[r.source] ?? 0, ...info, declarationForm: declarationForm(r, info, canSeeGuestDetails(ctx)) };
 }
 
 /**
@@ -544,7 +546,7 @@ export async function declarationsToFill(ctx: OrgContext, now = new Date(), limi
   return rows
     .map((r) => {
       const info = stayTaxInfo(r, regime, today, undefined, paymentFeeRates);
-      return { info, form: declarationForm(r, info) };
+      return { info, form: declarationForm(r, info, canSeeGuestDetails(ctx)) };
     })
     .filter(({ info }) => info.declaration.required)
     .slice(0, limit)

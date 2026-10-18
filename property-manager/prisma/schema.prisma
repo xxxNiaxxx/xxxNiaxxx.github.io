@@ -26,10 +26,18 @@ model User {
   /// Last request made while signed in (updated at most every couple of minutes), and from where: "web" or "app".
   lastSeenAt      DateTime?
   lastSeenClient  String?
+  /// Two-step sign-in (TOTP, lib/auth/totp.ts): the secret (encrypted), when it was turned on,
+  /// and the SHA-256 hashes of the unused recovery codes.
+  totpSecret      String?
+  totpEnabledAt   DateTime?
+  totpRecovery    String[]  @default([])
+  /// Time step of the last accepted code, so each code works only once.
+  totpLastStep    Int?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
   memberships       OrganizationMember[]
+  securityEvents    SecurityEvent[]
   pushSubscriptions PushSubscription[]
   teamMessages      TeamMessage[]
   autofillKeys      AutofillKey[]
@@ -140,6 +148,7 @@ model Organization {
   invitations       Invitation[]
   calendarFeeds     CalendarFeed[]
   calendarConflicts CalendarConflict[]
+  securityEvents    SecurityEvent[]
 }
 
 model OrganizationMember {
@@ -232,6 +241,10 @@ model Guest {
   idType         String?
   idNumber       String?
   notes          String?
+  /// email, phone, idNumber and notes are stored encrypted (lib/db); these keyed
+  /// hashes find a guest by exact email or phone (lib/crypto/fields.ts).
+  emailHash      String?
+  phoneHash      String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -240,6 +253,8 @@ model Guest {
   messages     Message[]
 
   @@index([organizationId, lastName])
+  @@index([organizationId, emailHash])
+  @@index([organizationId, phoneHash])
 }
 
 /// Channel a reservation came from. Phase 1 only creates MANUAL reservations;
@@ -781,4 +796,27 @@ model ErrorEvent {
   resolvedAt  DateTime?
 
   @@index([resolvedAt, lastSeenAt])
+}
+
+/// Sign-ins (with the device), two-step changes and downloads of guest data,
+/// shown to the user (sign-ins) and to the organization's administrators (downloads).
+model SecurityEvent {
+  id             String   @id @default(cuid())
+  userId         String?
+  organizationId String?
+  /// LOGIN, TOTP_ENABLED, TOTP_DISABLED, EXPORT (details.what says which file).
+  kind           String
+  /// "Chrome · Android" from the user agent, and the IP with its last part hidden.
+  device         String?
+  ip             String?
+  /// Hash of the browser/OS and network, to notice a sign-in from a new device.
+  deviceKey      String?
+  details        Json?
+  createdAt      DateTime @default(now())
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind, createdAt])
+  @@index([organizationId, kind, createdAt])
 }

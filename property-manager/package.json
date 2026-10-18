@@ -19,7 +19,7 @@
     "db:remove-demo": "tsx prisma/seed.ts --remove",
     "db:reset": "prisma migrate reset --force",
     "postinstall": "prisma generate",
-    "vercel-build": "prisma migrate deploy && next build"
+    "vercel-build": "prisma migrate deploy && tsx scripts/encrypt-guest-data.ts && next build"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -38,6 +38,7 @@
     "next": "^15.5.27",
     "next-auth": "^5.0.0-beta.32",
     "nodemailer": "^7.0.13",
+    "qrcode": "^1.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "server-only": "^0.0.1",
@@ -53,6 +54,7 @@
     "@tailwindcss/postcss": "^4.1.14",
     "@types/node": "^22.20.5",
     "@types/nodemailer": "^7.0.12",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/web-push": "^3.6.4",

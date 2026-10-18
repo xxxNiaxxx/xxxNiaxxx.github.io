@@ -6,6 +6,7 @@ import { OrgSwitcher } from "@/components/settings/org-switcher";
 import { RemindersToggle } from "@/components/settings/reminders-toggle";
 import { ChangePassword, SignOutEverywhere } from "@/components/settings/security";
 import { TeamPanel } from "@/components/settings/team";
+import { TwoStep } from "@/components/settings/two-step";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DefinitionList, PageHeader } from "@/components/ui/misc";
 import { getPageContext } from "@/lib/auth/page";
@@ -15,15 +16,38 @@ import { humanize } from "@/lib/format";
 import { hasRole } from "@/lib/permissions";
 import { listInvitations } from "@/lib/services/invitations";
 import { listMembers } from "@/lib/services/members";
+import { listExports, listLogins, twoStepStatus } from "@/lib/services/security";
 
 export const metadata: Metadata = { title: "Ρυθμίσεις" };
 
+const when = (iso: string) => new Date(iso).toLocaleString("el-GR", { timeZone: "Europe/Athens", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+function ActivityList({ items, empty }: { items: { id: string; title: string; detail: string | null; at: string }[]; empty: string }) {
+  if (!items.length) return <p className="text-[13px] text-muted-foreground">{empty}</p>;
+  return (
+    <ul className="divide-y divide-border rounded-xl border border-border text-[13px]">
+      {items.map((i) => (
+        <li key={i.id} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 px-3 py-2">
+          <span>
+            <span className="font-medium">{i.title}</span>
+            {i.detail && <span className="text-muted-foreground"> · {i.detail}</span>}
+          </span>
+          <span className="text-muted-foreground tabular-nums">{when(i.at)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default async function SettingsPage() {
   const { ctx, user, organization, role } = await getPageContext({ withoutSubscription: true });
-  const [members, invitations, memberships] = await Promise.all([
+  const [members, invitations, memberships, twoStep, logins, exports] = await Promise.all([
     listMembers(ctx),
     listInvitations(ctx),
     db.organizationMember.findMany({ where: { userId: user.id }, include: { organization: { select: { id: true, name: true } } } }),
+    twoStepStatus(user.id),
+    listLogins(user.id),
+    hasRole(ctx, "ADMIN") ? listExports(ctx) : null,
   ]);
   const ai = process.env.AI_API_KEY ? `Συνδεδεμένος · ${process.env.AI_MODEL || "gpt-4o-mini"}` : "Βοηθός εκτός σύνδεσης (χωρίς AI_API_KEY)";
 
@@ -48,6 +72,22 @@ export default async function SettingsPage() {
               <p className="text-[13px] text-muted-foreground">Θα χρειαστεί να συνδεθείτε ξανά σε κάθε συσκευή.</p>
               <SignOutEverywhere />
             </div>
+            <div className="grid gap-2 border-t border-border pt-4">
+              <h3 className="text-sm font-semibold">Κωδικός 2 βημάτων</h3>
+              <TwoStep enabled={twoStep.enabled} recoveryCodesLeft={twoStep.recoveryCodesLeft} />
+            </div>
+            <div className="grid gap-2 border-t border-border pt-4">
+              <h3 className="text-sm font-semibold">Πρόσφατες συνδέσεις</h3>
+              <p className="text-[13px] text-muted-foreground">Για σύνδεση από νέα συσκευή σάς στέλνουμε email και ειδοποίηση. Αν δείτε κάτι που δεν αναγνωρίζετε, αλλάξτε αμέσως τον κωδικό σας.</p>
+              <ActivityList empty="Δεν υπάρχουν ακόμη καταγεγραμμένες συνδέσεις." items={logins.map((l) => ({ id: l.id, title: l.device ?? "Άγνωστη συσκευή", detail: l.ip ? `δίκτυο ${l.ip}` : null, at: l.at }))} />
+            </div>
+            {exports && (
+              <div className="grid gap-2 border-t border-border pt-4">
+                <h3 className="text-sm font-semibold">Λήψεις αρχείων με στοιχεία επισκεπτών</h3>
+                <p className="text-[13px] text-muted-foreground">Ποιος από την ομάδα κατέβασε αρχεία (λογιστή, CSV, όλα τα δεδομένα) και πότε. Τα μέλη της ομάδας δεν βλέπουν ταυτότητες, τηλέφωνα και email επισκεπτών, ούτε κατεβάζουν αρχεία.</p>
+                <ActivityList empty="Δεν έχει κατέβει κανένα αρχείο." items={exports.map((x) => ({ id: x.id, title: `${x.what}${x.year ? ` ${x.year}` : ""}`, detail: x.who, at: x.at }))} />
+              </div>
+            )}
           </CardContent>
         </Card>
         <Card id="organization">

@@ -5,6 +5,7 @@ import { LinkTabs, PageHeader } from "@/components/ui/misc";
 import { getPageContext } from "@/lib/auth/page";
 import { todayISO } from "@/lib/dates";
 import { accountantPack } from "@/lib/services/accountant";
+import { canSeeGuestDetails } from "@/lib/services/serializers";
 import { PrintButton } from "./print-button";
 
 export const metadata: Metadata = { title: "Φάκελος για τον λογιστή" };
@@ -14,6 +15,11 @@ const fmt = (v: string | number | null) =>
 
 export default async function AccountantPage({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
   const { ctx } = await getPageContext();
+  if (!canSeeGuestDetails(ctx)) {
+    return (
+      <PageHeader back={{ href: "/tax", label: "Φορολογικά" }} title="Φάκελος για τον λογιστή" description="Έχει στοιχεία επισκεπτών: τον βλέπουν μόνο ο ιδιοκτήτης και οι διαχειριστές της ομάδας." />
+    );
+  }
   const current = Number(todayISO().slice(0, 4));
   const year = Number((await searchParams).year) || current;
   const pack = await accountantPack(ctx, year);

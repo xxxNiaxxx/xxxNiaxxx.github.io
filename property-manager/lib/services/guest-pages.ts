@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
+import { emailIndex } from "@/lib/crypto/fields";
 import { db } from "@/lib/db";
 import { addDaysISO, dateToISO, diffDaysISO, isoToDate, todayISO } from "@/lib/dates";
 import { sendEmail } from "@/lib/email";
@@ -242,7 +243,7 @@ export async function requestBooking(token: string, input: unknown, origin: stri
   if (open >= MAX_OPEN_REQUESTS) throw new AppError("BAD_REQUEST", "tooMany");
 
   const [firstName, ...rest] = data.name.split(/\s+/);
-  const existing = await db.guest.findFirst({ where: { organizationId: p.organizationId, email: data.email } });
+  const existing = await db.guest.findFirst({ where: { organizationId: p.organizationId, emailHash: emailIndex(data.email) } });
   const guest = existing ?? (await db.guest.create({
     data: { organizationId: p.organizationId, firstName, lastName: rest.join(" ") || "—", email: data.email, phone: data.phone ?? null, language: data.language && GUEST_PAGE_LANGUAGE_SET.has(data.language) ? data.language : null },
   }));

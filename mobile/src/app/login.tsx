@@ -15,6 +15,9 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Two-step sign-in: asked after a right password.
+  const [askCode, setAskCode] = useState(false);
+  const [code, setCode] = useState("");
 
   if (!ready) return <Loading />;
   if (session) return <Redirect href="/" />;
@@ -23,9 +26,14 @@ export default function Login() {
     setBusy(true);
     setError(null);
     try {
-      await signIn({ email, password, serverUrl: server });
+      await signIn({ email, password, code: askCode ? code : undefined, serverUrl: server });
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Η σύνδεση απέτυχε");
+      if (e instanceof ApiError && e.details.secondStep) {
+        setAskCode(true);
+        if (e.details.secondStep === "totp-invalid") setError(e.message);
+      } else {
+        setError(e instanceof ApiError ? e.message : "Η σύνδεση απέτυχε");
+      }
     } finally {
       setBusy(false);
     }
@@ -46,8 +54,15 @@ export default function Login() {
           <TextInput style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" autoComplete="email" keyboardType="email-address" placeholder="email@example.com" placeholderTextColor={colors.subtleText} />
         </View>
         <PasswordField label="Κωδικός" value={password} onChangeText={setPassword} onSubmitEditing={submit} />
+        {askCode && (
+          <View>
+            <Text style={styles.label}>Κωδικός 2 βημάτων</Text>
+            <TextInput style={styles.input} value={code} onChangeText={setCode} keyboardType="number-pad" autoComplete="one-time-code" textContentType="oneTimeCode" autoFocus maxLength={20} onSubmitEditing={submit} />
+            <Text style={[styles.rowSub, { marginTop: 6 }]}>Οι 6 αριθμοί από την εφαρμογή επαλήθευσης (π.χ. Google Authenticator), ή ένας κωδικός ανάκτησης.</Text>
+          </View>
+        )}
         {error && <Text style={{ color: colors.danger, backgroundColor: colors.dangerSoft, padding: 12, borderRadius: 10 }}>{error}</Text>}
-        <Button title="Σύνδεση" loading={busy} disabled={!email || !password} onPress={submit} />
+        <Button title={askCode ? "Επιβεβαίωση" : "Σύνδεση"} loading={busy} disabled={!email || !password || (askCode && !code)} onPress={submit} />
         <Button title="Δημιουργία λογαριασμού" variant="outline" onPress={() => Linking.openURL(`${server}/register`)} />
         <Text style={[styles.rowSub, { textAlign: "center" }]} onPress={() => Linking.openURL(`${server}/privacy`)}>
           Πολιτική απορρήτου

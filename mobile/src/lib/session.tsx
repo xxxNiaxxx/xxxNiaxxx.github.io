@@ -11,7 +11,7 @@ interface SessionContextValue {
   ready: boolean;
   session: SessionInfo | null;
   serverUrl: string;
-  signIn: (args: { email: string; password: string; serverUrl: string }) => Promise<void>;
+  signIn: (args: { email: string; password: string; code?: string; serverUrl: string }) => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
   switchOrganization: (organizationId: string) => Promise<void>;
@@ -52,11 +52,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     })();
   }, [refresh, signOut]);
 
-  const signIn = useCallback(async ({ email, password, serverUrl: url }: { email: string; password: string; serverUrl: string }) => {
+  const signIn = useCallback(async ({ email, password, code, serverUrl: url }: { email: string; password: string; code?: string; serverUrl: string }) => {
     const baseUrl = url.trim().replace(/\/$/, "");
     configureApi({ baseUrl, token: null, organizationId: null });
     await storage.remove(ORG_KEY);
-    const res = await api<SessionInfo & { token: string }>("/api/mobile/session", { body: { email, password } });
+    const res = await api<SessionInfo & { token: string }>("/api/mobile/session", { body: { email, password, ...(code ? { code } : {}) } });
     await Promise.all([storage.set(TOKEN_KEY, res.token), storage.set(SERVER_KEY, baseUrl)]);
     configureApi({ token: res.token });
     setServerUrl(baseUrl);
