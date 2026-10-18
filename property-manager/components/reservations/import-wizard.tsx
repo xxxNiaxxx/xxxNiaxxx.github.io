@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Field, Select } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status";
 import { AMOUNT_MODE_LABELS, detectAmountMode, roomAndCommission, type AmountMode } from "@/lib/import/amounts";
-import { autoMap, buildRows, detectDateOrder, FIELD_LABELS, IMPORT_FIELDS, normalizeHeader, REQUIRED_FIELDS, type ColumnMapping, type DateOrder } from "@/lib/import/parse";
+import { autoMap, buildRows, CSV_READ_OPTIONS, detectDateOrder, FIELD_LABELS, IMPORT_FIELDS, normalizeHeader, REQUIRED_FIELDS, type ColumnMapping, type DateOrder } from "@/lib/import/parse";
 import { api, ApiError } from "@/lib/client/api";
 import { formatDay, formatMoney } from "@/lib/format";
 import { RESERVATION_SOURCES, SOURCE_LABELS } from "@/lib/reservation-sources";
@@ -49,7 +49,7 @@ export function ImportWizard({ properties, pricing }: { properties: Property[]; 
     try {
       const XLSX = await import("xlsx");
       const wb = file.name.toLowerCase().endsWith(".csv")
-        ? XLSX.read(await file.text(), { type: "string", cellDates: true })
+        ? XLSX.read(await file.text(), CSV_READ_OPTIONS)
         : XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const table = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: true, defval: "" });
@@ -152,7 +152,8 @@ export function ImportWizard({ properties, pricing }: { properties: Property[]; 
   }
 
   return (
-    <div className="grid gap-6">
+    // minmax(0,1fr): the wide preview table scrolls inside its card instead of widening the page on phones.
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
       <Card>
         <CardHeader title="1. Από πού είναι το αρχείο;" />
         <CardContent className="grid gap-4">

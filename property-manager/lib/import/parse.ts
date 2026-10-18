@@ -95,6 +95,12 @@ export function autoMap(headers: string[]): ColumnMapping {
   return mapping;
 }
 
+/**
+ * How CSV text is read: as plain text. Otherwise the spreadsheet library turns
+ * Greek-style decimals ("42,45") into 4245; parseAmount/parseDate read the text.
+ */
+export const CSV_READ_OPTIONS = { type: "string", raw: true } as const;
+
 /** "425,53 EUR", "€ 1.234,56", "1,234.56", 425.53 → number (NaN when empty/invalid). */
 export function parseAmount(value: unknown): number {
   if (typeof value === "number") return value;
