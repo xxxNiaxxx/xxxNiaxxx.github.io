@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Η Κάψουλά μου</title>
+<meta name="description" content="Προσωπική capsule wardrobe: quiz, χρωματική παλέτα, λίστα κομματιών και έτοιμα σύνολα.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf7f3; --surface:#ffffff; --surface-2:#f3eee8; --ink:#2b2522; --muted:#7a6f69;
+  --line:#e6ddd4; --accent:#9c5b47; --accent-ink:#ffffff; --accent-soft:#f3e3dc; --ok:#4f7a5a;
+  --shadow:0 1px 2px rgba(43,37,34,.06),0 6px 24px rgba(43,37,34,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1b1816; --surface:#25211e; --surface-2:#2e2926; --ink:#f1ebe6; --muted:#a99d95;
+    --line:#3a3430; --accent:#d9937c; --accent-ink:#1b1816; --accent-soft:#3a2b25; --ok:#8fbf9a;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1b1816; --surface:#25211e; --surface-2:#2e2926; --ink:#f1ebe6; --muted:#a99d95;
+  --line:#3a3430; --accent:#d9937c; --accent-ink:#1b1816; --accent-soft:#3a2b25; --ok:#8fbf9a;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Manrope,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:600;line-height:1.2;margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 80px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+.brand{font-family:Fraunces,serif;font-size:20px;font-weight:600;letter-spacing:.2px}
+.brand span{color:var(--accent)}
+.ghost{background:none;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:14px;color:var(--muted)}
+.ghost:hover{color:var(--ink);border-color:var(--muted)}
+
+/* intro */
+.hero{text-align:center;padding:40px 0 20px}
+.hero h1{font-size:clamp(30px,6vw,46px);margin-bottom:14px}
+.hero p{color:var(--muted);max-width:520px;margin:0 auto 28px;font-size:17px}
+.cta{background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:14px 30px;font-weight:700;font-size:16px}
+.cta:hover{filter:brightness(1.05)}
+.cta:disabled{opacity:.4;cursor:default}
+.perks{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:40px;text-align:left}
+.perk{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.perk b{display:block;margin-bottom:4px}
+.perk small{color:var(--muted)}
+
+/* quiz */
+.progress{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:28px}
+.progress i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;color:var(--muted);font-size:14px}
+.q h2{font-size:clamp(22px,4.5vw,30px);margin-bottom:6px}
+.q .sub{color:var(--muted);margin:0 0 20px}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.opt{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px;text-align:left;display:flex;gap:12px;align-items:center;transition:border-color .15s,background .15s}
+.opt:hover{border-color:var(--muted)}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt .ot{font-weight:600}
+.opt .od{display:block;font-size:13px;color:var(--muted);font-weight:400;margin-top:2px}
+.opt svg{flex:none}
+.dot{width:28px;height:28px;border-radius:50%;flex:none;border:1px solid rgba(0,0,0,.12)}
+.dots{display:flex;flex:none}.dots .dot{width:20px;height:20px;margin-right:-6px}
+.qnav{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px}
+.calc{margin-top:18px;background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:14px}
+.calc summary{cursor:pointer;font-weight:600;color:var(--accent)}
+.calc .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:12px 0}
+.calc label{font-size:13px;color:var(--muted);display:block}
+.calc input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+.calc .res{font-size:14px;color:var(--muted)}
+
+/* results */
+.rhead{margin-bottom:26px}
+.rhead h1{font-size:clamp(28px,5vw,40px);margin-bottom:8px}
+.rhead p{color:var(--muted);margin:0}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{background:var(--surface-2);border-radius:999px;padding:4px 12px;font-size:13px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:22px;overflow-x:auto;scrollbar-width:none}
+.tabs button{background:none;border:0;padding:10px 14px;color:var(--muted);font-weight:600;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--ink);border-color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h3{font-size:19px;margin-bottom:10px}
+.pal{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.sw{border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.sw i{display:block;height:64px}
+.sw span{display:block;padding:6px 8px;font-size:13px;line-height:1.3}
+.sw small{color:var(--muted);font-size:11px}
+.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:16px 0 8px;font-weight:700}
+.lbl:first-child{margin-top:0}
+.seasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.seasons button{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:5px 12px;font-size:13px}
+.seasons button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+ul.tips{margin:0;padding-left:18px}ul.tips li{margin:4px 0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.no li::marker{content:"✕  ";color:var(--muted)}
+.yes li::marker{content:"✓  ";color:var(--ok)}
+
+.cat{margin-bottom:22px}
+.cat h3{font-size:18px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:baseline}
+.cat h3 small{font-family:Manrope,sans-serif;font-size:13px;color:var(--muted);font-weight:500}
+.fit{font-size:13px;color:var(--muted);margin:0 0 10px}
+.item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:6px;cursor:pointer;user-select:none}
+.item .dot{width:26px;height:26px}
+.item .in{flex:1;min-width:0}
+.item .nm{font-weight:600}
+.item .cn{font-size:13px;color:var(--muted)}
+.item .ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--line);flex:none;display:grid;place-items:center;font-size:13px;color:transparent}
+.item.own .ck{background:var(--ok);border-color:var(--ok);color:#fff}
+.item.own .nm{text-decoration:line-through;text-decoration-color:var(--muted)}
+.ess{font-size:11px;color:var(--accent);font-weight:700;margin-left:6px;text-transform:uppercase;letter-spacing:.5px}
+.stat{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.stat div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.stat b{font-size:22px;font-family:Fraunces,serif;display:block}
+.stat small{color:var(--muted)}
+
+.outfits{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.of{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.of .strip{display:flex;height:54px;border-radius:9px;overflow:hidden;margin-bottom:10px;border:1px solid var(--line)}
+.of .strip i{flex:1}
+.of ol{margin:0;padding:0;list-style:none;font-size:13.5px}
+.of li{display:flex;gap:8px;align-items:center;padding:2px 0}
+.of li .dot{width:12px;height:12px}
+.of .oc{font-size:12px;color:var(--muted);margin-top:8px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-size:14px}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.today{border:2px solid var(--accent)}
+.empty{color:var(--muted);text-align:center;padding:30px}
+.foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px;justify-content:center}
+@media print{
+  header.top,.tabs,.foot,.bar,.seasons{display:none}
+  .pane{display:block!important;page-break-inside:avoid}
+  body{background:#fff;color:#000}
+  .card,.item,.of{box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Η <span>Κάψουλά</span> μου</div>
+    <div style="display:flex;gap:8px">
+      <button class="ghost" id="themeBtn" aria-label="Αλλαγή θέματος">◐</button>
+      <button class="ghost" id="restartBtn" hidden>Από την αρχή</button>
+    </div>
+  </header>
+  <main id="app"></main>
+</div>
+
+<script>
+/* ---------- helpers ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('capsule.' + k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('capsule.' + k, JSON.stringify(v)); }catch(e){} }
+};
+function rng(seed){ return () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; }
+
+/* ---------- palettes ---------- */
+const SEASONS = {
+  spring:{ name:'Ανοιξιάτικη', desc:'Ζεστός υποτόνος, φωτεινά και καθαρά χρώματα. Σου πάνε τα χρώματα «με ήλιο».',
+    white:['Ιβουάρ','#FFF4DC'], dark:['Ζεστό navy','#2F3E5C'],
+    neutrals:[['Ιβουάρ','#FFF4DC'],['Καμηλό','#C19A6B'],['Ζεστό μπεζ','#E3C9A8'],['Ζεστό navy','#2F3E5C']],
+    mains:[['Κοραλί','#FF7F50'],['Πράσινο μήλου','#8DB600'],['Τιρκουάζ','#30B8B2'],['Ροδακινί','#FFB38A']],
+    accents:[['Κίτρινο νάρκισσου','#F7D046'],['Παπαρουνί','#E4473B'],['Aqua','#7FD8D0']],
+    avoid:'Μαύρο κοντά στο πρόσωπο, παγωμένα γκρι, σκούρο μπορντό.' },
+  summer:{ name:'Καλοκαιρινή', desc:'Ψυχρός υποτόνος, απαλά και «σκονισμένα» χρώματα. Σου πάνε οι παστέλ και οι γκρίζοι τόνοι.',
+    white:['Απαλό λευκό','#F5F3EF'], dark:['Γκρι navy','#3B4A6B'],
+    neutrals:[['Απαλό λευκό','#F5F3EF'],['Γκρι περιστεριού','#A8A9AD'],['Ροζ μπεζ','#D8BFB4'],['Γκρι navy','#3B4A6B']],
+    mains:[['Σκονισμένο ροζ','#D8A1A6'],['Λεβάντα','#B5A3D1'],['Απαλό μπλε','#8FAACD'],['Φασκόμηλο','#9CAF88']],
+    accents:[['Μούρο','#8E3A59'],['Πετρόλ μπλε','#3E7C8C'],['Καρπουζί','#E5737F']],
+    avoid:'Πορτοκαλί, μουσταρδί, έντονο μαύρο, χρυσαφένιο καφέ.' },
+  autumn:{ name:'Φθινοπωρινή', desc:'Ζεστός υποτόνος, βαθιά και γήινα χρώματα. Σου πάνε οι αποχρώσεις της φύσης.',
+    white:['Κρεμ','#F3E9D2'], dark:['Σοκολατί','#5C3A21'],
+    neutrals:[['Κρεμ','#F3E9D2'],['Καμηλό','#B8865B'],['Χακί ελιάς','#6B6B3A'],['Σοκολατί','#5C3A21']],
+    mains:[['Κεραμιδί','#C0583A'],['Μουσταρδί','#D4A017'],['Πράσινο ελιάς','#708238'],['Πετρόλ','#1F6F78']],
+    accents:[['Ζεστό μπορντό','#7B2D26'],['Κολοκυθί','#E07A1F'],['Χρυσαφί','#C9A227']],
+    avoid:'Καθαρό λευκό, φούξια, παγωμένα παστέλ, ασημί γκρι.' },
+  winter:{ name:'Χειμωνιάτικη', desc:'Ψυχρός υποτόνος, υψηλή αντίθεση και καθαρά, έντονα χρώματα. Σου πάνε το μαύρο και το λευκό.',
+    white:['Καθαρό λευκό','#FFFFFF'], dark:['Μαύρο','#151515'],
+    neutrals:[['Καθαρό λευκό','#FFFFFF'],['Μαύρο','#151515'],['Ανθρακί','#36454F'],['Navy','#1B2A4A']],
+    mains:[['Ρουμπινί','#C3002F'],['Βασιλικό μπλε','#2A52BE'],['Σμαραγδί','#00876A'],['Φούξια','#C9007A']],
+    accents:[['Βαθύ μωβ','#5B2C83'],['Παγωμένο ροζ','#F4C2D7'],['Λεμονί','#F4E04D']],
+    avoid:'Μπεζ, πορτοκαλί, μουσταρδί, χακί, ζεστά καφέ.' }
+};
+const DENIM = { dark:['Σκούρο τζιν','#2E4A6E'], light:['Ανοιχτό τζιν','#7E9CC0'] };
+
+/* ---------- shapes ---------- */
+const SHAPES = {
+  hourglass:{ n:'Κλεψύδρα', d:'Ώμοι και γοφοί περίπου ίσοι, σαφώς στενότερη μέση', w:[30,18,30],
+    goal:'Ακολούθησε τις καμπύλες σου και τόνισε τη μέση.',
+    yes:['Κρουαζέ φορέματα και μπλούζες','Ψηλόμεσα παντελόνια και φούστες','Ζώνη στη μέση','Λαιμόκοψη V','Φούστα pencil ή midi που πέφτει μαλακά'],
+    no:['Πολύ φαρδιά, άμορφα ρούχα που κρύβουν τη μέση','Box-cut σακάκια χωρίς μέση','Ογκώδη υφάσματα παντού'],
+    fit:{top:'Λαιμόκοψη V ή κρουαζέ, να φαίνεται η μέση.',bottom:'Ψηλόμεσα που ακολουθούν τη γραμμή σου.',dress:'Κρουαζέ ή με ζώνη στη μέση.',layer:'Σακάκι με μέση· δέσε το παλτό με ζώνη.',shoe:'Όλα σου πάνε· οι μυτερές μύτες μακραίνουν τη γραμμή.',acc:'Η ζώνη είναι το καλύτερό σου αξεσουάρ.'} },
+  pear:{ n:'Αχλάδι', d:'Γοφοί φαρδύτεροι από ώμους και στήθος', w:[22,17,32],
+    goal:'Φέρε το βλέμμα προς τα πάνω και ισορρόπησε τους ώμους με τους γοφούς.',
+    yes:['Φωτεινά χρώματα και λεπτομέρειες στο πάνω μέρος','Λαιμόκοψη βάρκα ή τετράγωνη','Φούστες A-line','Ίσιο ή ελαφρώς καμπάνα παντελόνι σε σκούρο χρώμα','Σακάκια με δομημένους ώμους'],
+    no:['Τσέπες, σχέδια και γυαλιστερά υφάσματα στους γοφούς','Πολύ στενά κάτω με φαρδύ πάνω','Μπλούζες που τελειώνουν ακριβώς στο πιο φαρδύ σημείο των γοφών'],
+    fit:{top:'Χρώμα, σχέδιο και λεπτομέρειες εδώ· λαιμόκοψη βάρκα ή τετράγωνη.',bottom:'Σκουρότερα χρώματα, ίσιο ή καμπάνα πόδι, A-line φούστες.',dress:'Εφαρμοστό πάνω, ανοίγει σε A-line κάτω.',layer:'Ως τη μέση ή ως το γόνατο, με ώμους.',shoe:'Μυτερές μύτες και ανοιχτό ταρσό μακραίνουν το πόδι.',acc:'Κολιέ και σκουλαρίκια τραβούν το βλέμμα πάνω.'} },
+  invtri:{ n:'Ανεστραμμένο τρίγωνο', d:'Ώμοι ή στήθος φαρδύτερα από τους γοφούς', w:[33,20,23],
+    goal:'Μαλάκωσε τους ώμους και δώσε όγκο στο κάτω μέρος.',
+    yes:['Λαιμόκοψη V και U','Wide-leg, cargo και φούστες με όγκο','Χρώμα και σχέδιο στο κάτω μέρος','Ρευστά υφάσματα πάνω','Σακάκια με μαλακούς ώμους'],
+    no:['Βάτες και φουσκωτά μανίκια','Λαιμόκοψη βάρκα και halter','Πολύ στενά παντελόνια με ογκώδες πάνω'],
+    fit:{top:'Απλά και ρευστά, λαιμόκοψη V, χωρίς βάτες.',bottom:'Φαρδιά πόδια, πιέτες, χρώμα και σχέδιο.',dress:'Απλό πάνω, φούστα με όγκο.',layer:'Μαλακοί ώμοι, ανοιχτό μπροστά.',shoe:'Λίγο πιο «βαριά» παπούτσια ισορροπούν τους ώμους.',acc:'Τσάντες στο ύψος των γοφών.'} },
+  rect:{ n:'Ορθογώνιο', d:'Ώμοι, μέση και γοφοί σε παρόμοια γραμμή', w:[26,24,26],
+    goal:'Δημιούργησε μέση και καμπύλες με κοψίματα και layering.',
+    yes:['Ζώνες και ψηλόμεσα','Peplum, βολάν και περιτυλίγματα','Φούστες με όγκο και πιέτες','Layering με σακάκια και ζακέτες','Εμπριμέ και υφές'],
+    no:['Ίσια, άμορφα σύνολα από πάνω ως κάτω','Πολύ σφιχτά ρούχα χωρίς δομή'],
+    fit:{top:'Περιτύλιγμα, βολάν, κοντό μήκος που μπαίνει μέσα.',bottom:'Ψηλόμεσα με πιέτες ή φούστες με όγκο.',dress:'Με ζώνη ή εμπριμέ με κόψιμο στη μέση.',layer:'Σακάκι με μέση ή ζώνη πάνω από το παλτό.',shoe:'Όλα σου πάνε.',acc:'Η φαρδιά ζώνη «φτιάχνει» μέση.'} },
+  apple:{ n:'Μήλο', d:'Ο όγκος συγκεντρώνεται στη μέση, πιο λεπτά πόδια', w:[27,30,26],
+    goal:'Δημιούργησε κάθετες γραμμές και ανάδειξε πόδια και ντεκολτέ.',
+    yes:['Ρευστά υφάσματα που πέφτουν μαλακά','Λαιμόκοψη V','Empire γραμμή και φορέματα-πουκάμισα','Ίσιο πόδι','Ανοιχτά, μακριά σακάκια'],
+    no:['Φαρδιές ζώνες ακριβώς στη μέση','Κροπ τοπ και πολύ εφαρμοστές μπλούζες','Σκληρά, ογκώδη υφάσματα στον κορμό'],
+    fit:{top:'Ρευστά, λαιμόκοψη V, μήκος ως τους γοφούς.',bottom:'Ίσιο πόδι, μεσαίο ύψος μέσης χωρίς σφίξιμο.',dress:'Empire γραμμή ή φόρεμα-πουκάμισο.',layer:'Ανοιχτό μπροστά, μακρύ, κάθετες γραμμές.',shoe:'Ανέδειξε τα πόδια σου: μυτερές μύτες, λεπτά λουράκια.',acc:'Μακριά κολιέ για κάθετη γραμμή.'} }
+};
+function shapeSvg(k, size = 44){
+  const [s, w, h] = SHAPES[k].w, c = 30;
+  const pts = [[c - s/2, 8],[c + s/2, 8],[c + w/2, 44],[c + h/2, 70],[c + h/2 - 6, 92],[c - h/2 + 6, 92],[c - h/2, 70],[c - w/2, 44]];
+  return `<svg width="${size}" height="${size * 1.6}" viewBox="0 0 60 100" aria-hidden="true"><polygon points="${pts.map(p => p.join(',')).join(' ')}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/></svg>`;
+}
+
+/* ---------- quiz ---------- */
+const STYLES = { classic:'Κλασικό', minimal:'Μίνιμαλ', casual:'Casual', romantic:'Ρομαντικό', boho:'Boho', edgy:'Rock / Edgy', sporty:'Sporty chic', business:'Επαγγελματικό' };
+const QUESTIONS = [
+  { id:'shape', t:'Ποιος σωματότυπος σου μοιάζει;', sub:'Κοίτα το περίγραμμα, όχι το βάρος. Αν δεν είσαι σίγουρη, χρησιμοποίησε τον υπολογισμό από κάτω.',
+    opts:Object.keys(SHAPES).map(k => ({ v:k, l:SHAPES[k].n, d:SHAPES[k].d, icon:shapeSvg(k) })), calc:true },
+  { id:'height', t:'Πόσο ψηλή είσαι;', opts:[
+    { v:'petite', l:'Μικροκαμωμένη', d:'κάτω από 1,60' }, { v:'mid', l:'Μέτρια', d:'1,60 – 1,70' }, { v:'tall', l:'Ψηλή', d:'πάνω από 1,70' } ] },
+  { id:'veins', t:'Τι χρώμα έχουν οι φλέβες στον καρπό σου;', sub:'Κοίτα τες στο φως της μέρας.', opts:[
+    { v:1, l:'Πράσινες / λαδί', dots:['#6f8a52'] }, { v:-1, l:'Μπλε / μωβ', dots:['#5a64a8'] }, { v:0, l:'Δεν ξεχωρίζω', dots:['#6f8a52','#5a64a8'] } ] },
+  { id:'metal', t:'Ποια κοσμήματα σε κολακεύουν;', opts:[
+    { v:1, l:'Χρυσά', dots:['#d4af37'] }, { v:-1, l:'Ασημένια', dots:['#c0c0c8'] }, { v:0, l:'Και τα δύο', dots:['#d4af37','#c0c0c8'] } ] },
+  { id:'sun', t:'Στον ήλιο…', opts:[
+    { v:1, l:'Μαυρίζω εύκολα, σπάνια καίγομαι' }, { v:-1, l:'Κοκκινίζω και καίγομαι εύκολα' }, { v:0, l:'Πρώτα κοκκινίζω, μετά μαυρίζω' } ] },
+  { id:'hair', t:'Το φυσικό χρώμα των μαλλιών σου;', opts:[
+    { v:'blond', l:'Ξανθά', dots:['#e3c58a'] }, { v:'lbrown', l:'Ανοιχτά καστανά', dots:['#a07850'] }, { v:'red', l:'Κόκκινα / χάλκινα', dots:['#b5532c'] },
+    { v:'dbrown', l:'Σκούρα καστανά', dots:['#4a3020'] }, { v:'black', l:'Μαύρα', dots:['#1a1412'] }, { v:'grey', l:'Γκρίζα / λευκά', dots:['#c8c6c4'] } ] },
+  { id:'eyes', t:'Το χρώμα των ματιών σου;', opts:[
+    { v:'light', l:'Γαλανά / γκρι', dots:['#7fa3c4'] }, { v:'green', l:'Πράσινα / φουντουκί', dots:['#7d8a4a'] },
+    { v:'brown', l:'Καστανά', dots:['#7a4a26'] }, { v:'dark', l:'Πολύ σκούρα', dots:['#2a1810'] } ] },
+  { id:'styles', multi:2, t:'Ποιο στυλ σε εκφράζει;', sub:'Διάλεξε έως δύο.',
+    opts:Object.entries(STYLES).map(([v, l]) => ({ v, l, d:{classic:'διαχρονικό, προσεγμένο',minimal:'καθαρές γραμμές, λίγα χρώματα',casual:'άνετο, καθημερινό',romantic:'θηλυκό, απαλό',boho:'ελεύθερο, φυσικά υφάσματα',edgy:'δέρμα, μαύρο, attitude',sporty:'άνεση με στυλ',business:'κομψό για τη δουλειά'}[v] })) },
+  { id:'life', t:'Πού περνάς τον περισσότερο χρόνο σου;', opts:[
+    { v:'office', l:'Γραφείο', d:'επαγγελματικό περιβάλλον' }, { v:'home', l:'Δουλειά από το σπίτι', d:'άνεση, με βίντεο-κλήσεις' },
+    { v:'student', l:'Σπουδές', d:'σχολή, καφές, βόλτες' }, { v:'active', l:'Στο πόδι', d:'παιδιά, τρέξιμο, μετακινήσεις' },
+    { v:'social', l:'Έξοδοι & εκδηλώσεις', d:'δείπνα, ποτά, events' }, { v:'mixed', l:'Λίγο απ᾽ όλα', d:'' } ] },
+  { id:'climate', t:'Για ποια εποχή φτιάχνουμε την κάψουλα;', opts:[
+    { v:'w', l:'Άνοιξη – Καλοκαίρι', d:'ζέστη, ελαφριά υφάσματα' }, { v:'c', l:'Φθινόπωρο – Χειμώνας', d:'πλεκτά, παλτά, μπότες' }, { v:'a', l:'Όλο τον χρόνο', d:'μία ντουλάπα για όλες τις εποχές' } ] },
+  { id:'size', t:'Πόσα κομμάτια θέλεις;', opts:[
+    { v:15, l:'15 κομμάτια', d:'ταξίδι ή αυστηρό μίνιμαλ' }, { v:25, l:'25 κομμάτια', d:'η κλασική κάψουλα' }, { v:35, l:'35 κομμάτια', d:'περισσότερη ποικιλία' } ] },
+  { id:'avoid', multi:6, optional:true, t:'Υπάρχει κάτι που δεν φοράς;', sub:'Διάλεξε όσα θέλεις ή προχώρα.', opts:[
+    { v:'dress', l:'Φορέματα' }, { v:'skirt', l:'Φούστες' }, { v:'heels', l:'Τακούνια' }, { v:'short', l:'Σορτς & μίνι' },
+    { v:'bright', l:'Έντονα χρώματα' }, { v:'fitted', l:'Πολύ εφαρμοστά' } ] },
+  { id:'budget', t:'Ποιος είναι ο προϋπολογισμός σου;', sub:'Για τις συμβουλές αγορών.', opts:[
+    { v:'low', l:'Οικονομικά', d:'έξυπνες αγορές, second hand' }, { v:'mid', l:'Μεσαία', d:'καλή ποιότητα σε λογική τιμή' }, { v:'high', l:'Επένδυση', d:'λιγότερα, καλύτερα κομμάτια' } ] }
+];
+
+/* ---------- item catalogue ----------
+   c: category · s: styles ('*' = all) · f: formality 1-3 · cl: w/c climate (none = all)
+   av: avoid tags · col: colour role · e: essential bonus */
+const ITEMS = [
+  // tops
+  {id:'tee-w',c:'top',n:'Βασικό T-shirt',s:'*',f:1,col:'white',e:3},
+  {id:'tee-d',c:'top',n:'Βασικό T-shirt',s:'*',f:1,col:'dark',e:2},
+  {id:'stripe',c:'top',n:'Ριγέ μπλούζα μαρινιέρα',s:['classic','casual','minimal'],f:1,col:'stripe'},
+  {id:'shirt-w',c:'top',n:'Κλασικό πουκάμισο',s:['classic','minimal','business','romantic'],f:2,col:'white',e:2},
+  {id:'silk',c:'top',n:'Σατέν / μεταξωτή μπλούζα',s:['romantic','classic','business','minimal'],f:3,col:'main'},
+  {id:'knit-fine',c:'top',n:'Λεπτό πλεκτό',s:['classic','minimal','business','romantic'],f:2,col:'neutral',cl:'c',e:1},
+  {id:'knit-chunky',c:'top',n:'Χοντρό πουλόβερ',s:['casual','boho','minimal','sporty'],f:1,col:'neutral',cl:'c'},
+  {id:'turtle',c:'top',n:'Ζιβάγκο',s:['minimal','classic','edgy','business'],f:2,col:'dark',cl:'c'},
+  {id:'cami',c:'top',n:'Τοπ με τιράντες',s:'*',f:2,col:'neutral',cl:'w'},
+  {id:'ruffle',c:'top',n:'Μπλούζα με βολάν',s:['romantic','boho'],f:2,col:'main'},
+  {id:'graphic',c:'top',n:'Graphic / band T-shirt',s:['edgy','casual','sporty'],f:1,col:'dark'},
+  {id:'body',c:'top',n:'Εφαρμοστό body',s:['edgy','minimal','sporty'],f:2,col:'dark',av:['fitted']},
+  {id:'linen-shirt',c:'top',n:'Λινό πουκάμισο',s:['boho','casual','minimal','classic'],f:1,col:'neutral',cl:'w'},
+  {id:'sweat',c:'top',n:'Φούτερ',s:['sporty','casual'],f:1,col:'neutral'},
+  {id:'chambray',c:'top',n:'Τζιν πουκάμισο',s:['casual','boho','edgy'],f:1,col:'denimL'},
+  {id:'top-color',c:'top',n:'Μπλούζα σε χρώμα έμφασης',s:'*',f:2,col:'main'},
+  {id:'polo',c:'top',n:'Πλεκτό πόλο',s:['classic','sporty','minimal','business'],f:2,col:'main'},
+  {id:'tank',c:'top',n:'Ριμπ αμάνικο',s:['sporty','minimal','casual','edgy'],f:1,col:'white',cl:'w'},
+  // bottoms
+  {id:'jean-str',c:'bottom',n:'Ίσιο τζιν',s:'*',f:1,col:'denimD',e:3},
+  {id:'jean-wide',c:'bottom',n:'Wide-leg / mom τζιν',s:['casual','boho','sporty','minimal'],f:1,col:'denimL'},
+  {id:'trouser',c:'bottom',n:'Ψηλόμεσο υφασμάτινο παντελόνι',s:['classic','minimal','business','romantic'],f:3,col:'neutral',e:2},
+  {id:'trouser-d',c:'bottom',n:'Παντελόνι κοστουμιού',s:['business','classic','minimal','edgy'],f:3,col:'dark'},
+  {id:'black-jean',c:'bottom',n:'Σκούρο στενό τζιν',s:['edgy','sporty','casual'],f:1,col:'dark',av:['fitted']},
+  {id:'linen-pant',c:'bottom',n:'Φαρδύ λινό παντελόνι',s:['boho','minimal','romantic','casual'],f:2,col:'neutral',cl:'w'},
+  {id:'skirt-satin',c:'bottom',n:'Σατέν φούστα midi',s:['romantic','minimal','classic','edgy'],f:2,col:'neutral',av:['skirt']},
+  {id:'skirt-mini',c:'bottom',n:'Δερμάτινη μίνι φούστα',s:['edgy'],f:2,col:'dark',av:['skirt','short']},
+  {id:'skirt-pencil',c:'bottom',n:'Φούστα pencil',s:['business','classic'],f:3,col:'dark',av:['skirt','fitted']},
+  {id:'shorts',c:'bottom',n:'Τζιν σορτς / βερμούδα',s:['casual','sporty','boho'],f:1,col:'denimL',cl:'w',av:['short']},
+  {id:'cargo',c:'bottom',n:'Cargo / κομψό jogger',s:['sporty','edgy','casual'],f:1,col:'neutral'},
+  {id:'skirt-pleat',c:'bottom',n:'Πλισέ φούστα midi',s:['romantic','classic'],f:2,col:'main',av:['skirt']},
+  {id:'leather-pant',c:'bottom',n:'Δερμάτινο παντελόνι',s:['edgy','minimal'],f:2,col:'dark',cl:'c'},
+  {id:'skirt-maxi',c:'bottom',n:'Εμπριμέ μάξι φούστα',s:['boho','romantic'],f:2,col:'print',cl:'w',av:['skirt']},
+  // dresses & one-pieces
+  {id:'lbd',c:'dress',n:'Μίνιμαλ φόρεμα',s:['classic','minimal','business','edgy','romantic'],f:3,col:'dark',av:['dress'],e:2},
+  {id:'wrap',c:'dress',n:'Κρουαζέ φόρεμα',s:['romantic','classic','business'],f:2,col:'main',av:['dress']},
+  {id:'shirtdress',c:'dress',n:'Φόρεμα-πουκάμισο',s:['casual','classic','minimal','business'],f:2,col:'neutral',av:['dress']},
+  {id:'maxi',c:'dress',n:'Εμπριμέ μάξι φόρεμα',s:['boho','romantic'],f:2,col:'print',cl:'w',av:['dress']},
+  {id:'slip',c:'dress',n:'Σατέν slip φόρεμα',s:['minimal','romantic','edgy'],f:3,col:'main',av:['dress','fitted']},
+  {id:'knitdress',c:'dress',n:'Πλεκτό φόρεμα',s:['minimal','classic','romantic'],f:2,col:'neutral',cl:'c',av:['dress']},
+  {id:'teedress',c:'dress',n:'Φόρεμα T-shirt',s:['sporty','casual','edgy'],f:1,col:'dark',cl:'w',av:['dress']},
+  {id:'jumpsuit',c:'dress',n:'Ολόσωμη φόρμα',s:['minimal','casual','boho','business'],f:2,col:'neutral'},
+  // layers
+  {id:'blazer',c:'layer',n:'Μπλέιζερ',s:['classic','minimal','business','edgy','romantic','casual'],f:3,col:'neutral',e:3},
+  {id:'denim-j',c:'layer',n:'Τζιν μπουφάν',s:['casual','boho','sporty','edgy'],f:1,col:'denimL'},
+  {id:'trench',c:'layer',n:'Καμπαρντίνα (trench)',s:['classic','minimal','romantic','business'],f:2,col:'neutral',e:1},
+  {id:'biker',c:'layer',n:'Δερμάτινο μπουφάν',s:['edgy','casual','minimal','sporty'],f:2,col:'dark'},
+  {id:'coat',c:'layer',n:'Μάλλινο παλτό',s:['classic','minimal','business','romantic'],f:3,col:'neutral',cl:'c',e:2},
+  {id:'cardigan',c:'layer',n:'Πλεκτή ζακέτα',s:['classic','romantic','boho','casual'],f:2,col:'neutral'},
+  {id:'puffer',c:'layer',n:'Καπιτονέ μπουφάν',s:['sporty','casual'],f:1,col:'dark',cl:'c'},
+  {id:'kimono',c:'layer',n:'Ελαφρύ κιμονό',s:['boho','romantic'],f:1,col:'print',cl:'w'},
+  {id:'overshirt',c:'layer',n:'Overshirt (shacket)',s:['casual','minimal','edgy','sporty'],f:1,col:'neutral'},
+  // shoes
+  {id:'sneakers',c:'shoe',n:'Λευκά sneakers',s:'*',f:1,col:'white',e:3},
+  {id:'loafers',c:'shoe',n:'Loafers',s:['classic','minimal','business','edgy'],f:2,col:'dark',cl:'c'},
+  {id:'ankle',c:'shoe',n:'Μποτάκια αστραγάλου',s:'*',f:2,col:'dark',cl:'c',e:2},
+  {id:'pumps',c:'shoe',n:'Μυτερές γόβες',s:['classic','business','romantic','minimal'],f:3,col:'neutral',av:['heels']},
+  {id:'flats',c:'shoe',n:'Μυτερές μπαλαρίνες',s:['classic','romantic','minimal','business'],f:2,col:'neutral'},
+  {id:'sandals',c:'shoe',n:'Flat σανδάλια',s:'*',f:1,col:'neutral',cl:'w',e:2},
+  {id:'heel-sandal',c:'shoe',n:'Πέδιλα με χαμηλό τακούνι / mules',s:['romantic','minimal','classic','business'],f:3,col:'neutral',cl:'w',av:['heels']},
+  {id:'combat',c:'shoe',n:'Combat / chunky μπότες',s:['edgy','casual','sporty'],f:1,col:'dark',cl:'c'},
+  {id:'tall-boots',c:'shoe',n:'Ψηλές μπότες',s:['boho','classic','romantic'],f:2,col:'neutral',cl:'c'},
+  {id:'espadrilles',c:'shoe',n:'Εσπαντρίγιες',s:['boho','casual','romantic'],f:1,col:'neutral',cl:'w'},
+  {id:'runners',c:'shoe',n:'Retro αθλητικά',s:['sporty','casual'],f:1,col:'main'},
+  // accessories
+  {id:'bag-shoulder',c:'acc',n:'Δερμάτινη τσάντα ώμου',s:'*',f:2,col:'neutral',e:3},
+  {id:'bag-cross',c:'acc',n:'Μικρή χιαστί τσάντα',s:['casual','edgy','sporty','boho'],f:1,col:'dark'},
+  {id:'tote',c:'acc',n:'Μεγάλη tote',s:['business','casual','minimal','classic'],f:2,col:'neutral'},
+  {id:'clutch',c:'acc',n:'Βραδινό τσαντάκι',s:['romantic','classic','minimal','edgy'],f:3,col:'accent'},
+  {id:'belt',c:'acc',n:'Δερμάτινη ζώνη',s:'*',f:2,col:'dark',e:2},
+  {id:'scarf',c:'acc',n:'Μεταξωτό φουλάρι',s:['classic','romantic','boho'],f:2,col:'accent'},
+  {id:'sunglasses',c:'acc',n:'Γυαλιά ηλίου',s:'*',f:1,col:'dark',e:1},
+  {id:'jewelry',c:'acc',n:'Βασικά κοσμήματα',s:'*',f:2,col:'metal',e:2},
+  {id:'straw',c:'acc',n:'Ψάθινο καπέλο / τσάντα',s:['boho','casual','romantic'],f:1,col:'straw',cl:'w'},
+  {id:'beanie',c:'acc',n:'Μάλλινο κασκόλ',s:'*',f:1,col:'accent',cl:'c'},
+  {id:'cap',c:'acc',n:'Καπέλο jockey',s:['sporty','casual'],f:1,col:'dark'}
+];
+const CATS = { top:'Μπλούζες', bottom:'Παντελόνια & φούστες', dress:'Φορέματα & ολόσωμα', layer:'Πανωφόρια', shoe:'Παπούτσια', acc:'Αξεσουάρ' };
+const QUOTA = { 15:{top:4,bottom:3,dress:1,layer:2,shoe:3,acc:2}, 25:{top:7,bottom:5,dress:3,layer:3,shoe:4,acc:3}, 35:{top:9,bottom:7,dress:4,layer:5,shoe:5,acc:5} };
+const LIFE_F = { office:2.5, home:1.4, student:1.3, active:1.1, social:2.3, mixed:1.8 };
+
+/* ---------- engine ---------- */
+function computeSeason(a){
+  let warm = (+a.veins || 0) + (+a.metal || 0) + (+a.sun || 0) * .5;
+  if (a.hair === 'red') warm += 2;
+  if (a.hair === 'blond' || a.hair === 'lbrown') warm += .3;
+  if (a.hair === 'black' || a.hair === 'grey') warm -= .5;
+  if (a.eyes === 'green') warm += .5;
+  if (a.eyes === 'light') warm -= .3;
+  const depth = ({blond:0,lbrown:1,red:1,grey:0,dbrown:2,black:3}[a.hair] ?? 1) + ({light:0,green:1,brown:2,dark:3}[a.eyes] ?? 1);
+  const dark = depth >= 3;
+  if (warm > 0) return dark ? 'autumn' : 'spring';
+  if (warm < 0) return dark ? 'winter' : 'summer';
+  return dark ? (a.hair === 'black' ? 'winter' : 'autumn') : 'summer';
+}
+
+function colorFor(item, pal, idx, a){
+  const bright = (a.avoid || []).includes('bright');
+  const pick = (arr, i) => arr[i % arr.length];
+  switch (item.col){
+    case 'white': return pal.white;
+    case 'dark': return pal.dark;
+    case 'denimD': return DENIM.dark;
+    case 'denimL': return DENIM.light;
+    case 'neutral': return pick(pal.neutrals.filter(n => n[1] !== pal.white[1] || item.c !== 'top'), idx.neutral++);
+    case 'main': return bright ? pick(pal.neutrals.slice(1), idx.neutral++) : pick(pal.mains, idx.main++);
+    case 'accent': return pick(pal.accents, idx.accent++);
+    case 'print': return ['Εμπριμέ', `linear-gradient(135deg,${pal.mains[0][1]} 0 33%,${pal.neutrals[0][1]} 33% 66%,${pal.mains[1][1]} 66%)`];
+    case 'stripe': return ['Ρίγα', `repeating-linear-gradient(0deg,${pal.white[1]} 0 5px,${pal.dark[1]} 5px 9px)`];
+    case 'metal': return computeWarm(a) >= 0 ? ['Χρυσά','#d4af37'] : ['Ασημένια','#c0c0c8'];
+    case 'straw': return ['Ψάθα','#d9bf8c'];
+  }
+  return pal.neutrals[0];
+}
+function computeWarm(a){ return (+a.veins || 0) + (+a.metal || 0) + (a.hair === 'red' ? 2 : 0); }
+const isColored = it => ['main','accent','print','stripe'].includes(it.col);
+
+function buildCapsule(a, seasonKey){
+  const pal = SEASONS[seasonKey];
+  const avoid = a.avoid || [];
+  const styles = a.styles || [];
+  const target = LIFE_F[a.life] ?? 1.8;
+  const q = { ...QUOTA[a.size || 25] };
+  if (avoid.includes('dress')){ q.top += Math.ceil(q.dress / 2); q.bottom += Math.floor(q.dress / 2); q.dress = 0; }
+  if (a.climate === 'a'){ q.layer += 1; q.acc -= 1; }
+  const score = it => {
+    let sc = it.e || 0;
+    if (it.s === '*') sc += 2.5;
+    else { const hits = styles.filter(s => it.s.includes(s)).length; sc += hits * 3; if (!hits) sc -= 3; }
+    if (a.life === 'office' && it.s !== '*' && it.s.includes('business')) sc += 2;
+    sc += 2 - Math.abs(it.f - target) * 1.5;
+    if (a.climate === 'a' && it.cl) sc -= .5;
+    return sc;
+  };
+  const pool = ITEMS.filter(it => !(it.av || []).some(x => avoid.includes(x)) && !(it.cl && a.climate !== 'a' && it.cl !== a.climate));
+  const idx = { neutral:0, main:0, accent:0 };
+  const out = [];
+  for (const cat of Object.keys(CATS)){
+    let cand = pool.filter(it => it.c === cat).map(it => ({ it, sc:score(it) })).sort((x, y) => y.sc - x.sc);
+    let picked = cand.slice(0, q[cat]);
+    // in all-year mode keep both warm and cold shoes / layers in the mix
+    if (a.climate === 'a' && (cat === 'shoe' || cat === 'layer')){
+      for (const need of ['w','c']){
+        if (!picked.some(p => p.it.cl === need)){
+          const add = cand.find(p => p.it.cl === need);
+          if (add && picked.length){ picked[picked.length - 1] = add; }
+        }
+      }
+    }
+    // fill leftover slots (if catalogue ran short) with duplicates in a new colour
+    while (picked.length < q[cat] && cand.length){ picked.push({ ...cand[picked.length % cand.length], dup:true }); }
+    picked.forEach(({ it, dup }) => {
+      const c = colorFor(it, pal, idx, a);
+      out.push({ ...it, uid: it.id + (dup ? '-2' : ''), color:c, top3: (it.e || 0) >= 2 });
+    });
+  }
+  // essentials first within each category
+  return out;
+}
+
+function swatch(c){ return c[1].startsWith('#') ? `background:${c[1]}` : `background:${c[1]}`; }
+
+function buildOutfits(items, a, seed, ownedOnly, owned){
+  const use = ownedOnly ? items.filter(i => owned[i.uid]) : items;
+  const by = c => use.filter(i => i.c === c);
+  const tops = by('top'), bottoms = by('bottom'), dresses = by('dress'), layers = by('layer'), shoes = by('shoe'), accs = by('acc');
+  const cores = [];
+  tops.forEach(t => bottoms.forEach(b => cores.push([t, b])));
+  dresses.forEach(d => cores.push([d]));
+  const ok = pieces => {
+    const fs = pieces.filter(p => p.c !== 'acc').map(p => p.f);
+    if (Math.max(...fs) - Math.min(...fs) > 1) return false;
+    const cls = new Set(pieces.map(p => p.cl).filter(Boolean));
+    if (cls.size > 1) return false;
+    const colored = pieces.filter(p => p.c !== 'acc' && p.c !== 'shoe' && isColored(p)).length;
+    if (colored > 1) return false;
+    if (pieces.filter(p => p.col && p.col.startsWith('denim')).length > 1) return false;
+    return true;
+  };
+  const valid = [];
+  cores.forEach(core => shoes.forEach(s => { if (ok([...core, s])) valid.push([...core, s]); }));
+  const r = rng(seed);
+  for (let i = valid.length - 1; i > 0; i--){ const j = Math.floor(r() * (i + 1)); [valid[i], valid[j]] = [valid[j], valid[i]]; }
+  // spread usage so every piece shows up
+  const used = {}, res = [];
+  const cost = o => o.reduce((s, p) => s + (used[p.uid] || 0), 0);
+  const pool = valid.slice();
+  while (res.length < 12 && pool.length){
+    pool.sort((x, y) => cost(x) - cost(y));
+    const o = pool.shift().slice();
+    const needLayer = a.climate === 'c' || (a.climate === 'a' && o.some(p => p.cl === 'c')) || r() < .45;
+    if (needLayer){
+      const L = layers.filter(l => ok([...o, l])).sort((x, y) => (used[x.uid] || 0) - (used[y.uid] || 0));
+      if (L.length) o.push(L[0]);
+    }
+    const A = accs.filter(x => ok([...o, x])).sort((x, y) => (used[x.uid] || 0) - (used[y.uid] || 0));
+    if (A.length) o.push(A[0]);
+    o.forEach(p => used[p.uid] = (used[p.uid] || 0) + 1);
+    res.push(o);
+  }
+  const occasion = o => {
+    const f = Math.max(...o.filter(p => p.c !== 'acc').map(p => p.f));
+    return f >= 3 ? (a.life === 'office' ? 'Γραφείο / meeting' : 'Δείπνο / έξοδος') : f === 2 ? 'Smart casual · καφές, δουλειά' : 'Καθημερινό · βόλτα, ψώνια';
+  };
+  return { list: res.map(o => ({ pieces:o, occ:occasion(o) })), total: valid.length * Math.max(1, layers.length) };
+}
+
+/* ---------- state ---------- */
+let state = store.get('state', { step:-1, answers:{}, done:false });
+let owned = store.get('owned', {});
+let ui = { tab:'pieces', seed:Date.now() % 100000, ownedOnly:false, season:null };
+const save = () => store.set('state', state);
+
+/* ---------- views ---------- */
+const app = $('#app');
+function render(){
+  $('#restartBtn').hidden = state.step < 0 && !state.done;
+  if (state.done) return renderResults();
+  if (state.step < 0) return renderIntro();
+  renderQuestion();
+  window.scrollTo({ top:0 });
+}
+
+function renderIntro(){
+  app.innerHTML = `
+  <section class="hero">
+    <h1>Η δική σου capsule wardrobe</h1>
+    <p>Απάντησε σε ${QUESTIONS.length} σύντομες ερωτήσεις και πάρε τη χρωματική σου παλέτα, τη λίστα με τα κομμάτια που χρειάζεσαι και έτοιμα σύνολα.</p>
+    <button class="cta" id="start">Ξεκίνα το quiz</button>
+    <div class="perks">
+      <div class="perk"><b>Χρωματική ανάλυση</b><small>Ποια εποχή είσαι και ποια χρώματα σε φωτίζουν.</small></div>
+      <div class="perk"><b>Σιλουέτα</b><small>Τι κοψίματα κολακεύουν τον σωματότυπό σου.</small></div>
+      <div class="perk"><b>Λίστα κομματιών</b><small>15, 25 ή 35 κομμάτια που ταιριάζουν όλα μεταξύ τους.</small></div>
+      <div class="perk"><b>Έτοιμα σύνολα</b><small>Ιδέες για κάθε μέρα και «τι να φορέσω σήμερα».</small></div>
+    </div>
+  </section>`;
+  $('#start').onclick = () => { state.step = 0; save(); render(); };
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[state.step];
+  const val = state.answers[q.id];
+  const isSel = v => q.multi ? (val || []).includes(v) : val === v;
+  const pct = Math.round(state.step / QUESTIONS.length * 100);
+  app.innerHTML = `
+  <div class="progress"><i style="width:${pct}%"></i></div>
+  <section class="q">
+    <div class="qhead"><span>Ερώτηση ${state.step + 1} από ${QUESTIONS.length}</span></div>
+    <h2>${esc(q.t)}</h2>
+    ${q.sub ? `<p class="sub">${esc(q.sub)}</p>` : '<p class="sub"></p>'}
+    <div class="opts">
+      ${q.opts.map((o, i) => `<button class="opt${isSel(o.v) ? ' sel' : ''}" data-i="${i}">
+        ${o.icon || ''}${o.dots ? `<span class="dots">${o.dots.map(d => `<span class="dot" style="background:${d}"></span>`).join('')}</span>` : ''}
+        <span><span class="ot">${esc(o.l)}</span>${o.d ? `<span class="od">${esc(o.d)}</span>` : ''}</span></button>`).join('')}
+    </div>
+    ${q.calc ? `<details class="calc"><summary>Υπολόγισέ τον από τις μετρήσεις σου</summary>
+      <div class="grid">
+        <div><label>Ώμοι (περίμετρος, cm)</label><input type="number" id="m-sh" inputmode="decimal"></div>
+        <div><label>Στήθος (cm)</label><input type="number" id="m-bu" inputmode="decimal"></div>
+        <div><label>Μέση (cm)</label><input type="number" id="m-wa" inputmode="decimal"></div>
+        <div><label>Γοφοί (cm)</label><input type="number" id="m-hi" inputmode="decimal"></div>
+      </div>
+      <button class="ghost" id="calcBtn">Υπολογισμός</button> <span class="res" id="calcRes"></span>
+    </details>` : ''}
+    <div class="qnav">
+      <button class="ghost" id="back">← Πίσω</button>
+      ${q.multi ? `<button class="cta" id="next" ${!q.optional && !(val || []).length ? 'disabled' : ''}>Συνέχεια</button>` : ''}
+    </div>
+  </section>`;
+  app.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+    const o = q.opts[+b.dataset.i];
+    if (q.multi){
+      let arr = (state.answers[q.id] || []).slice();
+      if (arr.includes(o.v)) arr = arr.filter(x => x !== o.v);
+      else { arr.push(o.v); if (arr.length > q.multi) arr.shift(); }
+      state.answers[q.id] = arr; save(); renderQuestion();
+    } else {
+      state.answers[q.id] = o.v; save(); next();
+    }
+  });
+  $('#back').onclick = () => { state.step--; save(); render(); };
+  if (q.multi) $('#next').onclick = () => { if (!state.answers[q.id]) state.answers[q.id] = []; next(); };
+  if (q.calc) $('#calcBtn').onclick = () => {
+    const g = id => parseFloat($('#' + id).value);
+    const sh = g('m-sh'), bu = g('m-bu'), wa = g('m-wa'), hi = g('m-hi');
+    if (![bu, wa, hi].every(x => x > 0)){ $('#calcRes').textContent = 'Συμπλήρωσε τουλάχιστον στήθος, μέση και γοφούς.'; return; }
+    const top = Math.max(bu, sh > 0 ? sh * .92 : 0);
+    let k;
+    if (wa >= bu * .9 && wa >= hi * .9) k = 'apple';
+    else if (hi > top * 1.05) k = 'pear';
+    else if (top > hi * 1.05) k = 'invtri';
+    else if (wa <= Math.min(top, hi) * .78) k = 'hourglass';
+    else k = 'rect';
+    state.answers.shape = k; save();
+    $('#calcRes').textContent = `Μοιάζεις με: ${SHAPES[k].n}. Επιλέχθηκε!`;
+    app.querySelectorAll('.opt').forEach((b, i) => b.classList.toggle('sel', q.opts[i].v === k));
+    setTimeout(next, 900);
+  };
+}
+function next(){
+  if (state.step < QUESTIONS.length - 1){ state.step++; save(); render(); }
+  else { state.done = true; ui.season = null; save(); render(); }
+}
+
+function renderResults(){
+  const a = state.answers;
+  const auto = computeSeason(a);
+  const sk = ui.season || a.seasonOverride || auto;
+  const pal = SEASONS[sk], shape = SHAPES[a.shape] || SHAPES.rect;
+  const items = buildCapsule(a, sk);
+  const ownCount = items.filter(i => owned[i.uid]).length;
+  const tabs = { pieces:'Τα κομμάτια', outfits:'Σύνολα', colors:'Χρώματα', body:'Σιλουέτα', shop:'Λίστα αγορών' };
+  app.innerHTML = `
+  <section class="rhead">
+    <h1>Η κάψουλά σου είναι έτοιμη</h1>
+    <p>${items.length} κομμάτια που συνδυάζονται όλα μεταξύ τους, στα χρώματα που σου πάνε.</p>
+    <div class="tags">
+      <span class="tag">🎨 ${pal.name}</span><span class="tag">${shape.n}</span>
+      ${(a.styles || []).map(s => `<span class="tag">${STYLES[s]}</span>`).join('')}
+      <span class="tag">${{w:'Άνοιξη–Καλοκαίρι',c:'Φθινόπωρο–Χειμώνας',a:'Όλο τον χρόνο'}[a.climate] || ''}</span>
+    </div>
+  </section>
+  <nav class="tabs">${Object.entries(tabs).map(([k, l]) => `<button data-t="${k}" class="${ui.tab === k ? 'on' : ''}">${l}</button>`).join('')}</nav>
+  <div id="pane"></div>
+  <div class="foot">
+    <button class="chip" id="print">Αποθήκευση ως PDF</button>
+    <button class="chip" id="redo">Ξανά το quiz</button>
+  </div>`;
+  app.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { ui.tab = b.dataset.t; renderResults(); });
+  $('#print').onclick = () => window.print();
+  $('#redo').onclick = restart;
+  const pane = $('#pane');
+
+  if (ui.tab === 'pieces'){
+    pane.innerHTML = `
+      <div class="stat">
+        <div><b>${items.length}</b><small>κομμάτια</small></div>
+        <div><b>${ownCount}</b><small>τα έχεις ήδη</small></div>
+        <div><b>${items.length - ownCount}</b><small>λείπουν</small></div>
+      </div>
+      <p class="fit" style="margin-bottom:16px">Πάτα σε ένα κομμάτι για να το σημειώσεις ότι το έχεις ήδη.</p>
+      ${Object.entries(CATS).map(([c, l]) => {
+        const list = items.filter(i => i.c === c); if (!list.length) return '';
+        return `<div class="cat"><h3>${l}<small>${list.length}</small></h3>
+          <p class="fit">${esc(shape.fit[c])}</p>
+          ${list.map(itemRow).join('')}</div>`;
+      }).join('')}`;
+    bindItems(pane);
+  }
+
+  if (ui.tab === 'outfits'){
+    const { list, total } = buildOutfits(items, a, ui.seed, ui.ownedOnly, owned);
+    pane.innerHTML = `
+      <div class="bar">
+        <button class="chip" id="today">✨ Τι να φορέσω σήμερα;</button>
+        <button class="chip" id="shuffle">Νέες ιδέες</button>
+        <button class="chip ${ui.ownedOnly ? 'on' : ''}" id="ownedOnly">Μόνο με όσα έχω</button>
+      </div>
+      <p class="fit">Περίπου <b>${total.toLocaleString('el-GR')}</b> πιθανοί συνδυασμοί${ui.ownedOnly ? ' με όσα έχεις ήδη' : ''}. Να μερικοί:</p>
+      <div id="todayBox"></div>
+      ${list.length ? `<div class="outfits">${list.map(outfitCard).join('')}</div>`
+        : `<div class="empty">${ui.ownedOnly ? 'Σημείωσε στα «Κομμάτια» ποια έχεις, για να δεις σύνολα μόνο με αυτά.' : 'Δεν βρέθηκαν συνδυασμοί.'}</div>`}`;
+    $('#shuffle').onclick = () => { ui.seed = (ui.seed * 7 + 13) % 100003; renderResults(); };
+    $('#ownedOnly').onclick = () => { ui.ownedOnly = !ui.ownedOnly; renderResults(); };
+    $('#today').onclick = () => {
+      if (!list.length) return;
+      const o = list[Math.floor(Math.random() * list.length)];
+      $('#todayBox').innerHTML = `<div class="outfits" style="margin-bottom:14px">${outfitCard(o).replace('class="of"', 'class="of today"')}</div>`;
+    };
+  }
+
+  if (ui.tab === 'colors'){
+    const sw = arr => `<div class="pal">${arr.map(c => `<div class="sw"><i style="background:${c[1]}"></i><span>${c[0]}<br><small>${c[1]}</small></span></div>`).join('')}</div>`;
+    pane.innerHTML = `
+      <div class="card"><h3>Είσαι ${pal.name}</h3><p style="margin:0">${pal.desc}</p>
+        <div class="seasons">${Object.entries(SEASONS).map(([k, s]) => `<button data-s="${k}" class="${k === sk ? 'on' : ''}">${s.name}${k === auto ? ' · από το quiz' : ''}</button>`).join('')}</div>
+        <p class="fit" style="margin-top:8px">Δεν σου κάθεται σωστά; Δοκίμασε άλλη παλέτα: όλη η κάψουλα ξαναχρωματίζεται.</p>
+      </div>
+      <div class="card">
+        <div class="lbl">Βασικά ουδέτερα · το 60% της ντουλάπας</div>${sw(pal.neutrals)}
+        <div class="lbl">Κύρια χρώματα · το 30%</div>${sw(pal.mains)}
+        <div class="lbl">Έμφαση · το 10%, σε αξεσουάρ</div>${sw(pal.accents)}
+      </div>
+      <div class="card"><h3>Απόφυγε κοντά στο πρόσωπο</h3><p style="margin:0">${pal.avoid}</p>
+        <p class="fit" style="margin-top:8px">Μέταλλο κοσμημάτων: <b>${computeWarm(a) > 0 ? 'χρυσό' : computeWarm(a) < 0 ? 'ασημί' : 'και τα δύο'}</b>.</p></div>`;
+    pane.querySelectorAll('.seasons button').forEach(b => b.onclick = () => {
+      ui.season = b.dataset.s; state.answers.seasonOverride = b.dataset.s === auto ? undefined : b.dataset.s; save(); renderResults();
+    });
+  }
+
+  if (ui.tab === 'body'){
+    const h = { petite:['Μονόχρωμα σύνολα από πάνω ως κάτω','Ψηλόμεσα παντελόνια και μπλούζα μέσα','Μυτερά παπούτσια και γυμνός αστράγαλος','Κοντά σακάκια ως τη μέση','Μίντι λίγο κάτω από το γόνατο, όχι στη μέση της γάμπας'],
+      tall:['Μάξι, wide-leg και oversized σου πάνε τέλεια','Χρωματικά μπλοκ πάνω–κάτω','Flat παπούτσια χωρίς δεύτερη σκέψη','Μακριά παλτά'],
+      mid:['Μπορείς να παίξεις με όλα τα μήκη','Midi και ψηλόμεσα δίνουν ωραίες αναλογίες'] }[a.height] || [];
+    pane.innerHTML = `
+      <div class="card" style="display:flex;gap:16px;align-items:center">${shapeSvg(a.shape || 'rect', 54)}
+        <div><h3>${shape.n}</h3><p style="margin:0">${shape.goal}</p></div></div>
+      <div class="two">
+        <div class="card"><h3>Σε κολακεύουν</h3><ul class="tips yes">${shape.yes.map(x => `<li>${x}</li>`).join('')}</ul></div>
+        <div class="card"><h3>Απόφυγε</h3><ul class="tips no">${shape.no.map(x => `<li>${x}</li>`).join('')}</ul></div>
+      </div>
+      ${h.length ? `<div class="card"><h3>Για το ύψος σου</h3><ul class="tips yes">${h.map(x => `<li>${x}</li>`).join('')}</ul></div>` : ''}
+      <div class="card"><h3>Ανά κατηγορία</h3><ul class="tips">${Object.entries(CATS).map(([c, l]) => `<li><b>${l}:</b> ${shape.fit[c]}</li>`).join('')}</ul></div>`;
+  }
+
+  if (ui.tab === 'shop'){
+    const missing = items.filter(i => !owned[i.uid]).sort((x, y) => (y.e || 0) - (x.e || 0));
+    const tips = { low:['Ξεκίνα από τα «βασικά» της λίστας: αυτά φτιάχνουν τους περισσότερους συνδυασμούς.','Ψάξε πρώτα σε Vinted και second-hand: παλτά, μπλέιζερ και δερμάτινα βρίσκονται σε άριστη κατάσταση.','Εκπτώσεις τέλη Ιανουαρίου και Ιουλίου για Zara, Mango, H&M, Pull&Bear.','Αγόρασε ένα κομμάτι τη φορά και φόρεσέ το σε 3 σύνολα πριν πάρεις το επόμενο.'],
+      mid:['Βάλε περισσότερα χρήματα σε ό,τι φοράς συχνά: τζιν, παπούτσια, τσάντα.','Mango, COS, Massimo Dutti, & Other Stories και Arket έχουν καλή αναλογία ποιότητας–τιμής.','Προτίμησε φυσικές ίνες: βαμβάκι, λινό, μαλλί, μετάξι.','Δοκίμασε τη ραπτική: ένα στρίφωμα κάνει ένα φθηνό παντελόνι να μοιάζει ακριβό.'],
+      high:['Επένδυσε σε παλτό, μπλέιζερ, τσάντα και παπούτσια: είναι αυτά που φαίνονται και διαρκούν.','Κοίτα το κόστος ανά χρήση: τιμή ÷ φορές που θα το φορέσεις.','Μαλλί merino, κασμίρ, πραγματικό δέρμα και μετάξι αξίζουν σε ουδέτερα χρώματα.','Τα έντονα χρώματα κράτα τα σε πιο οικονομικά κομμάτια που αλλάζεις συχνά.'] }[a.budget] || [];
+    pane.innerHTML = `
+      <div class="card"><h3>Λείπουν ${missing.length} κομμάτια</h3>
+        <p class="fit">Με σειρά προτεραιότητας: τα βασικά πρώτα. Πάτα για να τα σημειώσεις όταν τα αγοράσεις.</p>
+        ${missing.length ? missing.map(itemRow).join('') : '<div class="empty">Τα έχεις όλα! 🎉</div>'}
+      </div>
+      <div class="card"><h3>Συμβουλές αγορών</h3><ul class="tips yes">${tips.map(x => `<li>${x}</li>`).join('')}</ul></div>
+      <div class="card"><h3>Ο κανόνας του 3</h3><p style="margin:0">Πριν αγοράσεις κάτι, σκέψου 3 κομμάτια της κάψουλας με τα οποία συνδυάζεται. Αν δεν βρίσκεις, μην το πάρεις.</p></div>`;
+    bindItems(pane);
+  }
+  window.scrollTo({ top:0 });
+}
+
+function itemRow(i){
+  return `<div class="item${owned[i.uid] ? ' own' : ''}" data-uid="${i.uid}" role="checkbox" aria-checked="${!!owned[i.uid]}" tabindex="0">
+    <span class="dot" style="${swatch(i.color)}"></span>
+    <span class="in"><span class="nm">${esc(i.n)}</span>${i.top3 ? '<span class="ess">βασικό</span>' : ''}<br><span class="cn">${esc(i.color[0])}</span></span>
+    <span class="ck">✓</span></div>`;
+}
+function bindItems(root){
+  root.querySelectorAll('.item').forEach(el => {
+    const toggle = () => {
+      const u = el.dataset.uid;
+      if (owned[u]) delete owned[u]; else owned[u] = 1;
+      store.set('owned', owned);
+      const y = window.scrollY; renderResults(); window.scrollTo({ top:y });
+    };
+    el.onclick = toggle;
+    el.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); toggle(); } };
+  });
+}
+function outfitCard(o){
+  const clothes = o.pieces.filter(p => p.c !== 'acc');
+  return `<div class="of">
+    <div class="strip">${clothes.map(p => `<i style="${swatch(p.color)}"></i>`).join('')}</div>
+    <ol>${o.pieces.map(p => `<li><span class="dot" style="${swatch(p.color)}"></span>${esc(p.n)} · <span style="color:var(--muted)">${esc(p.color[0].toLowerCase())}</span></li>`).join('')}</ol>
+    <div class="oc">${o.occ}</div></div>`;
+}
+
+function restart(){
+  if (!confirm('Να ξεκινήσουμε από την αρχή; Τα κομμάτια που έχεις σημειώσει θα μείνουν.')) return;
+  state = { step:0, answers:{}, done:false }; ui.season = null; ui.tab = 'pieces'; save(); render();
+}
+$('#restartBtn').onclick = restart;
+
+/* theme toggle */
+(() => {
+  const t = store.get('theme', null); if (t) document.documentElement.dataset.theme = t;
+  $('#themeBtn').onclick = () => {
+    const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.dataset.theme = dark ? 'light' : 'dark'; store.set('theme', document.documentElement.dataset.theme);
+  };
+})();
+
+render();
+</script>
+</body>
+</html>
