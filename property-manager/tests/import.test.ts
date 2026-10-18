@@ -1,7 +1,8 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
 import { detectAmountMode, roomAndCommission } from "@/lib/import/amounts";
-import { autoMap, buildRows, detectDateOrder, parseAmount, parseDate } from "@/lib/import/parse";
+import * as XLSX from "xlsx";
+import { autoMap, buildRows, CSV_READ_OPTIONS, detectDateOrder, parseAmount, parseDate } from "@/lib/import/parse";
 import type { OrgContext } from "@/lib/permissions";
 import { importReservations } from "@/lib/services/reservation-import";
 import { getReservationDetails } from "@/lib/services/reservations";
@@ -38,6 +39,15 @@ describe("parsing exports", () => {
     expect(parseDate("Oct 11, 2026", "DMY")).toBe("2026-10-11");
     expect(parseDate(new Date(2026, 9, 11), "DMY")).toBe("2026-10-11");
     expect(parseDate("31/02/2026", "DMY")).toBeNull();
+  });
+
+  it("keeps Greek decimal commas in CSV files", () => {
+    const csv = 'Book number,Check-in,Price,Commission amount\n4100,2026-01-09,"283,00 EUR","42,45"\n4101,01/03/2026,"1.234,56",12';
+    const wb = XLSX.read(csv, CSV_READ_OPTIONS);
+    const table = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: "" });
+    expect(table[1].map(parseAmount).slice(2)).toEqual([283, 42.45]);
+    expect(parseAmount(table[2][2])).toBe(1234.56);
+    expect(parseDate(table[2][1], "MDY")).toBe("2026-01-03");
   });
 
   it("builds rows with statuses and problems", () => {
