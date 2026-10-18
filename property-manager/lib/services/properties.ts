@@ -10,7 +10,7 @@ import {
 } from "@/lib/validation/property";
 import { getRevenueSummary } from "./financials";
 import { assertProperty } from "./scope";
-import { serializeProperty, serializeReservation, serializeTask } from "./serializers";
+import { reservationForViewer, serializeProperty, serializeReservation, serializeTask } from "./serializers";
 
 export async function listProperties(ctx: OrgContext, query: PropertyListQuery = {}) {
   const { q, status } = propertyListQuery.parse(query);
@@ -73,8 +73,8 @@ export async function getPropertyDetails(ctx: OrgContext, id: string, now: Date 
   ]);
   return {
     property: serializeProperty(property),
-    currentReservation: current ? serializeReservation(current) : null,
-    upcomingReservations: upcoming.map(serializeReservation),
+    currentReservation: current ? reservationForViewer(ctx, serializeReservation(current)) : null,
+    upcomingReservations: upcoming.map((r) => reservationForViewer(ctx, serializeReservation(r))),
     openTasks: tasks.map((t) => serializeTask(t, now)),
     month: {
       from: revenue.from,

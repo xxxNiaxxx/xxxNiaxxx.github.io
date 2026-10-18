@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { isoToDate, zonedDateTime, zonedISODate } from "@/lib/dates";
 import type { OrgContext } from "@/lib/permissions";
 import { id, isoDate, optionalQuery } from "@/lib/validation/common";
-import { serializeReservation } from "./serializers";
+import { reservationForViewer, serializeReservation } from "./serializers";
 
 export const calendarQuery = z
   .object({ from: isoDate, to: isoDate, propertyId: optionalQuery(id) })
@@ -46,7 +46,7 @@ export async function getCalendar(ctx: OrgContext, query: unknown) {
     from: q.from,
     to: q.to,
     properties,
-    reservations: reservations.map(serializeReservation),
+    reservations: reservations.map((r) => reservationForViewer(ctx, serializeReservation(r))),
     tasks: tasks.map((t) => ({
       id: t.id,
       propertyId: t.propertyId,

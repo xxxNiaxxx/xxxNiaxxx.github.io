@@ -8,14 +8,17 @@ import { api } from "@/lib/client/api";
 import { useMutation } from "@/lib/client/use-mutation";
 import { formatDateTime } from "@/lib/format";
 
-/** Message with the link, in the guest's language (others get English). */
+/**
+ * Message with the link, in the guest's language (others get English). It
+ * says that no payment is ever asked, so a phishing copy asking for one stands out.
+ */
 const INVITE: Record<string, (name: string, url: string) => string> = {
-  el: (n, u) => `Γεια σας ${n}! Για να είναι όλα έτοιμα για την άφιξή σας, ολοκληρώστε το online check-in (1 λεπτό): ${u}`,
-  en: (n, u) => `Hi ${n}! To have everything ready for your arrival, please complete your online check-in (1 minute): ${u}`,
-  de: (n, u) => `Hallo ${n}! Damit bei Ihrer Ankunft alles bereit ist, schließen Sie bitte den Online-Check-in ab (1 Minute): ${u}`,
-  fr: (n, u) => `Bonjour ${n} ! Pour que tout soit prêt à votre arrivée, merci de compléter votre check-in en ligne (1 minute) : ${u}`,
-  it: (n, u) => `Ciao ${n}! Per avere tutto pronto al tuo arrivo, completa il check-in online (1 minuto): ${u}`,
-  es: (n, u) => `¡Hola ${n}! Para tenerlo todo listo a tu llegada, completa el check-in online (1 minuto): ${u}`,
+  el: (n, u) => `Γεια σας ${n}! Για να είναι όλα έτοιμα για την άφιξή σας, ολοκληρώστε το online check-in (1 λεπτό): ${u}\nΔεν θα σας ζητήσουμε ποτέ πληρωμή ή στοιχεία κάρτας με μήνυμα.`,
+  en: (n, u) => `Hi ${n}! To have everything ready for your arrival, please complete your online check-in (1 minute): ${u}\nWe will never ask you for a payment or card details by message.`,
+  de: (n, u) => `Hallo ${n}! Damit bei Ihrer Ankunft alles bereit ist, schließen Sie bitte den Online-Check-in ab (1 Minute): ${u}\nWir werden Sie nie per Nachricht um eine Zahlung oder Kartendaten bitten.`,
+  fr: (n, u) => `Bonjour ${n} ! Pour que tout soit prêt à votre arrivée, merci de compléter votre check-in en ligne (1 minute) : ${u}\nNous ne vous demanderons jamais de paiement ni de données de carte par message.`,
+  it: (n, u) => `Ciao ${n}! Per avere tutto pronto al tuo arrivo, completa il check-in online (1 minuto): ${u}\nNon ti chiederemo mai un pagamento o i dati della carta via messaggio.`,
+  es: (n, u) => `¡Hola ${n}! Para tenerlo todo listo a tu llegada, completa el check-in online (1 minuto): ${u}\nNunca te pediremos un pago ni datos de tarjeta por mensaje.`,
 };
 
 export function CheckinCard({

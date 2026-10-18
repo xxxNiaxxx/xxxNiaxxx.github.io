@@ -10,7 +10,7 @@ import { getPropertyDetails, listProperties } from "@/lib/services/properties";
 import { getReservationDetails, listReservations } from "@/lib/services/reservations";
 import { listTasks } from "@/lib/services/tasks";
 import { getAnnualReport, getTaxOverview } from "@/lib/services/tax";
-import { serializeReservation } from "@/lib/services/serializers";
+import { reservationForViewer, serializeReservation } from "@/lib/services/serializers";
 import { proposeAction } from "./actions";
 import { createMemory } from "./memory";
 import type { ToolSpec } from "./provider";
@@ -51,7 +51,7 @@ async function upcoming(tc: ToolContext, field: "checkIn" | "checkOut", days: nu
     },
     orderBy: { [field]: "asc" },
   });
-  return { today: from, through: addDaysISO(from, days), reservations: rows.map(serializeReservation) };
+  return { today: from, through: addDaysISO(from, days), reservations: rows.map((r) => reservationForViewer(tc.org, serializeReservation(r))) };
 }
 
 async function resolveProperty(tc: ToolContext, args: { propertyId?: string; name?: string }) {

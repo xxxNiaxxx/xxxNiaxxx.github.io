@@ -1,6 +1,7 @@
 import type { Guest, Prisma, Property, Reservation, Task, Message, Transaction } from "@prisma/client";
 import { dateToISO, diffDaysISO } from "@/lib/dates";
 import { guestLanguage } from "@/lib/i18n/guest-language";
+import { hasRole, type OrgContext } from "@/lib/permissions";
 import { checklistSchema, type ChecklistItem } from "@/lib/validation/task";
 
 /** API/UI shapes. Prisma rows never leave the services layer directly. */
@@ -104,6 +105,20 @@ export function serializeReservation(r: ReservationRow) {
   };
 }
 export type ReservationDTO = ReturnType<typeof serializeReservation>;
+
+/**
+ * Guests' contact details, ID number and notes are for owners and
+ * administrators only: team members (e.g. cleaning) see names and dates.
+ */
+export const canSeeGuestDetails = (ctx: Pick<OrgContext, "role">) => hasRole(ctx, "ADMIN");
+
+export function guestForViewer<T extends { email: string | null; phone: string | null; idNumber: string | null; notes: string | null }>(ctx: Pick<OrgContext, "role">, g: T): T {
+  return canSeeGuestDetails(ctx) ? g : { ...g, email: null, phone: null, idNumber: null, notes: null };
+}
+
+export function reservationForViewer<T extends { guestEmail: string | null; guestPhone: string | null }>(ctx: Pick<OrgContext, "role">, r: T): T {
+  return canSeeGuestDetails(ctx) ? r : { ...r, guestEmail: null, guestPhone: null };
+}
 
 export function parseChecklist(value: unknown): ChecklistItem[] {
   const parsed = checklistSchema.safeParse(value);

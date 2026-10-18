@@ -1,25 +1,28 @@
+import { emailIndex, phoneIndex } from "@/lib/crypto/fields";
 import { db } from "@/lib/db";
 import { conflict } from "@/lib/errors";
 import type { OrgContext } from "@/lib/permissions";
 import { guestCreateSchema, guestListQuery, guestUpdateSchema } from "@/lib/validation/guest";
 import { assertGuest } from "./scope";
-import { serializeGuest, serializeMessage, serializeReservation, toNumber } from "./serializers";
+import { canSeeGuestDetails, guestForViewer, reservationForViewer, serializeGuest, serializeMessage, serializeReservation, toNumber } from "./serializers";
 
 export async function listGuests(ctx: OrgContext, query: { q?: string } = {}) {
   const { q } = guestListQuery.parse(query);
   const terms = q?.split(/\s+/).filter(Boolean) ?? [];
+  // Email and phone are encrypted: a whole email or phone number is found by its hash.
+  const byContact = q?.includes("@") ? { emailHash: emailIndex(q) } : q && /^[\d\s+()./-]+$/.test(q) && phoneIndex(q) ? { phoneHash: phoneIndex(q) } : null;
   const rows = await db.guest.findMany({
     where: {
       organizationId: ctx.organizationId,
-      AND: terms.map((term) => ({
-        OR: [
-          { firstName: { contains: term, mode: "insensitive" as const } },
-          { lastName: { contains: term, mode: "insensitive" as const } },
-          { email: { contains: term, mode: "insensitive" as const } },
-          { phone: { contains: term } },
-          { country: { contains: term, mode: "insensitive" as const } },
-        ],
-      })),
+      ...(byContact ?? {
+        AND: terms.map((term) => ({
+          OR: [
+            { firstName: { contains: term, mode: "insensitive" as const } },
+            { lastName: { contains: term, mode: "insensitive" as const } },
+            { country: { contains: term, mode: "insensitive" as const } },
+          ],
+        })),
+      }),
     },
     include: {
       reservations: {
@@ -31,7 +34,7 @@ export async function listGuests(ctx: OrgContext, query: { q?: string } = {}) {
     take: 200,
   });
   return rows.map((g) => ({
-    ...serializeGuest(g),
+    ...guestForViewer(ctx, serializeGuest(g)),
     stays: g.reservations.length,
     totalRevenue: g.reservations.reduce((sum, r) => sum + toNumber(r.totalAmount), 0),
     lastStay: g.reservations.map((r) => r.checkIn.toISOString().slice(0, 10)).sort().at(-1) ?? null,
@@ -40,7 +43,7 @@ export async function listGuests(ctx: OrgContext, query: { q?: string } = {}) {
 export type GuestListItem = Awaited<ReturnType<typeof listGuests>>[number];
 
 export async function getGuest(ctx: OrgContext, id: string) {
-  return serializeGuest(await assertGuest(ctx, id));
+  return guestForViewer(ctx, serializeGuest(await assertGuest(ctx, id)));
 }
 
 export async function getGuestDetails(ctx: OrgContext, id: string) {
@@ -60,8 +63,8 @@ export async function getGuestDetails(ctx: OrgContext, id: string) {
   const stays = reservations.filter((r) => r.status === "CONFIRMED" || r.status === "COMPLETED").map(serializeReservation);
   const totalNights = stays.reduce((s, r) => s + r.nights, 0);
   return {
-    guest: serializeGuest(guest),
-    reservations: reservations.map(serializeReservation),
+    guest: guestForViewer(ctx, serializeGuest(guest)),
+    reservations: reservations.map((r) => reservationForViewer(ctx, serializeReservation(r))),
     messages: messages.map(serializeMessage),
     stats: {
       stays: stays.length,
@@ -75,13 +78,15 @@ export async function getGuestDetails(ctx: OrgContext, id: string) {
 export async function createGuest(ctx: OrgContext, input: unknown) {
   const data = guestCreateSchema.parse(input);
   const row = await db.guest.create({ data: { ...data, organizationId: ctx.organizationId } });
-  return serializeGuest(row);
+  return guestForViewer(ctx, serializeGuest(row));
 }
 
 export async function updateGuest(ctx: OrgContext, id: string, input: unknown) {
-  const data = guestUpdateSchema.parse(input);
+  const parsed = guestUpdateSchema.parse(input);
   await assertGuest(ctx, id);
-  return serializeGuest(await db.guest.update({ where: { id }, data }));
+  // Members do not see these fields, so their (empty) form must not overwrite them.
+  const data = canSeeGuestDetails(ctx) ? parsed : { firstName: parsed.firstName, lastName: parsed.lastName, country: parsed.country, language: parsed.language };
+  return guestForViewer(ctx, serializeGuest(await db.guest.update({ where: { id }, data })));
 }
 
 export async function deleteGuest(ctx: OrgContext, id: string) {

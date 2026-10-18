@@ -1,4 +1,5 @@
 import { Prisma, type ReservationStatus } from "@prisma/client";
+import { emailIndex, phoneIndex } from "@/lib/crypto/fields";
 import { db } from "@/lib/db";
 import { dateToISO, isoToDate } from "@/lib/dates";
 import { AppError, badRequest, conflict } from "@/lib/errors";
@@ -15,7 +16,7 @@ import { platformFieldLabel } from "@/lib/import/labels";
 import { syncBookingIncome } from "./financials";
 import { getTaxContext } from "./tax";
 import { assertGuest, assertProperty, assertReservation, type Tx } from "./scope";
-import { serializeMessage, serializeReservation, serializeTask } from "./serializers";
+import { canSeeGuestDetails, reservationForViewer, serializeMessage, serializeReservation, serializeTask } from "./serializers";
 
 const include = {
   property: { select: { id: true, name: true } },
@@ -103,7 +104,8 @@ export async function listReservations(ctx: OrgContext, query: ReservationListQu
               { property: { name: { contains: f.q, mode: "insensitive" } } },
               { guest: { firstName: { contains: f.q, mode: "insensitive" } } },
               { guest: { lastName: { contains: f.q, mode: "insensitive" } } },
-              { guest: { email: { contains: f.q, mode: "insensitive" } } },
+              ...(emailIndex(f.q) ? [{ guest: { emailHash: emailIndex(f.q) } }] : []),
+              ...(phoneIndex(f.q) ? [{ guest: { phoneHash: phoneIndex(f.q) } }] : []),
             ],
           }
         : {}),
@@ -112,13 +114,13 @@ export async function listReservations(ctx: OrgContext, query: ReservationListQu
     orderBy: [{ checkIn: "desc" }],
     take: 500,
   });
-  return rows.map(serializeReservation);
+  return rows.map((r) => reservationForViewer(ctx, serializeReservation(r)));
 }
 
 export async function getReservation(ctx: OrgContext, id: string) {
   await assertReservation(ctx, id);
   const row = await db.reservation.findUniqueOrThrow({ where: { id }, include });
-  return serializeReservation(row);
+  return reservationForViewer(ctx, serializeReservation(row));
 }
 
 /** The platform export row kept on the reservation, with Greek field names. */
@@ -147,7 +149,13 @@ export async function getReservationDetails(ctx: OrgContext, id: string) {
       orderBy: { createdAt: "desc" },
     }),
   ]);
-  return { reservation, tasks: tasks.map((t) => serializeTask(t)), messages: messages.map(serializeMessage), platform: platformInfo(raw.platformDetails) };
+  return {
+    reservation,
+    tasks: tasks.map((t) => serializeTask(t)),
+    messages: messages.map(serializeMessage),
+    // The platform's export row holds the guest's contact details.
+    platform: canSeeGuestDetails(ctx) ? platformInfo(raw.platformDetails) : null,
+  };
 }
 
 export async function createReservation(ctx: OrgContext, input: unknown) {
@@ -203,7 +211,7 @@ export async function createReservation(ctx: OrgContext, input: unknown) {
     await syncBookingIncome(tx, created);
     return created;
   });
-  return serializeReservation(row);
+  return reservationForViewer(ctx, serializeReservation(row));
 }
 
 export async function updateReservation(ctx: OrgContext, id: string, input: unknown) {
@@ -264,7 +272,7 @@ export async function updateReservation(ctx: OrgContext, id: string, input: unkn
     await syncBookingIncome(tx, updated);
     return updated;
   });
-  return serializeReservation(row);
+  return reservationForViewer(ctx, serializeReservation(row));
 }
 
 export async function cancelReservation(ctx: OrgContext, id: string) {
@@ -288,5 +296,5 @@ export async function cancelReservation(ctx: OrgContext, id: string) {
     });
     return updated;
   });
-  return serializeReservation(row);
+  return reservationForViewer(ctx, serializeReservation(row));
 }

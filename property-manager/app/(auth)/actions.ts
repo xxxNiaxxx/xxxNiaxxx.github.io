@@ -1,6 +1,6 @@
 "use server";
 
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
 import { ZodError } from "zod";
 import { signIn, signOut } from "@/lib/auth/config";
 import { AppError } from "@/lib/errors";
@@ -13,6 +13,8 @@ export interface AuthFormState {
   done?: boolean;
   /** After joining the waitlist with automatic approval: the personal sign-up link. */
   next?: string;
+  /** Sign-in: the password was right, the two-step code is needed. */
+  needsCode?: boolean;
   fieldErrors?: Record<string, string>;
   values?: Record<string, string>;
 }
@@ -24,14 +26,18 @@ function safeNext(next: FormDataEntryValue | null) {
 
 export async function loginAction(_prev: AuthFormState, form: FormData): Promise<AuthFormState> {
   const email = String(form.get("email") ?? "");
+  const code = String(form.get("code") ?? "").trim();
   try {
     await signIn("credentials", {
       email,
       password: String(form.get("password") ?? ""),
+      ...(code ? { code } : {}),
       redirectTo: safeNext(form.get("next")),
     });
     return {};
   } catch (e) {
+    if (e instanceof CredentialsSignin && e.code === "totp") return { needsCode: true, values: { email } };
+    if (e instanceof CredentialsSignin && e.code === "totp-invalid") return { needsCode: true, error: "Ο κωδικός 2 βημάτων δεν είναι σωστός. Δοκιμάστε τον τρέχοντα κωδικό.", values: { email } };
     if (e instanceof AuthError) return { error: "Λάθος email ή κωδικός.", values: { email } };
     throw e; // NEXT_REDIRECT must propagate
   }

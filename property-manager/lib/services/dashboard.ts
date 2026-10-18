@@ -4,7 +4,7 @@ import { formatDateTime, formatDay } from "@/lib/format";
 import type { OrgContext } from "@/lib/permissions";
 import { getOccupancy } from "./financials";
 import { getTaxOverview } from "./tax";
-import { serializeReservation, serializeTask, toNumber } from "./serializers";
+import { reservationForViewer, serializeReservation, serializeTask, toNumber } from "./serializers";
 import { OPEN_STATUSES } from "./tasks";
 import { conflictDetail, conflictTitle, listOpenConflicts } from "./calendar-conflicts";
 import { BOOKING_REQUEST_NOTE } from "./guest-pages";
@@ -232,8 +232,8 @@ export async function getDashboard(ctx: OrgContext, now: Date = new Date()) {
     },
     attention,
     todayAgenda: {
-      checkIns: checkIns.map(serializeReservation),
-      checkOuts: checkOuts.map(serializeReservation),
+      checkIns: checkIns.map((r) => reservationForViewer(ctx, serializeReservation(r))),
+      checkOuts: checkOuts.map((r) => reservationForViewer(ctx, serializeReservation(r))),
       cleaning: tasks.filter((t) => t.type === "CLEANING"),
       maintenance: tasks.filter((t) => t.type === "MAINTENANCE"),
       other: tasks.filter((t) => t.type !== "CLEANING" && t.type !== "MAINTENANCE"),

@@ -6,6 +6,8 @@ export class ApiError extends Error {
     public readonly status: number,
     /** Validation messages by field name. */
     public readonly fieldErrors: Record<string, string> = {},
+    /** The error's details object, e.g. { secondStep: "totp" } at sign-in. */
+    public readonly details: Record<string, unknown> = {},
   ) {
     super(message);
   }
@@ -63,7 +65,8 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
         if (d.path && d.message) fieldErrors[d.path.split(".")[0]] ??= d.message;
       }
     }
-    throw new ApiError(json?.error?.message ?? `Το αίτημα απέτυχε (${res.status})`, res.status, fieldErrors);
+    const details = json?.error?.details && typeof json.error.details === "object" && !Array.isArray(json.error.details) ? (json.error.details as Record<string, unknown>) : {};
+    throw new ApiError(json?.error?.message ?? `Το αίτημα απέτυχε (${res.status})`, res.status, fieldErrors, details);
   }
   return json?.data as T;
 }

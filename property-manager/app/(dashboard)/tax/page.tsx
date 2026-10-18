@@ -37,9 +37,14 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
         description={<>Υποχρεώσεις βραχυχρόνιας μίσθωσης: δηλώσεις διαμονής, ΤΑΚΚ, φόρος εισοδήματος και συμμόρφωση · <Link href="/help#foros" className="text-accent underline-offset-4 hover:underline">Πώς υπολογίζονται;</Link></>}
         actions={
           <>
-            <Button asChild><Link href={`/tax/accountant?year=${year}`}><FolderOpen /> Φάκελος λογιστή</Link></Button>
-            <Button asChild variant="outline"><a href={`/api/tax/export?type=stays&year=${year}`}><Download /> Διαμονές CSV {year}</a></Button>
-            <Button asChild variant="outline"><a href={`/api/tax/export?type=annual&year=${year}`}><Download /> Ετήσια CSV {year}</a></Button>
+            {/* Files with guest data: owners and administrators only. */}
+            {hasRole(ctx, "ADMIN") && (
+              <>
+                <Button asChild><Link href={`/tax/accountant?year=${year}`}><FolderOpen /> Φάκελος λογιστή</Link></Button>
+                <Button asChild variant="outline"><a href={`/api/tax/export?type=stays&year=${year}`}><Download /> Διαμονές CSV {year}</a></Button>
+                <Button asChild variant="outline"><a href={`/api/tax/export?type=annual&year=${year}`}><Download /> Ετήσια CSV {year}</a></Button>
+              </>
+            )}
             <Button asChild variant="outline" className="hidden md:inline-flex"><Link href="/tax/autofill"><Wand2 /> Αυτόματη συμπλήρωση ΑΑΔΕ</Link></Button>
           </>
         }

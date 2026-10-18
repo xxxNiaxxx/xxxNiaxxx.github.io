@@ -1,12 +1,21 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
-import { verifyCredentials } from "./token";
+import { SecondStepError, verifyCredentials } from "./token";
 
 const credentialsSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
   password: z.string().min(1),
+  code: z.string().trim().max(20).optional(),
 });
+
+/** The login form reads `code` ("totp" / "totp-invalid") to ask for the two-step code. */
+class SecondStepSignin extends CredentialsSignin {
+  constructor(step: string) {
+    super();
+    this.code = step;
+  }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -14,11 +23,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   providers: [
     Credentials({
-      credentials: { email: {}, password: {} },
+      credentials: { email: {}, password: {}, code: {} },
       async authorize(raw) {
         const parsed = credentialsSchema.safeParse(raw);
         if (!parsed.success) return null;
-        return verifyCredentials(parsed.data.email, parsed.data.password);
+        try {
+          return await verifyCredentials(parsed.data.email, parsed.data.password, { code: parsed.data.code, client: "web" });
+        } catch (e) {
+          if (e instanceof SecondStepError) throw new SecondStepSignin(e.step);
+          throw e;
+        }
       },
     }),
   ],

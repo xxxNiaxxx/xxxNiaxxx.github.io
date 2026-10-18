@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emailIndex } from "@/lib/crypto/fields";
 import { db } from "@/lib/db";
 import { isoToDate } from "@/lib/dates";
 import { AppError } from "@/lib/errors";
@@ -55,7 +56,7 @@ async function findOrCreateGuest(ctx: OrgContext, row: z.infer<typeof rowSchema>
     where: {
       organizationId: ctx.organizationId,
       OR: [
-        ...(email ? [{ email }] : []),
+        ...(email ? [{ emailHash: emailIndex(email) }] : []),
         { firstName: { equals: firstName, mode: "insensitive" as const }, lastName: { equals: lastName, mode: "insensitive" as const } },
       ],
     },
