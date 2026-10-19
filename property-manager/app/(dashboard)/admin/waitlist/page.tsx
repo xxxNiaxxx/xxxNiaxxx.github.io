@@ -6,13 +6,14 @@ import { PageHeader } from "@/components/ui/misc";
 import { getPageContext } from "@/lib/auth/page";
 import { emailConfigured, isPlatformAdmin } from "@/lib/email";
 import { isAutoApprove, isRegistrationOpen, listWaitlist } from "@/lib/services/waitlist";
+import { followUpEmailsOn } from "@/lib/services/welcome-emails";
 
 export const metadata: Metadata = { title: "Λίστα αναμονής" };
 
 export default async function WaitlistAdminPage() {
   const { user } = await getPageContext();
   if (!isPlatformAdmin(user.email)) notFound();
-  const [entries, registrationOpen, autoApprove] = await Promise.all([listWaitlist(), isRegistrationOpen(), isAutoApprove()]);
+  const [entries, registrationOpen, autoApprove, followUpEmails] = await Promise.all([listWaitlist(), isRegistrationOpen(), isAutoApprove(), followUpEmailsOn()]);
   return (
     <>
       <PageHeader title="Λίστα αναμονής" description="Ποιοι ζήτησαν να δοκιμάσουν την εφαρμογή και ποιοι έχουν πρόσβαση" />
@@ -23,6 +24,7 @@ export default async function WaitlistAdminPage() {
         entries={entries}
         registrationOpen={registrationOpen}
         autoApprove={autoApprove}
+        followUpEmails={followUpEmails}
         emailReady={emailConfigured()}
         playTestingUrl={process.env.PLAY_TESTING_URL || null}
       />

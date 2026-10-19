@@ -40,12 +40,14 @@ export function WaitlistAdmin({
   entries,
   registrationOpen,
   autoApprove,
+  followUpEmails,
   emailReady,
   playTestingUrl,
 }: {
   entries: WaitlistEntryDTO[];
   registrationOpen: boolean;
   autoApprove: boolean;
+  followUpEmails: boolean;
   emailReady: boolean;
   playTestingUrl: string | null;
 }) {
@@ -117,6 +119,28 @@ export function WaitlistAdmin({
                 {autoApprove
                   ? "Όποιος συμπληρώνει τη φόρμα εγκρίνεται αμέσως και πηγαίνει κατευθείαν στη δημιουργία λογαριασμού (παίρνει και email με τον σύνδεσμο). Κλείστε το αν έρθουν ψεύτικες εγγραφές."
                   : "Οι αιτήσεις περιμένουν να τις εγκρίνετε εσείς."}
+              </span>
+            </span>
+          </label>
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 accent-[var(--color-accent)]"
+              checked={followUpEmails}
+              disabled={pending}
+              onChange={(ev) =>
+                run(() => api("/api/admin/settings", { method: "PATCH", body: { followUpEmails: ev.target.checked } }), {
+                  success: ev.target.checked ? "Αυτόματα email: ενεργά" : "Αυτόματα email: σταματημένα",
+                })
+              }
+            />
+            <span className="text-sm">
+              <span className="font-medium">Αυτόματα email καλωσορίσματος και υπενθύμισης</span>
+              <span className="block text-muted-foreground">
+                {followUpEmails
+                  ? "Ενεργά: σε νέους χρήστες την 1η, 3η και 7η ημέρα, και μία υπενθύμιση σε όσους εγκρίθηκαν αλλά δεν έφτιαξαν λογαριασμό."
+                  : "Σταματημένα: δεν φεύγει κανένα email καλωσορίσματος ή υπενθύμισης."}
+                {!emailReady && " Χρειάζεται πρώτα ρύθμιση email (SMTP)."}
               </span>
             </span>
           </label>

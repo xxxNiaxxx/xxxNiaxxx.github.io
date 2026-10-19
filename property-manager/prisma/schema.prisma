@@ -33,6 +33,10 @@ model User {
   totpRecovery    String[]  @default([])
   /// Time step of the last accepted code, so each code works only once.
   totpLastStep    Int?
+  /// Welcome emails sent after sign-up (1st day, 3rd day, 7th day): how many went out.
+  welcomeEmails   Int       @default(0)
+  /// Unsubscribed from tips and news emails (welcome series); reminders and reports are separate settings.
+  emailOptOutAt   DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -698,6 +702,8 @@ model WaitlistEntry {
   linkOpenedAt      DateTime?
   linkOpenCount     Int            @default(0)
   registeredAt      DateTime?
+  /// The one reminder (with a fresh link) to someone approved who has not created an account.
+  reminderSentAt    DateTime?
   userId            String?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
