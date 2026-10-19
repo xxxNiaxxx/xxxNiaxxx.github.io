@@ -53,6 +53,7 @@ export function Landing() {
           <Logo /> <span className="truncate">{APP_NAME}</span>
         </Link>
         <nav className="flex shrink-0 items-center gap-1 text-sm sm:gap-3">
+          <Link href="/ypologistis" className="hidden px-2 py-1.5 text-muted-foreground hover:text-foreground sm:inline">Υπολογιστής καθαρών</Link>
           <Link href="/help" className="hidden px-2 py-1.5 text-muted-foreground hover:text-foreground sm:inline">Πώς λειτουργεί</Link>
           <Link href="/login" className="px-2 py-1.5 text-muted-foreground hover:text-foreground">Σύνδεση</Link>
           <Link href="/waitlist" className="rounded-lg bg-primary px-3 py-1.5 font-medium text-primary-foreground">Δοκιμή</Link>
@@ -72,6 +73,7 @@ export function Landing() {
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link href="/waitlist" className="rounded-xl bg-primary px-5 py-3 font-medium text-primary-foreground">Θέλω να το δοκιμάσω</Link>
+            <Link href="/ypologistis" className="rounded-xl border border-border bg-surface px-5 py-3 font-medium">Υπολογίστε τα καθαρά σας</Link>
             <Link href="/help" className="rounded-xl border border-border bg-surface px-5 py-3 font-medium">Δείτε πώς λειτουργεί</Link>
           </div>
         </section>
