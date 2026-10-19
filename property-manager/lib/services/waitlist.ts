@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { platformAdminEmails, sendEmail } from "@/lib/email";
 import { pushToAdmins } from "@/lib/services/push";
 import { lastTeamMessageAt } from "@/lib/services/team-messages";
+import { followUpEmailsOn } from "@/lib/services/welcome-emails";
 import { AppError, conflict } from "@/lib/errors";
 import { email, optionalEmail, optionalText, requiredText } from "@/lib/validation/common";
 import { ACCESS_DAYS, WAITLIST_PLATFORM_VALUES, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
@@ -228,6 +229,48 @@ export async function approveEntry(id: string, origin: string, now = new Date(),
   });
   if (emailed) await db.waitlistEntry.update({ where: { id }, data: { approvalEmailedAt: now } });
   return { path: accessPath(token), emailed };
+}
+
+/**
+ * Daily: one reminder, with a fresh link, to people approved 2–14 days ago who
+ * have not created an account. They asked for access, so a single nudge is welcome;
+ * older approvals are left alone.
+ */
+export async function remindUnregistered(origin: string, now = new Date()) {
+  if (!(await followUpEmailsOn())) return { sent: 0, off: true };
+  const entries = await db.waitlistEntry.findMany({
+    where: {
+      status: "APPROVED",
+      registeredAt: null,
+      reminderSentAt: null,
+      approvedAt: { gte: new Date(now.getTime() - 14 * 86_400_000), lte: new Date(now.getTime() - 2 * 86_400_000) },
+    },
+  });
+  let sent = 0;
+  for (const entry of entries) {
+    const { count } = await db.waitlistEntry.updateMany({ where: { id: entry.id, reminderSentAt: null }, data: { reminderSentAt: now } });
+    if (!count) continue;
+    const token = randomBytes(24).toString("base64url");
+    const emailed = await sendEmail({
+      to: entry.email,
+      subject: `Ο λογαριασμός σας στο ${APP_NAME} σας περιμένει`,
+      text:
+        `Γεια σας ${entry.name},\n\nπριν από λίγες μέρες ανοίξαμε την πρόσβασή σας, αλλά δεν έχει γίνει ακόμη ο λογαριασμός. ` +
+        `Με τον σύνδεσμο παρακάτω τον φτιάχνετε σε ένα λεπτό· μετά, με το αρχείο κρατήσεων της Airbnb ή της Booking, ` +
+        `βλέπετε αμέσως καθαρά έσοδα, ΤΑΚΚ και εκτίμηση φόρου της χρονιάς. ${FREE_UNTIL_NOTE}\n\n` +
+        `Ο σύνδεσμος είναι προσωπικός και ισχύει για ${ACCESS_DAYS} ημέρες. Αν δεν σας ενδιαφέρει πια, απαντήστε «όχι» και θα σβήσουμε τα στοιχεία σας.\n\n` +
+        `Η ομάδα του ${APP_NAME}`,
+      action: { label: "Δημιουργία λογαριασμού", url: `${origin}${accessPath(token)}` },
+    });
+    if (emailed) {
+      // The new link replaces the old one only once the email has gone out.
+      await db.waitlistEntry.update({ where: { id: entry.id }, data: { tokenHash: hashToken(token), tokenExpiresAt: new Date(now.getTime() + ACCESS_DAYS * 86_400_000) } });
+      sent++;
+    } else {
+      await db.waitlistEntry.update({ where: { id: entry.id }, data: { reminderSentAt: null } }); // email not set up: try again tomorrow
+    }
+  }
+  return { sent };
 }
 
 export async function rejectEntry(id: string) {

@@ -7,6 +7,8 @@ import { sendScheduledEmails } from "@/lib/services/notifications";
 import { sendFreePeriodReminders, syncSubscriptionQuantities } from "@/lib/services/billing";
 import { appOrigin } from "@/lib/request";
 import { purgeOldIdNumbers, reencryptGuestData } from "@/lib/services/data-protection";
+import { remindUnregistered } from "@/lib/services/waitlist";
+import { sendWelcomeEmails } from "@/lib/services/welcome-emails";
 
 /** Runs a step; a failure is reported to the administrators and the other steps still run. */
 async function step<T>(name: string, fn: () => Promise<T>) {
@@ -22,6 +24,7 @@ async function step<T>(name: string, fn: () => Promise<T>) {
  * Vercel Cron (vercel.json), every morning: syncs every iCal feed, sends the
  * reminder emails (and, early in the month, the monthly reports) and updates
  * the number of paid properties on subscriptions, resets the shared demo,
+ * sends the welcome emails and the one reminder to approved waitlist people,
  * encrypts guest data still in the clear and deletes ID numbers no longer needed.
  * Requires `Authorization: Bearer $CRON_SECRET`.
  */
@@ -33,9 +36,11 @@ export async function GET(req: NextRequest) {
   const billing = await step("billing", () => syncSubscriptionQuantities());
   const billingReminders = await step("billing-reminders", async () => sendFreePeriodReminders(await appOrigin()));
   const demo = await step("demo", () => refreshDemo(db));
+  const welcome = await step("welcome-emails", async () => sendWelcomeEmails(await appOrigin()));
+  const waitlistReminders = await step("waitlist-reminders", async () => remindUnregistered(await appOrigin()));
   const encryption = await step("encryption", () => reencryptGuestData());
   const idNumbers = await step("id-numbers", () => purgeOldIdNumbers());
-  return NextResponse.json({ data: { calendars, emails, billing, billingReminders, demo, encryption, idNumbers } });
+  return NextResponse.json({ data: { calendars, emails, billing, billingReminders, demo, welcome, waitlistReminders, encryption, idNumbers } });
 }
 
 export const maxDuration = 60;
