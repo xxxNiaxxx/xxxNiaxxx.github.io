@@ -2,7 +2,7 @@ import { Bot, CalendarCheck2, FileCheck2, UserCheck, Wallet } from "lucide-react
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BENEFITS } from "@/lib/marketing";
-import { PRICE_PER_PROPERTY } from "@/lib/services/billing";
+import { PRICE_SUMMARY } from "@/lib/services/billing";
 import { isAutoApprove } from "@/lib/services/waitlist";
 import { WaitlistForm } from "./waitlist-form";
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 const FAQ: [string, string][] = [
   ["Βλέπετε τους κωδικούς μου στο Taxisnet;", "Όχι, ποτέ. Η εφαρμογή συμπληρώνει τη φόρμα της ΑΑΔΕ στη δική σας οθόνη· εσείς ελέγχετε και πατάτε την υποβολή. Κωδικούς δεν ζητάμε και δεν κρατάμε."],
-  ["Πόσο θα κοστίζει μετά το 2026;", `${PRICE_PER_PROPERTY} € τον μήνα ανά κατάλυμα, μόνο για τους μήνες που έχει κρατήσεις: ένα εποχικό κατάλυμα δεν πληρώνει τον χειμώνα. Χωρίς δέσμευση, ακύρωση με ένα κλικ. Πριν από οποιαδήποτε χρέωση σας ενημερώνουμε με email.`],
+  ["Πόσο θα κοστίζει μετά το 2026;", `${PRICE_SUMMARY}, μόνο για τους μήνες που έχει κρατήσεις: ένα εποχικό κατάλυμα δεν πληρώνει τον χειμώνα. Χωρίς δέσμευση, ακύρωση με ένα κλικ. Πριν από οποιαδήποτε χρέωση σας ενημερώνουμε με email.`],
   ["Κι αν δεν μου αρέσει;", "Σταματάτε όποτε θέλετε και κατεβάζετε όλα τα δεδομένα σας με ένα κουμπί."],
   ["Ποιος είναι πίσω από την εφαρμογή;", "Μια μικρή ομάδα οικοδεσποτών στην Ελλάδα. Τη φτιάξαμε για τα δικά μας καταλύματα και τη βελτιώνουμε με ό,τι μας λένε οι χρήστες."],
 ];

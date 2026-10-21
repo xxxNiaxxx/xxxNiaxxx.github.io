@@ -3,7 +3,7 @@ import Link from "next/link";
 import { APP_NAME } from "@/lib/brand";
 import { todayISO } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
-import { PRICE_PER_EXTRA_ROOM, PRICE_PER_PROPERTY } from "@/lib/services/billing";
+import { nthPropertyPrice, PRICE_PER_EXTRA_ROOM, PRICE_PER_PROPERTY, propertiesMonthlyPrice } from "@/lib/services/billing";
 import {
   BUSINESS_THRESHOLD_PROPERTIES,
   DETACHED_AREA_THRESHOLD_SQM,
@@ -333,7 +333,8 @@ export default function HelpPage() {
       <h2 id="syndromi">Συνδρομή</h2>
       <p>
         Η εφαρμογή είναι δωρεάν μέχρι τις 31 Δεκεμβρίου 2026. Από 1 Ιανουαρίου 2027 κοστίζει {PRICE_PER_PROPERTY} € ανά κατάλυμα τον
-        μήνα, <strong>μόνο για τους μήνες που το κατάλυμα έχει κρατήσεις</strong>: ένα εποχικό κατάλυμα δεν πληρώνει τον χειμώνα, αυτόματα.
+        μήνα, και φθηνότερα όσο προσθέτετε καταλύματα: από το 3ο κατάλυμα {nthPropertyPrice(3)} € και από το 6ο {nthPropertyPrice(6)} € (π.χ. 6 καταλύματα:
+        {propertiesMonthlyPrice(6)} € τον μήνα), <strong>μόνο για τους μήνες που το κατάλυμα έχει κρατήσεις</strong>: ένα εποχικό κατάλυμα δεν πληρώνει τον χειμώνα, αυτόματα.
         Δωμάτια που έχουν το καθένα δικό του ΑΜΑ (βραχυχρόνια μίσθωση) περνιούνται ως χωριστά καταλύματα, με την ίδια τιμή.
         Αν πολλά δωμάτια νοικιάζονται χωριστά με <em>έναν</em> αριθμό μητρώου, συμπληρώστε στο κατάλυμα τα «Δωμάτια προς ενοικίαση»: κάθε δωμάτιο μετά το
         πρώτο κοστίζει {PRICE_PER_EXTRA_ROOM} € (π.χ. 12 δωμάτια: {PRICE_PER_PROPERTY + 11 * PRICE_PER_EXTRA_ROOM} € τον μήνα). Πληρωμή με κάρτα μέσω Stripe, χωρίς δέσμευση. Στη σελίδα <em>Συνδρομή</em> ο ιδιοκτήτης ενεργοποιεί τη συνδρομή (αν το

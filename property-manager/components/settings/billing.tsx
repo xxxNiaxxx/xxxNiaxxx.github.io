@@ -55,7 +55,7 @@ export function BillingPanel({ state, justSubscribed }: { state: BillingState; j
             <>
               <div>
                 <p className="text-3xl font-semibold tracking-tight">{euro(state.pricePerProperty)}<span className="text-base font-normal text-muted-foreground"> / κατάλυμα / μήνα</span></p>
-                <p className="mt-1 text-sm text-muted-foreground">Μόνο για τους μήνες που το κατάλυμα έχει κρατήσεις. Ενοικιαζόμενα δωμάτια με έναν ΑΜΑ: +{euro(state.pricePerExtraRoom)} για κάθε επιπλέον δωμάτιο.</p>
+                <p className="mt-1 text-sm text-muted-foreground">Από το 3ο κατάλυμα {euro(10)} και από το 6ο {euro(8)}. Μόνο για τους μήνες που το κατάλυμα έχει κρατήσεις. Ενοικιαζόμενα δωμάτια με έναν ΑΜΑ: +{euro(state.pricePerExtraRoom)} για κάθε επιπλέον δωμάτιο.</p>
               </div>
               <div className="rounded-lg border border-border p-3 text-sm">
                 <p className="font-medium">
