@@ -12,6 +12,8 @@ import {
   sendFreePeriodReminders,
   setStripeForTests,
   startCheckout,
+  nthPropertyPrice,
+  propertiesMonthlyPrice,
   propertyMonthlyPrice,
   syncSubscriptionQuantities,
 } from "@/lib/services/billing";
@@ -99,6 +101,13 @@ describe("subscriptions", () => {
   it("price: 12 € a property, +3 € for every extra room under the same registry number", () => {
     expect(propertyMonthlyPrice(1)).toBe(12);
     expect(propertyMonthlyPrice(12)).toBe(45);
+  });
+
+  it("graduated: 12 € for the first 2 properties, 10 € for the 3rd–5th, 8 € from the 6th", () => {
+    expect([1, 2, 3, 5, 6, 10].map(nthPropertyPrice)).toEqual([12, 12, 10, 10, 8, 8]);
+    expect(propertiesMonthlyPrice(1)).toBe(12);
+    expect(propertiesMonthlyPrice(6)).toBe(12 * 2 + 10 * 3 + 8);
+    expect(propertyMonthlyPrice(4, 3)).toBe(10 + 3 * 3);
   });
 
   it("the billing page shows the next charge from the stays already booked", async () => {

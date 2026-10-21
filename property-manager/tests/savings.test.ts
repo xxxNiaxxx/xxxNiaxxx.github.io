@@ -19,7 +19,9 @@ describe("what the app saved", () => {
     const propertyId = (await db.property.create({ data: { organizationId: ctx.organizationId, name: "Loft", city: "X", country: "GR", basePrice: 100, maxGuests: 2 } })).id;
     const guest = await createGuest(ctx);
     const stay = await createReservation(ctx, { propertyId, guestId: guest.id, guestsCount: 1, checkIn: "2026-09-01", checkOut: "2026-09-04", totalAmount: 300, source: "AIRBNB" });
-    await setStayDeclaration(ctx, stay.id, { status: "DECLARED" }); // declared 8/10, deadline 20/10
+    await setStayDeclaration(ctx, stay.id, { status: "DECLARED" });
+    // Declared 8/10, before the 20/10 deadline (fixed, so the test does not depend on today's date).
+    await db.reservation.update({ where: { id: stay.id }, data: { declaredAt: NOW } });
     await draftGuestReply(ctx, { reservationId: stay.id, guestMessage: "Where can we park?" }, null);
     await setDirectBooking(ctx, propertyId, true);
     const token = (await publicPagesLink(ctx, propertyId)).bookingPath.split("/").pop()!;

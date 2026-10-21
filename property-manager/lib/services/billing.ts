@@ -11,23 +11,39 @@ import { assertNotDemo } from "@/lib/demo";
  * until the end of 2026; subscribing earlier starts the first charge on
  * 1 January 2027.
  *
- * Price: 12 € a month per property, only for the months it has stays, plus
- * 3 € for every extra room rented separately under the same registry number
- * (ενοικιαζόμενα δωμάτια). A property marked «Ανενεργό» is never charged.
+ * Price, graduated (PROPERTY_PRICE_TIERS): 12 € a month for each of the
+ * first 2 properties, 10 € for the 3rd–5th, 8 € from the 6th, only for the
+ * months a property has stays, plus 3 € for every extra room rented
+ * separately under the same registry number (ενοικιαζόμενα δωμάτια). A
+ * property marked «Ανενεργό» is never charged.
  * Stripe bills each period in advance, so the daily job sets the quantities
  * from the stays of the coming period (the one after currentPeriodEnd).
  *
- * Environment: STRIPE_SECRET_KEY, STRIPE_PRICE_ID (12 €, monthly, per unit),
- * STRIPE_ROOM_PRICE_ID (3 €, monthly, per unit), STRIPE_WEBHOOK_SECRET;
- * NEXT_PUBLIC_PRICE_PER_PROPERTY and NEXT_PUBLIC_PRICE_PER_EXTRA_ROOM are the
- * prices shown.
+ * Environment: STRIPE_SECRET_KEY, STRIPE_PRICE_ID (monthly, per unit,
+ * «graduated» tiers: 1–2 → 12 €, 3–5 → 10 €, 6+ → 8 €), STRIPE_ROOM_PRICE_ID
+ * (3 €, monthly, per unit), STRIPE_WEBHOOK_SECRET. The quantity sent to
+ * Stripe is still the number of properties; Stripe applies the tiers.
  */
 export const FREE_UNTIL = new Date("2027-01-01T00:00:00+02:00");
-export const PRICE_PER_PROPERTY = Number(process.env.NEXT_PUBLIC_PRICE_PER_PROPERTY || 12);
-export const PRICE_PER_EXTRA_ROOM = Number(process.env.NEXT_PUBLIC_PRICE_PER_EXTRA_ROOM || 3);
+/** Graduated: each tier's price applies to the properties within it (must match the Stripe price). */
+export const PROPERTY_PRICE_TIERS = [
+  { upTo: 2, price: 12 },
+  { upTo: 5, price: 10 },
+  { upTo: Infinity, price: 8 },
+] as const;
+export const PRICE_PER_PROPERTY = PROPERTY_PRICE_TIERS[0].price;
+export const PRICE_PER_EXTRA_ROOM = 3;
+/** One line for the pages and emails that state the price. */
+export const PRICE_SUMMARY = "12 € τον μήνα ανά κατάλυμα· από το 3ο κατάλυμα 10 € και από το 6ο 8 €";
 
-/** Monthly price of one property with stays that month. */
-export const propertyMonthlyPrice = (rentalUnits: number) => PRICE_PER_PROPERTY + Math.max(0, rentalUnits - 1) * PRICE_PER_EXTRA_ROOM;
+/** Price of the n-th property (1-based) charged in a month. */
+export const nthPropertyPrice = (n: number) => PROPERTY_PRICE_TIERS.find((t) => n <= t.upTo)!.price;
+
+/** Monthly price of `count` properties (without extra rooms). */
+export const propertiesMonthlyPrice = (count: number) => Array.from({ length: Math.max(0, count) }, (_, i) => nthPropertyPrice(i + 1)).reduce((a, b) => a + b, 0);
+
+/** Monthly price of one property with stays that month: its tier price (n-th charged property) plus its extra rooms. */
+export const propertyMonthlyPrice = (rentalUnits: number, n = 1) => nthPropertyPrice(n) + Math.max(0, rentalUnits - 1) * PRICE_PER_EXTRA_ROOM;
 /** Statuses that keep access: past_due while Stripe retries the card. */
 const PAID_STATUSES = new Set(["active", "trialing", "past_due"]);
 
@@ -100,10 +116,11 @@ export async function billableProperties(organizationId: string, start: Date, en
     select: { id: true, name: true, rentalUnits: true },
     orderBy: { name: "asc" },
   });
-  return rows.map((p) => ({ ...p, price: propertyMonthlyPrice(p.rentalUnits) }));
+  // Tiers go in name order; the total is the same whichever property takes which tier.
+  return rows.map((p, i) => ({ ...p, price: propertyMonthlyPrice(p.rentalUnits, i + 1) }));
 }
 
-/** Stripe quantities for those properties: one 12 € unit per property, one 3 € unit per extra room. */
+/** Stripe quantities for those properties: one unit per property (tiered price), one 3 € unit per extra room. */
 export function quantitiesFor(properties: { rentalUnits: number }[]) {
   return {
     properties: properties.length,
@@ -316,13 +333,13 @@ export async function sendFreePeriodReminders(origin: string, now = new Date()) 
     if (emails.some((e) => isPlatformAdmin(e)) || !emails.length) continue;
     const units = await db.property.findMany({ where: { organizationId: org.id, status: "ACTIVE" }, select: { rentalUnits: true } });
     const properties = Math.max(1, units.length);
-    const fullMonth = units.length ? units.reduce((a, p) => a + propertyMonthlyPrice(p.rentalUnits), 0) : PRICE_PER_PROPERTY;
+    const fullMonth = units.length ? units.reduce((a, p, i) => a + propertyMonthlyPrice(p.rentalUnits, i + 1), 0) : PRICE_PER_PROPERTY;
     await sendEmail({
       to: emails,
       subject: "Η δωρεάν περίοδος λήγει στις 31 Δεκεμβρίου",
       text:
         `Η εφαρμογή είναι δωρεάν για το «${org.name}» μέχρι τις 31 Δεκεμβρίου 2026.\n\n` +
-        `Από 1 Ιανουαρίου 2027 η συνδρομή είναι ${PRICE_PER_PROPERTY} € ανά κατάλυμα τον μήνα, μόνο για τους μήνες που έχει κρατήσεις ` +
+        `Από 1 Ιανουαρίου 2027 η συνδρομή είναι ${PRICE_SUMMARY}, μόνο για τους μήνες που έχει κρατήσεις ` +
         `(+${PRICE_PER_EXTRA_ROOM} € για κάθε επιπλέον δωμάτιο στον ίδιο ΑΜΑ). Για τα ${properties} ` +
         `${properties === 1 ? "κατάλυμά" : "καταλύματά"} σας, έναν μήνα με κρατήσεις σε όλα: ${fullMonth} €. Δεν χρεώνεστε τίποτα αν δεν ` +
         "ενεργοποιήσετε συνδρομή· αν την ενεργοποιήσετε τώρα, η πρώτη χρέωση γίνεται 1 Ιανουαρίου.\n\n" +
