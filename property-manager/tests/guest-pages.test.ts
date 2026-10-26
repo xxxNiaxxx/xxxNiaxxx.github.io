@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "@/lib/db";
 import { type EmailMessage, setEmailSenderForTests } from "@/lib/email";
 import type { OrgContext } from "@/lib/permissions";
@@ -19,6 +19,9 @@ describe("guest pages", () => {
   const sent: EmailMessage[] = [];
 
   beforeAll(async () => {
+    // The pages read the clock themselves: pin «today» to NOW so the fixed dates below stay valid.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
     await resetDatabase();
     setEmailSenderForTests(async (m) => void sent.push(m));
     ctx = await createTenant("Guests");
@@ -32,7 +35,10 @@ describe("guest pages", () => {
     await db.guest.update({ where: { id: guest.id }, data: { country: "Germany" } });
     reservationId = (await createReservation(ctx, { propertyId, guestId: guest.id, guestsCount: 2, checkIn: "2026-10-20", checkOut: "2026-10-23", totalAmount: 300, source: "AIRBNB", confirmationCode: "HMXYZ12345" })).id;
   });
-  afterAll(() => setEmailSenderForTests(null));
+  afterAll(() => {
+    setEmailSenderForTests(null);
+    vi.useRealTimers();
+  });
 
   it("online check-in fills the guest's identity for the AADE declaration", async () => {
     const { path } = await checkinLink(ctx, reservationId);
