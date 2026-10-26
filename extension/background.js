@@ -2,8 +2,9 @@
 //
 // It keeps the key the app gave the extension («Σύνδεση επέκτασης»), asks the
 // app for the stays waiting for a declaration, and runs the autofill script
-// (autofill.js, bundled) in the AADE page. It never submits anything and never
-// sees the TAXISnet login.
+// (autofill.js, bundled) in the AADE page. When the host has submitted a
+// declaration, it tells the app to mark that stay declared. It never submits
+// anything and never sees the TAXISnet login.
 
 const APP = "https://aivrachychronia.vercel.app";
 
@@ -24,6 +25,24 @@ async function pending() {
   }
 }
 
+/** The host submitted the declaration on AADE: the app marks the stay declared. */
+async function declared(reservationId) {
+  const { key } = await chrome.storage.local.get("key");
+  if (!key) return { error: "not-connected" };
+  try {
+    const res = await fetch(`${APP}/api/aade/declared`, {
+      method: "POST",
+      headers: { "x-autofill-key": key, "content-type": "application/json" },
+      body: JSON.stringify({ reservationId }),
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok || !body) return { error: "failed", message: body?.error?.message };
+    return { ok: true };
+  } catch {
+    return { error: "offline" };
+  }
+}
+
 async function fill(tabId, frameId, values) {
   const target = { tabId, frameIds: [frameId ?? 0] };
   // In the page itself (not the extension's isolated world): the form's own widgets live there.
@@ -34,6 +53,7 @@ async function fill(tabId, frameId, values) {
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   if (msg?.type === "pending") pending().then(reply);
+  else if (msg?.type === "declared" && typeof msg.id === "string") declared(msg.id).then(reply);
   else if (msg?.type === "fill" && sender.tab) fill(sender.tab.id, sender.frameId, msg.values).then(reply, (e) => reply({ error: String(e?.message || e) }));
   else if (msg?.type === "connect" && typeof msg.key === "string" && msg.key.startsWith("afk_")) chrome.storage.local.set({ key: msg.key }).then(() => reply({ ok: true }));
   else if (msg?.type === "status") chrome.storage.local.get("key").then(({ key }) => reply({ connected: !!key }));

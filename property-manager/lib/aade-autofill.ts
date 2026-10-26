@@ -13,7 +13,7 @@
 export const AUTOFILL_PREFIX = "AADE-AUTOFILL:";
 
 /** Shown in the progress badge and the diagnostics, to know which version ran. */
-export const AUTOFILL_VERSION = "2026-10-12.10";
+export const AUTOFILL_VERSION = "2026-10-26.1";
 
 /** Declaration fields the bookmarklet knows how to fill. */
 const AUTOFILL_KEYS = ["checkIn", "checkOut", "amount", "paymentMethod", "platform", "foreigner", "taxId", "guestName", "idNumber", "cancelAmount", "cancelDate", "bookingNumber"];

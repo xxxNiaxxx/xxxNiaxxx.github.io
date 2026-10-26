@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { POST as DECLARED } from "@/app/api/aade/declared/route";
 import { OPTIONS, GET } from "@/app/api/aade/pending/route";
 import { db } from "@/lib/db";
 import type { OrgContext } from "@/lib/permissions";
-import { createAutofillKey, declarationsForKey, revokeAutofillKeys } from "@/lib/services/autofill-keys";
+import { createAutofillKey, declarationsForKey, markDeclaredForKey, revokeAutofillKeys } from "@/lib/services/autofill-keys";
 import { createReservation } from "@/lib/services/reservations";
 import { signOutEverywhere } from "@/lib/services/settings";
 import { setStayDeclaration } from "@/lib/services/tax";
@@ -103,5 +104,31 @@ describe("«Συμπλήρωση ΑΑΔΕ» bookmark keys", () => {
     const bad = await GET(new NextRequest("http://localhost/api/aade/pending"));
     expect(bad.status).toBe(401);
     expect(bad.headers.get("access-control-allow-origin")).toBe("*");
+  });
+
+  it("marks a submitted stay declared for the extension, only in the key's organization, once", async () => {
+    const { key } = await createAutofillKey(ctx);
+    const [first, second] = await declarationsForKey(key, NOW);
+    const foreign = await db.reservation.findFirstOrThrow({ where: { organizationId: other.organizationId } });
+    await expect(markDeclaredForKey(key, { reservationId: foreign.id }, NOW)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(markDeclaredForKey("afk_nope", { reservationId: first.reservationId }, NOW)).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(await markDeclaredForKey(key, { reservationId: first.reservationId }, NOW)).toEqual({ reservationId: first.reservationId, status: "DECLARED" });
+    const row = await db.reservation.findUniqueOrThrow({ where: { id: first.reservationId } });
+    expect(row).toMatchObject({ declarationStatus: "DECLARED", declaredAt: NOW });
+    // Again (page reloaded): nothing changes, the date stays the first one.
+    await markDeclaredForKey(key, { reservationId: first.reservationId }, new Date("2026-10-13T10:00:00Z"));
+    expect((await db.reservation.findUniqueOrThrow({ where: { id: first.reservationId } })).declaredAt).toEqual(NOW);
+    // «Επόμενη»: the next one is now first in the list.
+    expect((await declarationsForKey(key, NOW)).map((s) => s.reservationId)).toEqual([second.reservationId]);
+
+    const res = await DECLARED(new NextRequest("http://localhost/api/aade/declared", {
+      method: "POST", headers: { "x-autofill-key": key, "content-type": "application/json" }, body: JSON.stringify({ reservationId: second.reservationId }),
+    }));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    expect(await declarationsForKey(key, NOW)).toEqual([]);
+    const bad = await DECLARED(new NextRequest("http://localhost/api/aade/declared", { method: "POST", body: "{}" }));
+    expect(bad.status).toBe(401);
   });
 });

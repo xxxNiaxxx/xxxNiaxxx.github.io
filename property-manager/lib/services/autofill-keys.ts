@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
+import { z } from "zod";
 import { db } from "@/lib/db";
-import { AppError } from "@/lib/errors";
+import { AppError, notFound } from "@/lib/errors";
 import type { OrgContext } from "@/lib/permissions";
 import { assertAccess } from "./billing";
 import { declarationsToFill } from "./tax";
@@ -28,8 +29,8 @@ export async function revokeAutofillKeys(userId: string) {
   return { revoked: count };
 }
 
-/** The stays a bookmark key may fill in, or UNAUTHORIZED. */
-export async function declarationsForKey(key: string | null | undefined, now = new Date()) {
+/** The member a bookmark key acts for, or UNAUTHORIZED. */
+async function contextForKey(key: string | null | undefined, now: Date): Promise<OrgContext> {
   const unauthorized = new AppError("UNAUTHORIZED", "Ο σελιδοδείκτης δεν ισχύει πια· αντιγράψτε τον ξανά από το Βραχυχρόνια.ai.");
   if (!key || !key.startsWith(PREFIX) || key.length > 100) throw unauthorized;
   const row = await db.autofillKey.findUnique({ where: { keyHash: hashKey(key) } });
@@ -41,5 +42,29 @@ export async function declarationsForKey(key: string | null | undefined, now = n
   if (!member) throw unauthorized;
   await assertAccess(row.organizationId, now);
   await db.autofillKey.update({ where: { id: row.id }, data: { lastUsedAt: now } });
-  return declarationsToFill({ userId: row.userId, organizationId: row.organizationId, role: member.role }, now);
+  return { userId: row.userId, organizationId: row.organizationId, role: member.role };
+}
+
+/** The stays a bookmark key may fill in, or UNAUTHORIZED. */
+export async function declarationsForKey(key: string | null | undefined, now = new Date()) {
+  return declarationsToFill(await contextForKey(key, now), now);
+}
+
+/**
+ * The extension saw the host submit the declaration on AADE: marks the stay
+ * declared. Only a stay of the key's organization that still waits for a
+ * declaration; a second call for the same stay changes nothing.
+ */
+export async function markDeclaredForKey(key: string | null | undefined, input: unknown, now = new Date()) {
+  const ctx = await contextForKey(key, now);
+  const { reservationId } = z.object({ reservationId: z.string().min(1).max(100) }).parse(input);
+  const r = await db.reservation.findFirst({
+    where: { id: reservationId, organizationId: ctx.organizationId },
+    select: { declarationStatus: true },
+  });
+  if (!r) throw notFound("Reservation");
+  if (r.declarationStatus === "PENDING") {
+    await db.reservation.update({ where: { id: reservationId }, data: { declarationStatus: "DECLARED", declaredAt: now } });
+  }
+  return { reservationId, status: r.declarationStatus === "PENDING" ? "DECLARED" : r.declarationStatus };
 }
