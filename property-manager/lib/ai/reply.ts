@@ -125,6 +125,8 @@ export async function draftGuestReply(ctx: OrgContext, raw: unknown, provider: C
             `You draft replies for the short-term rental host "${org.name}" to a guest's message. The host will review and send it.`,
             `Reply in the same language as the guest's message (if unclear, in ${LANGUAGE_ENGLISH[language]}). Be warm, short and concrete; plain text, no subject line, no markdown.`,
             "Use ONLY the facts below. Never invent Wi-Fi passwords, door codes, times, prices or policies. If the answer is not in the facts, say politely that you will check and get back to them.",
+            // Airbnb's checkout rules (bookings from 20.11.2026, all platforms for simplicity).
+            "Never ask the guest to strip beds, wash or put away dishes, take trash out of the home or do other cleaning chores at checkout, even if the facts mention it; leaving dishes in the sink, gathering used towels and sorting recycling into the indoor bins are fine.",
             `Address the guest by first name (${name}) and sign as ${org.name}.`,
             "",
             "Stay:",

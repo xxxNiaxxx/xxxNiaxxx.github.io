@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { OPTIONS, GET } from "@/app/api/aade/pending/route";
 import { db } from "@/lib/db";
 import type { OrgContext } from "@/lib/permissions";
@@ -18,6 +18,9 @@ describe("«Συμπλήρωση ΑΑΔΕ» bookmark keys", () => {
   let guestId: string;
 
   beforeAll(async () => {
+    // The pages read the clock themselves: pin «today» to NOW so the fixed dates below stay valid.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
     await resetDatabase();
     ctx = await createTenant("Keys");
     other = await createTenant("Other");
@@ -29,6 +32,8 @@ describe("«Συμπλήρωση ΑΑΔΕ» bookmark keys", () => {
     const otherGuest = await createGuest(other, "Not", "Mine");
     await createReservation(other, { propertyId: otherProperty.id, guestId: otherGuest.id, guestsCount: 1, checkIn: "2026-10-05", checkOut: "2026-10-08", totalAmount: 100, source: "AIRBNB" });
   });
+
+  afterAll(() => vi.useRealTimers());
 
   it("lists the started stays still to be declared, the most recent first, with the form values", async () => {
     const current = await createReservation(ctx, { propertyId, guestId, guestsCount: 1, checkIn: "2026-10-11", checkOut: "2026-10-18", totalAmount: 425.53, source: "BOOKING_COM", confirmationCode: "5292188575" });
