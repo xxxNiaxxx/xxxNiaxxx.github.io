@@ -3,7 +3,7 @@ window.__vrachyAutofill = function (values) {
   window.__AADE_AUTOFILL__ = values;
   (async function () {
   var PREFIX = "AADE-AUTOFILL:";
-  var VERSION = "2026-10-12.10";
+  var VERSION = "2026-10-26.1";
   var APP = "https://aivrachychronia.vercel.app";
   var $ = window.jQuery;
   var norm = function (s) {
