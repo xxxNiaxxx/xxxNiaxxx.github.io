@@ -1,0 +1,350 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DocumentPreview } from "@/components/DocumentPreview";
+import { parseBlocks } from "@/lib/blocks";
+import type { ErrorCode } from "@/lib/errors";
+import { copy, format } from "@/lib/i18n";
+import { isLanguage, languageLabels, languages, type Language } from "@/lib/languages";
+import { LIMITS, type ApplicationResult } from "@/lib/schema";
+import { freeThemes, isPremiumTheme, premiumThemes, type PremiumTheme, type Theme } from "@/lib/themes";
+
+type Version = { result: ApplicationResult; checks: string[]; revision?: string; parent?: number };
+type Busy = null | "generate" | "revise";
+type Notice = { kind: "error" | "info" | "success"; text: string } | null;
+
+const SUPPORT_CONTACT = process.env.NEXT_PUBLIC_SUPPORT_CONTACT || "";
+
+// Browser storage holds only conveniences (site language, purchase tokens) — never CV text.
+function load(key: string): string | null {
+  try { return window.localStorage.getItem(key); } catch { return null; }
+}
+function save(key: string, value: string) {
+  try { window.localStorage.setItem(key, value); } catch { /* private mode: fine */ }
+}
+
+class ApiError extends Error {
+  constructor(public code: ErrorCode) { super(code); }
+}
+
+async function postJson(url: string, body: unknown): Promise<Response> {
+  let response: Response;
+  try {
+    response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  } catch {
+    throw new ApiError("ai_unavailable");
+  }
+  if (!response.ok) {
+    let code: ErrorCode = response.status === 504 ? "ai_timeout" : response.status === 413 ? "too_large" : "server_error";
+    try { code = ((await response.json()) as { error?: ErrorCode }).error ?? code; } catch { /* not JSON (e.g. platform timeout page) */ }
+    throw new ApiError(code);
+  }
+  return response;
+}
+
+export default function Home() {
+  const [uiLang, setUiLang] = useState<Language>("en");
+  const [outputLang, setOutputLang] = useState<Language>("en");
+  const [outputTouched, setOutputTouched] = useState(false);
+  const [cvText, setCvText] = useState("");
+  const [jobText, setJobText] = useState("");
+  const [theme, setTheme] = useState<Theme>("classic");
+  const [versions, setVersions] = useState<Version[]>([]);
+  const [current, setCurrent] = useState(0);
+  const [revision, setRevision] = useState("");
+  const [busy, setBusy] = useState<Busy>(null);
+  const [exporting, setExporting] = useState<string | null>(null);
+  const [notice, setNotice] = useState<Notice>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [premiumCheckout, setPremiumCheckout] = useState(false);
+  const [tokens, setTokens] = useState<Partial<Record<PremiumTheme, string>>>({});
+  const outputRef = useRef<HTMLElement>(null);
+
+  const t = copy[uiLang];
+  const version = versions[current];
+  const message = useCallback((error: unknown) => t.errors[error instanceof ApiError ? error.code : "server_error"] ?? t.errors.server_error, [t]);
+
+  // Restore conveniences and handle a return from Stripe Checkout.
+  useEffect(() => {
+    const stored = load("applyready.lang");
+    const lang = isLanguage(stored) ? stored : languages.find((l) => navigator.language?.toLowerCase().startsWith(l));
+    if (lang) { setUiLang(lang); setOutputLang(lang); }
+    const restored: Partial<Record<PremiumTheme, string>> = {};
+    for (const p of premiumThemes) { const token = load(`applyready.theme.${p}`); if (token) restored[p] = token; }
+    setTokens(restored);
+    fetch("/api/config").then((r) => r.json()).then((c: { premiumCheckout?: boolean }) => setPremiumCheckout(Boolean(c.premiumCheckout))).catch(() => undefined);
+
+    const params = new URLSearchParams(window.location.search);
+    const purchase = params.get("purchase");
+    const sessionId = params.get("session_id");
+    if (!purchase) return;
+    window.history.replaceState(null, "", window.location.pathname);
+    const tl = copy[lang ?? "en"];
+    if (purchase === "cancelled") { setNotice({ kind: "info", text: tl.purchaseCancelled }); return; }
+    if (purchase !== "success" || !sessionId) return;
+    // The redirect proves nothing: ask the server, which only answers once the verified webhook has recorded the payment.
+    setNotice({ kind: "info", text: tl.purchasePending });
+    let cancelled = false;
+    (async () => {
+      for (let attempt = 0; attempt < 15 && !cancelled; attempt++) {
+        try {
+          const response = await postJson("/api/stripe/claim", { sessionId });
+          const data = (await response.json()) as { theme: PremiumTheme; token: string };
+          save(`applyready.theme.${data.theme}`, data.token);
+          setTokens((prev) => ({ ...prev, [data.theme]: data.token }));
+          setTheme(data.theme);
+          setNotice({ kind: "success", text: tl.purchaseSuccess });
+          return;
+        } catch (error) {
+          if (!(error instanceof ApiError) || error.code !== "purchase_pending") { setNotice({ kind: "error", text: tl.errors[error instanceof ApiError ? error.code : "server_error"] }); return; }
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+      }
+      if (!cancelled) setNotice({ kind: "error", text: tl.errors.purchase_pending });
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => { document.documentElement.lang = uiLang; }, [uiLang]);
+
+  function changeUiLang(lang: Language) {
+    setUiLang(lang);
+    save("applyready.lang", lang);
+    if (!outputTouched) setOutputLang(lang);
+  }
+
+  async function generate(isRevision: boolean) {
+    if (busy) return;
+    setNotice(null);
+    setBusy(isRevision ? "revise" : "generate");
+    const base = isRevision ? version : undefined;
+    try {
+      const response = await postJson("/api/generate", {
+        cvText, jobText, language: outputLang, theme,
+        revision: isRevision ? revision : "",
+        previous: base?.result,
+      });
+      const data = (await response.json()) as { result: ApplicationResult; checks: string[] };
+      const next: Version = { result: data.result, checks: data.checks ?? [], revision: isRevision ? revision.trim() : undefined, parent: isRevision ? current : undefined };
+      // Append, never replace: every earlier version stays available.
+      setVersions((prev) => [...prev, next]);
+      setCurrent(versions.length);
+      setRevision("");
+      setNotice({ kind: "success", text: t.ready });
+      if (!isRevision) outputRef.current?.focus();
+    } catch (error) {
+      setNotice({ kind: "error", text: message(error) });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function download(document: "cv" | "letter", fmt: "pdf" | "docx") {
+    if (!version || exporting) return;
+    setExporting(`${document}-${fmt}`);
+    setNotice(null);
+    try {
+      const response = await postJson(`/api/export/${fmt}`, {
+        document, theme, language: outputLang,
+        cv: version.result.cv, coverLetter: version.result.coverLetter,
+        entitlement: isPremiumTheme(theme) ? tokens[theme] : undefined,
+      });
+      const name = /filename="([^"]+)"/.exec(response.headers.get("Content-Disposition") ?? "")?.[1] ?? `applyready.${fmt}`;
+      const url = URL.createObjectURL(await response.blob());
+      const a = window.document.createElement("a");
+      a.href = url;
+      a.download = name;
+      window.document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      setNotice({ kind: "error", text: message(error) });
+    } finally {
+      setExporting(null);
+    }
+  }
+
+  async function copyText(key: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      setNotice({ kind: "error", text: t.errors.server_error });
+    }
+  }
+
+  async function buy(themeId: PremiumTheme) {
+    setNotice(null);
+    try {
+      const response = await postJson("/api/stripe/checkout", { theme: themeId });
+      const data = (await response.json()) as { url?: string };
+      if (data.url) window.location.assign(data.url);
+    } catch (error) {
+      setNotice({ kind: "error", text: message(error) });
+    }
+  }
+
+  const letterhead = useMemo(() => (version ? parseBlocks(version.result.cv, { withName: true }).filter((b, i) => i < 3 && (b.kind === "name" || b.kind === "contact")) : []), [version]);
+  const canGenerate = cvText.trim().length >= LIMITS.cvMin && jobText.trim().length >= LIMITS.jobMin && !busy;
+  const locked = isPremiumTheme(theme) && !tokens[theme];
+
+  const downloadButtons = (document: "cv" | "letter") => (
+    <div className="actions" role="group" aria-label={`${t.download}: ${document === "cv" ? t.cvOut : t.letter}`}>
+      {(["pdf", "docx"] as const).map((fmt) => (
+        <button key={fmt} type="button" className="secondary" disabled={Boolean(exporting) || locked} onClick={() => download(document, fmt)}>
+          {exporting === `${document}-${fmt}` ? "…" : `${t.download} ${fmt === "pdf" ? t.pdf : t.docx}`}
+        </button>
+      ))}
+      <button type="button" className="secondary" onClick={() => copyText(document, document === "cv" ? version!.result.cv : version!.result.coverLetter)}>
+        {copied === document ? t.copied : t.copy}
+      </button>
+    </div>
+  );
+
+  return (
+    <main className="container">
+      <header className="topbar">
+        <div className="brand">ApplyReady <span>AI</span></div>
+        <label className="inline-label">
+          <span>{t.uiLanguage}</span>
+          <select className="pill" value={uiLang} onChange={(e) => changeUiLang(e.target.value as Language)}>
+            {languages.map((l) => <option key={l} value={l}>{languageLabels[l]}</option>)}
+          </select>
+        </label>
+      </header>
+
+      <section className="hero">
+        <h1>{t.tagline}</h1>
+        <p>{t.intro}</p>
+        <ol className="steps">{t.steps.map((s) => <li key={s}>{s}</li>)}</ol>
+      </section>
+
+      <div className="layout">
+        <form className="panel form-panel" onSubmit={(e) => { e.preventDefault(); if (canGenerate) generate(false); }}>
+          <h2>{t.inputHeading}</h2>
+
+          <label htmlFor="cv">{t.cv}</label>
+          <textarea id="cv" value={cvText} onChange={(e) => setCvText(e.target.value)} maxLength={LIMITS.cvMax} placeholder={t.cvPlaceholder} aria-describedby="cv-count" rows={9} />
+          <p id="cv-count" className="small counter">{format(t.chars, { n: cvText.length, max: LIMITS.cvMax })}{cvText.trim().length < LIMITS.cvMin && ` · ${format(t.minChars, { min: LIMITS.cvMin })}`}</p>
+
+          <label htmlFor="job">{t.job}</label>
+          <textarea id="job" value={jobText} onChange={(e) => setJobText(e.target.value)} maxLength={LIMITS.jobMax} placeholder={t.jobPlaceholder} aria-describedby="job-count" rows={7} />
+          <p id="job-count" className="small counter">{format(t.chars, { n: jobText.length, max: LIMITS.jobMax })}{jobText.trim().length < LIMITS.jobMin && ` · ${format(t.minChars, { min: LIMITS.jobMin })}`}</p>
+
+          <label htmlFor="output-lang">{t.outputLanguage}</label>
+          <select id="output-lang" value={outputLang} onChange={(e) => { setOutputLang(e.target.value as Language); setOutputTouched(true); }}>
+            {languages.map((l) => <option key={l} value={l}>{languageLabels[l]}</option>)}
+          </select>
+
+          <fieldset className="themes">
+            <legend>{t.theme}</legend>
+            <div className="theme-grid">
+              {freeThemes.map((th) => (
+                <label key={th} className={`theme theme-${th} ${theme === th ? "selected" : ""}`}>
+                  <input type="radio" name="theme" value={th} checked={theme === th} onChange={() => setTheme(th)} />
+                  <span className="swatch" aria-hidden="true" />
+                  <strong>{t.themes[th].name}</strong>
+                  <span className="small">{t.themes[th].desc}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <p className="warning">{t.sensitiveWarning}</p>
+          <button type="submit" className="primary" disabled={!canGenerate}>{busy === "generate" ? t.generating : t.generate}</button>
+
+          <section className="premium" aria-labelledby="premium-title">
+            <h3 id="premium-title">{t.premiumTitle}</h3>
+            <p className="small">{premiumCheckout ? t.premiumBody : t.premiumUnavailable}</p>
+            <div className="theme-grid two">
+              {premiumThemes.map((th) => {
+                const owned = Boolean(tokens[th]);
+                return (
+                  <div key={th} className={`theme theme-${th} ${theme === th ? "selected" : ""}`}>
+                    <span className="swatch" aria-hidden="true" />
+                    <strong>{t.themes[th].name} <span className="badge">{owned ? t.owned : t.locked}</span></strong>
+                    <span className="small">{t.themes[th].desc}</span>
+                    {owned ? (
+                      <button type="button" className="secondary" aria-pressed={theme === th} onClick={() => setTheme(th)}>{t.themes[th].name}</button>
+                    ) : premiumCheckout ? (
+                      <button type="button" className="secondary" onClick={() => buy(th)}>{t.buy}</button>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </form>
+
+        <section className="panel output" ref={outputRef} tabIndex={-1} aria-busy={Boolean(busy)} aria-labelledby="output-title">
+          <div aria-live="polite" role="status" className="live">
+            {notice && <div className={`status ${notice.kind}`} role={notice.kind === "error" ? "alert" : undefined}>{notice.text}</div>}
+            {busy && <div className="status info"><span className="spinner" aria-hidden="true" />{busy === "generate" ? t.generating : t.revising}</div>}
+          </div>
+
+          {!version ? (
+            <div className="empty">
+              <h2 id="output-title">{t.emptyTitle}</h2>
+              <p>{t.emptyBody}</p>
+            </div>
+          ) : (
+            <>
+              {versions.length > 1 && (
+                <nav className="versions" aria-label={t.versions}>
+                  <span className="small">{t.versions}:</span>
+                  {versions.map((v, i) => (
+                    <button key={i} type="button" className={`chip ${i === current ? "active" : ""}`} aria-pressed={i === current}
+                      title={v.parent !== undefined ? `${format(t.revisionOf, { n: v.parent + 1 })}: ${v.revision ?? ""}` : undefined}
+                      onClick={() => setCurrent(i)}>
+                      {format(t.version, { n: i + 1 })}
+                    </button>
+                  ))}
+                </nav>
+              )}
+
+              <h2 id="output-title">{t.cvOut}</h2>
+              <p className="small">{t.reviewWarning}</p>
+              {downloadButtons("cv")}
+              <DocumentPreview text={version.result.cv} theme={theme} kind="cv" />
+
+              {version.checks.length > 0 && (
+                <div className="callout">
+                  <strong>{t.checksTitle}</strong>
+                  <p className="small">{t.checksBody} {version.checks.join(", ")}</p>
+                </div>
+              )}
+
+              <div className="result-section">
+                <h2>{t.letter}</h2>
+                {downloadButtons("letter")}
+                <DocumentPreview text={version.result.coverLetter} theme={theme} kind="letter" letterhead={letterhead} />
+              </div>
+
+              <div className="result-section">
+                <h2>{t.gaps}</h2>
+                <p className="small">{t.gapsHint}</p>
+                {version.result.gaps.length ? <ul className="gaps">{version.result.gaps.map((g, i) => <li key={i}>{g}</li>)}</ul> : <p>{t.gapsEmpty}</p>}
+              </div>
+
+              <form className="result-section" onSubmit={(e) => { e.preventDefault(); if (revision.trim() && !busy) generate(true); }}>
+                <label htmlFor="revision">{t.revisionLabel}</label>
+                <textarea id="revision" value={revision} onChange={(e) => setRevision(e.target.value)} maxLength={LIMITS.revisionMax} placeholder={t.revisionPlaceholder} rows={3} aria-describedby="revision-note" />
+                <p id="revision-note" className="small">{t.revisionNote}</p>
+                <button type="submit" className="primary" disabled={Boolean(busy) || !revision.trim()}>{busy === "revise" ? t.revising : t.revise}</button>
+              </form>
+            </>
+          )}
+        </section>
+      </div>
+
+      <details className="privacy">
+        <summary>{t.privacyTitle}</summary>
+        {t.privacy.map((p) => <p key={p}>{p}</p>)}
+        {SUPPORT_CONTACT && <p>{format(t.contact, { contact: SUPPORT_CONTACT })}</p>}
+      </details>
+      <footer>{t.footer}</footer>
+    </main>
+  );
+}
