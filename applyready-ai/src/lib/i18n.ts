@@ -10,6 +10,8 @@ type Copy = {
   steps: [string, string, string];
   inputHeading: string;
   uiLanguage: string;
+  lightMode: string;
+  darkMode: string;
   outputLanguage: string;
   cv: string;
   cvPlaceholder: string;
@@ -76,6 +78,8 @@ const en: Copy = {
   steps: ["Paste your CV and the job ad", "Pick a language and a theme", "Review, revise, download PDF or Word"],
   inputHeading: "Your information",
   uiLanguage: "Site language",
+  lightMode: "Light mode",
+  darkMode: "Dark mode",
   outputLanguage: "Language of your CV",
   cv: "Current CV (text)",
   cvPlaceholder: "Name, contact line, experience, education, skills…",
@@ -177,6 +181,8 @@ const el: Copy = {
   steps: ["Επικόλλησε βιογραφικό και αγγελία", "Διάλεξε γλώσσα και θέμα", "Έλεγξε, διόρθωσε, κατέβασε PDF ή Word"],
   inputHeading: "Τα στοιχεία σου",
   uiLanguage: "Γλώσσα σελίδας",
+  lightMode: "Φωτεινό θέμα",
+  darkMode: "Σκοτεινό θέμα",
   outputLanguage: "Γλώσσα βιογραφικού",
   cv: "Τρέχον βιογραφικό (κείμενο)",
   cvPlaceholder: "Όνομα, στοιχεία επικοινωνίας, εμπειρία, σπουδές, δεξιότητες…",
@@ -278,6 +284,8 @@ const es: Copy = {
   steps: ["Pega tu CV y la oferta", "Elige idioma y tema", "Revisa, corrige y descarga en PDF o Word"],
   inputHeading: "Tu información",
   uiLanguage: "Idioma del sitio",
+  lightMode: "Modo claro",
+  darkMode: "Modo oscuro",
   outputLanguage: "Idioma de tu CV",
   cv: "CV actual (texto)",
   cvPlaceholder: "Nombre, contacto, experiencia, formación, habilidades…",
@@ -379,6 +387,8 @@ const fr: Copy = {
   steps: ["Collez votre CV et l’offre", "Choisissez la langue et le thème", "Relisez, modifiez, téléchargez en PDF ou Word"],
   inputHeading: "Vos informations",
   uiLanguage: "Langue du site",
+  lightMode: "Mode clair",
+  darkMode: "Mode sombre",
   outputLanguage: "Langue de votre CV",
   cv: "CV actuel (texte)",
   cvPlaceholder: "Nom, coordonnées, expérience, formation, compétences…",
@@ -480,6 +490,8 @@ const de: Copy = {
   steps: ["Lebenslauf und Anzeige einfügen", "Sprache und Design wählen", "Prüfen, überarbeiten, als PDF oder Word laden"],
   inputHeading: "Deine Angaben",
   uiLanguage: "Sprache der Seite",
+  lightMode: "Heller Modus",
+  darkMode: "Dunkler Modus",
   outputLanguage: "Sprache des Lebenslaufs",
   cv: "Aktueller Lebenslauf (Text)",
   cvPlaceholder: "Name, Kontakt, Berufserfahrung, Ausbildung, Kenntnisse…",

@@ -45,6 +45,7 @@ async function postJson(url: string, body: unknown): Promise<Response> {
 
 export default function Home() {
   const [uiLang, setUiLang] = useState<Language>("en");
+  const [colorScheme, setColorScheme] = useState<"dark" | "light">("dark");
   const [outputLang, setOutputLang] = useState<Language>("en");
   const [outputTouched, setOutputTouched] = useState(false);
   const [cvText, setCvText] = useState("");
@@ -109,6 +110,18 @@ export default function Home() {
   }, []);
 
   useEffect(() => { document.documentElement.lang = uiLang; }, [uiLang]);
+
+  // The inline script in layout.tsx already applied a saved choice; mirror it in state.
+  useEffect(() => {
+    if (document.documentElement.dataset.colorScheme === "light") setColorScheme("light");
+  }, []);
+
+  function toggleColorScheme() {
+    const next = colorScheme === "dark" ? "light" : "dark";
+    setColorScheme(next);
+    document.documentElement.dataset.colorScheme = next;
+    save("applyready.colorScheme", next);
+  }
 
   function changeUiLang(lang: Language) {
     setUiLang(lang);
@@ -229,12 +242,17 @@ export default function Home() {
     <main className="container">
       <header className="topbar">
         <div className="brand">ApplyReady <span>AI</span></div>
-        <label className="inline-label">
-          <span>{t.uiLanguage}</span>
-          <select className="pill" value={uiLang} onChange={(e) => changeUiLang(e.target.value as Language)}>
-            {languages.map((l) => <option key={l} value={l}>{languageLabels[l]}</option>)}
-          </select>
-        </label>
+        <div className="topbar-controls">
+          <button type="button" className="secondary scheme-toggle" onClick={toggleColorScheme}>
+            <span aria-hidden="true">{colorScheme === "dark" ? "☀ " : "☾ "}</span>{colorScheme === "dark" ? t.lightMode : t.darkMode}
+          </button>
+          <label className="inline-label">
+            <span>{t.uiLanguage}</span>
+            <select className="pill" value={uiLang} onChange={(e) => changeUiLang(e.target.value as Language)}>
+              {languages.map((l) => <option key={l} value={l}>{languageLabels[l]}</option>)}
+            </select>
+          </label>
+        </div>
       </header>
 
       <section className="hero">

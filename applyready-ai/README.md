@@ -10,6 +10,7 @@ No account and no card are needed. The app does not store CVs.
 
 | Area | Status |
 |---|---|
+| Dark mode by default, with a light-mode switch (remembered in the browser, applied before first paint); CV previews stay white like paper | Done |
 | Site in 5 languages (`en`, `el`, `es`, `fr`, `de`); output language chosen separately | Done |
 | 3 free themes (Classic, Modern, Minimal) that look different in the preview, PDF and DOCX | Done |
 | CV from a file: PDF (text layer), Word DOCX or TXT, read in memory on the server | Done |

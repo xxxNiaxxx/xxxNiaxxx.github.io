@@ -13,7 +13,7 @@ This describes what the code does. It is **not** legal advice, and it does not m
 | Export requests (CV and letter text) | Browser → our function, rendered in memory | Not stored or logged. The file is streamed back. |
 | IP address | Used to build a rate-limit key: `sha256(RATE_LIMIT_SALT + IP)`, truncated | Daily counters in Upstash Redis, expiring after about 25 hours. A duplicate-request lock (a hash of the request) lasts up to 2 minutes and is deleted on completion. |
 | Stripe purchase (if enabled) | Stripe processes payment and email | We store `{theme, status, livemode, createdAt}` keyed by the Checkout Session id for 3 years (fulfilment and refunds), plus a payment-intent → session id mapping. No name, email or card data. |
-| Browser storage | `localStorage` on the visitor's device | Site language and premium purchase tokens only. **Never** CV text. |
+| Browser storage | `localStorage` on the visitor's device | Site language, light/dark choice and premium purchase tokens only. **Never** CV text. |
 | Server logs | Vercel function logs | JSON events with codes, durations and counts only (`src/lib/log.ts`). A test checks that CV text, job text and API keys never appear. |
 
 No cookies, analytics or third-party scripts are used. The Content Security Policy only allows the site's own origin.
