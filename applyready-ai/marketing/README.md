@@ -4,6 +4,8 @@
 |---|---|
 | `ΠΡΟΣΦΟΡΑ.md` | Η προσφορά και το πλάνο: υπόσχεση (αυτοπεποίθηση), ιδανικός πελάτης, στοίβα αξίας, τιμή/εγγύηση, κανάλια, μέτρηση, 4 εβδομάδες |
 | `ΚΕΙΜΕΝΑ.md` | Έτοιμα κείμενα: ομάδες Facebook, Instagram, σενάριο reel, Google Ads, email σε Γραφεία Διασύνδεσης, LinkedIn |
+| `ΠΕΡΙΕΧΟΜΕΝΟ.md` | Περιεχόμενο που τραβάει την προσοχή: 5 κανόνες, τύποι για αγκίστρια, 4 πυλώνες, πρόγραμμα σεζόν (Ιαν–Απρ), 3 σενάρια reels, η πρόκληση «Στείλε μου την αγγελία σου», μέτρηση |
+| `carousel/slide-1.png … slide-7.png` | Carousel «5 λάθη στο βιογραφικό για ξενοδοχείο» (1080×1350, Instagram/Facebook). Πηγή: `carousel/carousel.html?slide=1…7` |
 | `ads/ad-square-1080.png` | Post Facebook / Instagram |
 | `ads/ad-story-1080x1920.png` | Stories, Viber/WhatsApp status |
 | `ads/ad.html` | Πηγή των εικόνων (ανοίγει σε browser με `?format=square` ή `?format=story`) |
