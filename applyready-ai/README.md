@@ -13,6 +13,7 @@ No account and no card are needed. The app does not store CVs.
 | Dark mode by default, with a light-mode switch (remembered in the browser, applied before first paint); CV previews stay white like paper | Done |
 | Site in 5 languages (`en`, `el`, `es`, `fr`, `de`); output language chosen separately | Done |
 | 4 free themes (Classic, Modern, Minimal, Europass style) that look different in the preview, PDF and DOCX. Europass style is a two-column layout like the European CV, labelled as not the official format | Done |
+| "Why you fit this job" (3–5 strengths, each with evidence from the CV) and interview preparation (likely questions with honest answers, including for gaps) — the confidence part of the product | Done |
 | Keyword match score (like ATS scanners): your CV vs the tailored CV, matched and missing words of the ad; click a missing word to ask for it in a revision. Runs in the browser, no AI cost (`src/lib/match.ts`) | Done |
 | CV from a file: PDF (text layer), Word DOCX or TXT, read in memory on the server | Done |
 | CV and job ad from screenshots (upload, or paste with Ctrl+V), read by a vision model; the text lands in the box for the user to check | Done (needs `AI_VISION_MODEL`) |
@@ -91,6 +92,10 @@ All are runtime-necessary and widely used:
 Word files are read with a small built-in zip reader (`src/lib/zip.ts`, with a cap on the unpacked size) instead of another dependency.
 
 The original scaffold's `openai` SDK was removed: its peer dependency conflicts with zod 4, and plain `fetch` covers the one endpoint we call. `@react-pdf/renderer` was replaced by `pdf-lib`. `postcss` is pinned through `overrides` to a patched version. `npm audit` reports 0 vulnerabilities.
+
+## Marketing
+
+The offer, positioning and launch plan (in Greek) are in [marketing/](marketing/README.md).
 
 ## Privacy and data
 

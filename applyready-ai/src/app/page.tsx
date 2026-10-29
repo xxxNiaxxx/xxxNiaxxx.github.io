@@ -271,6 +271,7 @@ export default function Home() {
       <section className="hero">
         <h1>{t.tagline}</h1>
         <p>{t.intro}</p>
+        <ul className="badges" aria-label={t.badges.join(", ")}>{t.badges.map((b) => <li key={b}>✓ {b}</li>)}</ul>
         <ol className="steps">{t.steps.map((s) => <li key={s}>{s}</li>)}</ol>
       </section>
 
@@ -362,6 +363,21 @@ export default function Home() {
                 </nav>
               )}
 
+              {version.result.strengths.length > 0 && (
+                <section className="fit" aria-labelledby="fit-title">
+                  <h2 id="fit-title">{t.fitTitle}</h2>
+                  <p className="small">{t.fitHint}</p>
+                  <ul>
+                    {version.result.strengths.map((s, i) => (
+                      <li key={i}>
+                        <strong>{s.strength}</strong>
+                        {s.evidence && <span className="small fit-evidence">{t.fitEvidence} {s.evidence}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
               <h2 id="output-title">{t.cvOut}</h2>
               <p className="small">{t.reviewWarning}</p>
               {downloadButtons("cv")}
@@ -387,6 +403,19 @@ export default function Home() {
                 <p className="small">{t.gapsHint}</p>
                 {version.result.gaps.length ? <ul className="gaps">{version.result.gaps.map((g, i) => <li key={i}>{g}</li>)}</ul> : <p>{t.gapsEmpty}</p>}
               </div>
+
+              {version.result.interview.length > 0 && (
+                <div className="result-section">
+                  <h2>{t.interviewTitle}</h2>
+                  <p className="small">{t.interviewHint}</p>
+                  {version.result.interview.map((item, i) => (
+                    <details key={i} className="qa" open={i === 0}>
+                      <summary>{item.question}</summary>
+                      <p>{item.answer}</p>
+                    </details>
+                  ))}
+                </div>
+              )}
 
               <form className="result-section" onSubmit={(e) => { e.preventDefault(); if (revision.trim() && !busy) generate(true); }}>
                 <label htmlFor="revision">{t.revisionLabel}</label>

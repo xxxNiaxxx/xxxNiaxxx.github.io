@@ -47,7 +47,7 @@ export function getAiConfig(env: NodeJS.ProcessEnv = process.env): AiConfig {
     model,
     // Keep below the route's maxDuration (60 s) so the user sees a clear timeout.
     timeoutMs: intEnv(env, "AI_TIMEOUT_MS", 55_000, 5_000, 58_000),
-    maxOutputTokens: intEnv(env, "AI_MAX_OUTPUT_TOKENS", 3_000, 500, 16_000),
+    maxOutputTokens: intEnv(env, "AI_MAX_OUTPUT_TOKENS", 4_000, 500, 16_000),
     jsonMode: env.AI_JSON_MODE !== "false",
     visionModel: env.AI_VISION_MODEL?.trim() || undefined,
   };
@@ -69,6 +69,9 @@ export function buildMessages(input: ApplicationRequest) {
     '  "cv": string — the tailored CV as plain text. First line: the person\'s name. Next line: their contact line or headline if the source has one. Mark section headings with "## " and bullet points with "- ". No Markdown other than that.',
     '  "coverLetter": string — a concise cover letter (max ~350 words) as plain text paragraphs, no placeholders like [Company] unless the information is genuinely missing.',
     '  "gaps": array of strings — job requirements the source CV does not support, and any statement the person should verify before sending.',
+    '  "strengths": array of 3–5 objects {"strength": string, "evidence": string} — why this person genuinely fits THIS job. "strength" is a short, encouraging, specific statement; "evidence" quotes or names what in <source_cv> proves it. Only strengths the CV really shows.',
+    '  "interview": array of 3–5 objects {"question": string, "answer": string} — questions this employer is likely to ask, each with a short first-person answer the person can adapt, built only from their real experience. Include at least one question about a gap, answered honestly (what they have instead, how they would learn it), never by claiming the missing skill.',
+    "Tone of strengths and interview answers: warm, confident and specific, so the person feels ready — but never exaggerated.",
     "Hard rules:",
     "- Use only facts in <source_cv> (and <previous_result>, which was derived from it). Never invent or inflate employers, job titles, dates, degrees, certifications, skills, tools, languages, metrics, numbers or achievements.",
     "- You may reword, reorder, shorten and emphasise what is relevant to the job.",
@@ -83,7 +86,7 @@ export function buildMessages(input: ApplicationRequest) {
     parts.push(
       fence("previous_result", JSON.stringify(input.previous)),
       fence("revision_request", input.revision),
-      "Return the full revised result (all three keys), keeping everything the revision request does not ask to change.",
+      "Return the full revised result (all keys), keeping everything the revision request does not ask to change.",
     );
   } else {
     parts.push("Create the first tailored version.");
@@ -112,7 +115,21 @@ function normaliseResult(raw: unknown): ApplicationResult {
   if (raw && typeof raw === "object") {
     const r = raw as Record<string, unknown>;
     const gaps = r.gaps ?? r.skillsGap ?? r.skills_gap ?? [];
+    const list = (value: unknown) => (Array.isArray(value) ? value : []);
+    // Strengths may come back as plain strings; interview items may use near-miss keys.
+    const strengths = list(r.strengths ?? r.why_you_fit ?? r.whyYouFit)
+      .map((item) => (typeof item === "string" ? { strength: item, evidence: "" } : item as Record<string, unknown>))
+      .map((item) => ({ strength: String(item.strength ?? item.point ?? "").trim().slice(0, 200), evidence: String(item.evidence ?? item.proof ?? "").trim().slice(0, 300) }))
+      .filter((item) => item.strength)
+      .slice(0, 5);
+    const interview = list(r.interview ?? r.interviewPrep ?? r.interview_prep)
+      .map((item) => item as Record<string, unknown>)
+      .map((item) => ({ question: String(item?.question ?? item?.q ?? "").trim().slice(0, 300), answer: String(item?.answer ?? item?.a ?? "").trim().slice(0, 900) }))
+      .filter((item) => item.question && item.answer)
+      .slice(0, 6);
     raw = {
+      strengths,
+      interview,
       cv: r.cv,
       coverLetter: r.coverLetter ?? r.cover_letter,
       gaps: (Array.isArray(gaps) ? gaps : String(gaps).split("\n"))

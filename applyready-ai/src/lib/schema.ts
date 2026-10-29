@@ -11,6 +11,8 @@ export const LIMITS = {
   letterMax: 8_000,
   gapMax: 500,
   gapsMax: 30,
+  strengthsMax: 5,
+  interviewMax: 6,
 } as const;
 
 /** Removes control characters (keeps newlines and tabs) that have no place in a CV. */
@@ -24,6 +26,10 @@ export const resultSchema = z.object({
   cv: text(LIMITS.cvMin, LIMITS.cvMax),
   coverLetter: text(20, LIMITS.letterMax),
   gaps: z.array(text(1, LIMITS.gapMax)).max(LIMITS.gapsMax),
+  /** Why the person fits this job, each point backed by something in their CV. */
+  strengths: z.array(z.object({ strength: text(1, 200), evidence: text(0, 300) })).max(LIMITS.strengthsMax).default([]),
+  /** Likely interview questions with honest answers built from the person's real experience. */
+  interview: z.array(z.object({ question: text(1, 300), answer: text(1, 900) })).max(LIMITS.interviewMax).default([]),
 });
 export type ApplicationResult = z.infer<typeof resultSchema>;
 

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<!-- Source for ad-square-1080.png and ad-story-1080x1920.png. Rendered with Playwright: ?format=square|story -->
+<style>
+  @font-face { font-family: Ad; src: url("../../fonts/DejaVuSans.ttf"); }
+  @font-face { font-family: Ad; font-weight: 700; src: url("../../fonts/DejaVuSans-Bold.ttf"); }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: Ad, sans-serif; background: #0f1420; color: #e6e9f2; width: 1080px; height: 1080px; padding: 72px; display: flex; flex-direction: column; gap: 34px; }
+  body.story { height: 1920px; padding: 120px 80px; gap: 54px; justify-content: center; }
+  .brand { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+  .brand span { color: #8da2ff; }
+  h1 { font-size: 76px; line-height: 1.08; letter-spacing: -2px; font-weight: 700; }
+  .story h1 { font-size: 92px; }
+  h1 em { font-style: normal; color: #8fe0b0; }
+  .card { background: #10301f; border: 2px solid #8fe0b0; border-radius: 28px; padding: 34px 38px; }
+  .card h2 { color: #8fe0b0; font-size: 34px; margin-bottom: 18px; }
+  .card li { list-style: none; font-size: 29px; line-height: 1.35; margin: 12px 0; padding-left: 46px; position: relative; color: #ffffff; }
+  .card li::before { content: "✓"; position: absolute; left: 0; color: #8fe0b0; font-weight: 700; }
+  .card small { display: block; font-size: 22px; color: #b9d8c6; margin-top: 4px; }
+  .meter { background: #171d2b; border: 1px solid #2a3245; border-radius: 24px; padding: 26px 34px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .meter h3 { grid-column: 1 / -1; font-size: 30px; color: #e6e9f2; }
+  .meter div { font-size: 26px; color: #a3abbd; }
+  .meter b { display: block; font-size: 54px; color: #e6e9f2; margin-top: 4px; }
+  .meter .after b { color: #8da2ff; }
+  .bar { height: 12px; border-radius: 99px; background: #2a3245; margin-top: 10px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: #a3abbd; border-radius: 99px; }
+  .after .bar i { background: #8da2ff; }
+  .badges { display: flex; flex-wrap: wrap; gap: 14px; }
+  .badges span { font-size: 28px; font-weight: 700; color: #8fe0b0; background: #10301f; border-radius: 99px; padding: 10px 22px; }
+  .note { font-size: 20px; color: #7d869a; }
+  .square .meter { display: none; }
+</style>
+</head>
+<body>
+  <div class="brand">ApplyReady <span>AI</span></div>
+  <h1>Στείλε κάθε αίτηση<br><em>με σιγουριά.</em></h1>
+  <div class="card">
+    <h2>Γιατί ταιριάζεις σε αυτή τη θέση</h2>
+    <ul>
+      <li>5 χρόνια εξυπηρέτηση πελατών σε ξενοδοχείο<small>Από το βιογραφικό σου: Ξενοδοχείο Ακρόπολις, 2019–2024</small></li>
+      <li>Συντονισμός ομάδας 6 ατόμων<small>Από το βιογραφικό σου: Υπεύθυνη βάρδιας</small></li>
+      <li>Αγγλικά και γερμανικά<small>Από το βιογραφικό σου: Γλώσσες</small></li>
+    </ul>
+  </div>
+  <div class="meter">
+    <h3>Ταίριασμα με την αγγελία</h3>
+    <div>Πριν<b>36%</b><div class="bar"><i style="width:36%"></i></div></div>
+    <div class="after">Μετά<b>55%</b><div class="bar"><i style="width:55%"></i></div></div>
+  </div>
+  <div class="badges"><span>✓ Δωρεάν</span><span>✓ Χωρίς λογαριασμό</span><span>✓ PDF & Word</span><span>✓ 5 γλώσσες</span></div>
+  <p class="note">Παράδειγμα με φανταστικό βιογραφικό. Τίποτα δεν προστίθεται που δεν υπάρχει στο δικό σου.</p>
+  <script>document.body.classList.add(new URLSearchParams(location.search).get("format") === "story" ? "story" : "square");</script>
+</body>
+</html>

@@ -70,6 +70,30 @@ describe("generateApplication", () => {
     const fetchImpl = vi.fn(async () => aiReply({ cv: greekCv, cover_letter: good.coverLetter, skills_gap: "- A\n- B" }));
     expect((await generateApplication(input, { config, fetchImpl })).gaps).toEqual(["A", "B"]);
   });
+  it("returns strengths with evidence and interview preparation", async () => {
+    const fetchImpl = vi.fn(async () => aiReply({
+      ...good,
+      strengths: [{ strength: "Πέντε χρόνια στην εξυπηρέτηση πελατών ξενοδοχείου", evidence: "Ξενοδοχείο Ακρόπολις (2019–2024)" }, "Συντονισμός ομάδας"],
+      interview: [{ question: "Πώς χειρίζεστε έναν θυμωμένο πελάτη;", answer: "Στο Ακρόπολις…" }, { q: "Ξέρετε Opera PMS;", a: "Όχι ακόμη, αλλά…" }, { question: "" }],
+    }));
+    const result = await generateApplication(input, { config, fetchImpl });
+    expect(result.strengths).toEqual([
+      { strength: "Πέντε χρόνια στην εξυπηρέτηση πελατών ξενοδοχείου", evidence: "Ξενοδοχείο Ακρόπολις (2019–2024)" },
+      { strength: "Συντονισμός ομάδας", evidence: "" },
+    ]);
+    expect(result.interview.map((q) => q.question)).toEqual(["Πώς χειρίζεστε έναν θυμωμένο πελάτη;", "Ξέρετε Opera PMS;"]);
+  });
+  it("still works when a model leaves out strengths and interview", async () => {
+    const result = await generateApplication(input, { config, fetchImpl: vi.fn(async () => aiReply(good)) });
+    expect(result.strengths).toEqual([]);
+    expect(result.interview).toEqual([]);
+  });
+  it("asks for evidence-backed strengths and honest answers about gaps", () => {
+    const system = buildMessages(input)[0].content;
+    expect(system).toContain('"strengths"');
+    expect(system).toContain("Only strengths the CV really shows");
+    expect(system).toContain("never by claiming the missing skill");
+  });
   it("retries once on bad output, then gives up", async () => {
     const fetchImpl = vi.fn(async () => aiReply("not json"));
     await expect(generateApplication(input, { config, fetchImpl })).rejects.toMatchObject({ code: "ai_bad_output" });

@@ -8,6 +8,12 @@ type Copy = {
   tagline: string;
   intro: string;
   steps: [string, string, string];
+  badges: string[];
+  fitTitle: string;
+  fitEvidence: string;
+  fitHint: string;
+  interviewTitle: string;
+  interviewHint: string;
   inputHeading: string;
   uiLanguage: string;
   lightMode: string;
@@ -84,9 +90,15 @@ type Copy = {
 };
 
 const en: Copy = {
-  tagline: "A better CV for the job you want.",
-  intro: "Paste your current CV and a job ad. Get a tailored CV, a cover letter and honest notes on what the job asks for that your CV does not show.",
-  steps: ["Paste your CV and the job ad", "Pick a language and a theme", "Review, revise, download PDF or Word"],
+  tagline: "Send every application with confidence.",
+  intro: "Paste your CV and a job ad. In 2 minutes you have a CV and cover letter made for that job, you know why you fit, and you're ready for the interview. Nothing made up.",
+  steps: ["Paste your CV and the job ad", "See why you fit and how well you match", "Download PDF or Word and apply with confidence"],
+  badges: ["Free", "No account", "No card", "No subscription"],
+  fitTitle: "Why you fit this job",
+  fitEvidence: "From your CV:",
+  fitHint: "Your real strengths for this role. Say them out loud before the interview.",
+  interviewTitle: "Interview preparation",
+  interviewHint: "Likely questions with answers built from your own experience. Put them in your own words.",
   inputHeading: "Your information",
   uiLanguage: "Site language",
   lightMode: "Light mode",
@@ -151,7 +163,7 @@ const en: Copy = {
   docx: "Word (DOCX)",
   copy: "Copy",
   copied: "Copied",
-  ready: "Done. Read every line before you send it: AI can make mistakes.",
+  ready: "Done. See why you fit, then read every line before you send it.",
   reviewWarning: "AI-generated text. You are responsible for checking that everything is true.",
   premiumTitle: "Premium themes",
   premiumBody: "One-time purchase per theme. Free themes stay free.",
@@ -199,9 +211,15 @@ const en: Copy = {
 };
 
 const el: Copy = {
-  tagline: "Ένα καλύτερο βιογραφικό για τη δουλειά που θέλεις.",
-  intro: "Επικόλλησε το βιογραφικό σου και μια αγγελία. Πάρε προσαρμοσμένο βιογραφικό, συνοδευτική επιστολή και ειλικρινείς σημειώσεις για ό,τι ζητά η θέση και δεν φαίνεται στο βιογραφικό σου.",
-  steps: ["Επικόλλησε βιογραφικό και αγγελία", "Διάλεξε γλώσσα και θέμα", "Έλεγξε, διόρθωσε, κατέβασε PDF ή Word"],
+  tagline: "Στείλε κάθε αίτηση με σιγουριά.",
+  intro: "Επικόλλησε το βιογραφικό σου και μια αγγελία. Σε 2 λεπτά έχεις βιογραφικό και επιστολή γι' αυτή τη θέση, ξέρεις γιατί ταιριάζεις και είσαι έτοιμος/η για τη συνέντευξη. Χωρίς τίποτα ψεύτικο.",
+  steps: ["Επικόλλησε βιογραφικό και αγγελία", "Δες γιατί ταιριάζεις και πόσο", "Κατέβασε PDF ή Word και στείλ' το με σιγουριά"],
+  badges: ["Δωρεάν", "Χωρίς λογαριασμό", "Χωρίς κάρτα", "Χωρίς συνδρομή"],
+  fitTitle: "Γιατί ταιριάζεις σε αυτή τη θέση",
+  fitEvidence: "Από το βιογραφικό σου:",
+  fitHint: "Τα πραγματικά δυνατά σου σημεία γι' αυτή τη θέση. Πες τα μία φορά φωναχτά πριν από τη συνέντευξη.",
+  interviewTitle: "Προετοιμασία συνέντευξης",
+  interviewHint: "Πιθανές ερωτήσεις, με απαντήσεις από τη δική σου εμπειρία. Πες τες με δικά σου λόγια.",
   inputHeading: "Τα στοιχεία σου",
   uiLanguage: "Γλώσσα σελίδας",
   lightMode: "Φωτεινό θέμα",
@@ -266,7 +284,7 @@ const el: Copy = {
   docx: "Word (DOCX)",
   copy: "Αντιγραφή",
   copied: "Αντιγράφηκε",
-  ready: "Έτοιμο. Διάβασε κάθε γραμμή πριν το στείλεις: η τεχνητή νοημοσύνη κάνει λάθη.",
+  ready: "Έτοιμο. Δες γιατί ταιριάζεις και διάβασε κάθε γραμμή πριν το στείλεις.",
   reviewWarning: "Κείμενο από τεχνητή νοημοσύνη. Εσύ είσαι υπεύθυνος/η να ελέγξεις ότι όλα είναι αληθή.",
   premiumTitle: "Premium θέματα",
   premiumBody: "Εφάπαξ αγορά ανά θέμα. Τα δωρεάν θέματα μένουν δωρεάν.",
@@ -314,9 +332,15 @@ const el: Copy = {
 };
 
 const es: Copy = {
-  tagline: "Un CV mejor para el puesto que quieres.",
-  intro: "Pega tu CV actual y una oferta de empleo. Obtén un CV adaptado, una carta de presentación y notas honestas sobre lo que pide el puesto y tu CV no muestra.",
-  steps: ["Pega tu CV y la oferta", "Elige idioma y tema", "Revisa, corrige y descarga en PDF o Word"],
+  tagline: "Envía cada candidatura con seguridad.",
+  intro: "Pega tu CV y una oferta. En 2 minutos tienes un CV y una carta hechos para ese puesto, sabes por qué encajas y estás listo/a para la entrevista. Nada inventado.",
+  steps: ["Pega tu CV y la oferta", "Mira por qué encajas y cuánto", "Descarga PDF o Word y envíalo con seguridad"],
+  badges: ["Gratis", "Sin cuenta", "Sin tarjeta", "Sin suscripción"],
+  fitTitle: "Por qué encajas en este puesto",
+  fitEvidence: "De tu CV:",
+  fitHint: "Tus fortalezas reales para este puesto. Dilas en voz alta antes de la entrevista.",
+  interviewTitle: "Preparación de la entrevista",
+  interviewHint: "Preguntas probables con respuestas basadas en tu propia experiencia. Dilas con tus palabras.",
   inputHeading: "Tu información",
   uiLanguage: "Idioma del sitio",
   lightMode: "Modo claro",
@@ -381,7 +405,7 @@ const es: Copy = {
   docx: "Word (DOCX)",
   copy: "Copiar",
   copied: "Copiado",
-  ready: "Listo. Lee cada línea antes de enviarlo: la IA puede equivocarse.",
+  ready: "Listo. Mira por qué encajas y lee cada línea antes de enviarlo.",
   reviewWarning: "Texto generado por IA. Eres responsable de comprobar que todo es cierto.",
   premiumTitle: "Temas premium",
   premiumBody: "Compra única por tema. Los temas gratuitos siguen siendo gratuitos.",
@@ -429,9 +453,15 @@ const es: Copy = {
 };
 
 const fr: Copy = {
-  tagline: "Un meilleur CV pour le poste que vous visez.",
-  intro: "Collez votre CV actuel et une offre d’emploi. Obtenez un CV adapté, une lettre de motivation et des remarques honnêtes sur ce que le poste demande et que votre CV ne montre pas.",
-  steps: ["Collez votre CV et l’offre", "Choisissez la langue et le thème", "Relisez, modifiez, téléchargez en PDF ou Word"],
+  tagline: "Envoyez chaque candidature en confiance.",
+  intro: "Collez votre CV et une offre. En 2 minutes, vous avez un CV et une lettre faits pour ce poste, vous savez pourquoi vous correspondez et vous êtes prêt·e pour l’entretien. Rien d’inventé.",
+  steps: ["Collez votre CV et l’offre", "Voyez pourquoi vous correspondez, et à quel point", "Téléchargez en PDF ou Word et postulez en confiance"],
+  badges: ["Gratuit", "Sans compte", "Sans carte", "Sans abonnement"],
+  fitTitle: "Pourquoi vous correspondez à ce poste",
+  fitEvidence: "D’après votre CV :",
+  fitHint: "Vos vrais points forts pour ce poste. Dites-les à voix haute avant l’entretien.",
+  interviewTitle: "Préparation à l’entretien",
+  interviewHint: "Questions probables, avec des réponses tirées de votre propre expérience. Reformulez-les avec vos mots.",
   inputHeading: "Vos informations",
   uiLanguage: "Langue du site",
   lightMode: "Mode clair",
@@ -496,7 +526,7 @@ const fr: Copy = {
   docx: "Word (DOCX)",
   copy: "Copier",
   copied: "Copié",
-  ready: "Terminé. Relisez chaque ligne avant l’envoi : l’IA peut se tromper.",
+  ready: "Terminé. Voyez pourquoi vous correspondez, puis relisez chaque ligne avant l’envoi.",
   reviewWarning: "Texte généré par IA. Il vous appartient de vérifier que tout est exact.",
   premiumTitle: "Thèmes premium",
   premiumBody: "Achat unique par thème. Les thèmes gratuits restent gratuits.",
@@ -544,9 +574,15 @@ const fr: Copy = {
 };
 
 const de: Copy = {
-  tagline: "Ein besserer Lebenslauf für deinen Wunschjob.",
-  intro: "Füge deinen Lebenslauf und eine Stellenanzeige ein. Du erhältst einen angepassten Lebenslauf, ein Anschreiben und ehrliche Hinweise darauf, was die Stelle verlangt und dein Lebenslauf nicht zeigt.",
-  steps: ["Lebenslauf und Anzeige einfügen", "Sprache und Design wählen", "Prüfen, überarbeiten, als PDF oder Word laden"],
+  tagline: "Schick jede Bewerbung mit Selbstvertrauen ab.",
+  intro: "Füge deinen Lebenslauf und eine Stellenanzeige ein. In 2 Minuten hast du Lebenslauf und Anschreiben für genau diese Stelle, weißt, warum du passt, und bist bereit fürs Vorstellungsgespräch. Nichts erfunden.",
+  steps: ["Lebenslauf und Anzeige einfügen", "Sehen, warum und wie gut du passt", "Als PDF oder Word laden und selbstbewusst bewerben"],
+  badges: ["Kostenlos", "Ohne Konto", "Ohne Karte", "Ohne Abo"],
+  fitTitle: "Warum du zu dieser Stelle passt",
+  fitEvidence: "Aus deinem Lebenslauf:",
+  fitHint: "Deine echten Stärken für diese Stelle. Sag sie vor dem Gespräch einmal laut.",
+  interviewTitle: "Vorbereitung aufs Vorstellungsgespräch",
+  interviewHint: "Wahrscheinliche Fragen mit Antworten aus deiner eigenen Erfahrung. Formuliere sie mit deinen Worten.",
   inputHeading: "Deine Angaben",
   uiLanguage: "Sprache der Seite",
   lightMode: "Heller Modus",
@@ -611,7 +647,7 @@ const de: Copy = {
   docx: "Word (DOCX)",
   copy: "Kopieren",
   copied: "Kopiert",
-  ready: "Fertig. Lies jede Zeile vor dem Versand: KI kann Fehler machen.",
+  ready: "Fertig. Sieh dir an, warum du passt, und lies jede Zeile vor dem Versand.",
   reviewWarning: "KI-generierter Text. Du bist dafür verantwortlich, dass alles stimmt.",
   premiumTitle: "Premium-Designs",
   premiumBody: "Einmaliger Kauf pro Design. Die kostenlosen Designs bleiben kostenlos.",
