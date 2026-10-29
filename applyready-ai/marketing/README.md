@@ -8,6 +8,7 @@
 | `carousel/slide-1.png … slide-7.png` | Carousel «5 λάθη στο βιογραφικό για ξενοδοχείο» (1080×1350, Instagram/Facebook). Πηγή: `carousel/carousel.html?slide=1…7` |
 | `ads/ad-square-1080.png` | Post Facebook / Instagram |
 | `ads/ad-story-1080x1920.png` | Stories, Viber/WhatsApp status |
+| `ads/ad-season-square-1080.png`, `ads/ad-season-story-1080x1920.png` | Διαφήμιση για τη σεζόν: «Βιογραφικό για ξενοδοχείο; Στα αγγλικά ή γερμανικά, σε 2 λεπτά». Πηγή: `ads/ad-season.html` |
 | `ads/ad.html` | Πηγή των εικόνων (ανοίγει σε browser με `?format=square` ή `?format=story`) |
 
 Τα παραδείγματα στις εικόνες είναι φανταστικά και το γράφουν. Κανένας ψεύτικος αριθμός ή κριτική.

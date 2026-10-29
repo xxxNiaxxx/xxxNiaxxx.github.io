@@ -14,6 +14,11 @@ No account and no card are needed. The app does not store CVs.
 | Site in 5 languages (`en`, `el`, `es`, `fr`, `de`); output language chosen separately | Done |
 | 4 free themes (Classic, Modern, Minimal, Europass style) that look different in the preview, PDF and DOCX. Europass style is a two-column layout like the European CV, labelled as not the official format | Done |
 | "Why you fit this job" (3–5 strengths, each with evidence from the CV) and interview preparation (likely questions with honest answers, including for gaps) — the confidence part of the product | Done |
+| Extras on request (`/api/assist`, each counts as one generation): emails (send, 7-day follow-up, thank-you), a plan for the gaps (no invented courses or links), a LinkedIn profile, and interview practice with honest feedback | Done |
+| The same application in another language with one click (kept as a new version) | Done |
+| "Try an example": a fictional seasonal-hotel CV and job ad (`src/lib/examples.ts`) | Done |
+| "My applications": a follow-up-aware list kept only in the browser; marking "Interview" offers practice | Done |
+| Share button and visit source: `?utm_source=` is logged as a short label with generation events (no cookies, no analytics) | Done |
 | Keyword match score (like ATS scanners): your CV vs the tailored CV, matched and missing words of the ad; click a missing word to ask for it in a revision. Runs in the browser, no AI cost (`src/lib/match.ts`) | Done |
 | CV from a file: PDF (text layer), Word DOCX or TXT, read in memory on the server | Done |
 | CV and job ad from screenshots (upload, or paste with Ctrl+V), read by a vision model; the text lands in the box for the user to check | Done (needs `AI_VISION_MODEL`) |

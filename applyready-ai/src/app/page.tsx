@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DocumentPreview } from "@/components/DocumentPreview";
+import { Extras, Practice } from "@/components/Extras";
+import { Tracker } from "@/components/Tracker";
+import { exampleFor } from "@/lib/examples";
 import { MatchPanel } from "@/components/MatchPanel";
 import { readImages, SourceTools, type SourceEvents } from "@/components/SourceTools";
 import { parseBlocks } from "@/lib/blocks";
 import type { ErrorCode } from "@/lib/errors";
 import { copy, format } from "@/lib/i18n";
-import { isLanguage, languageLabels, languages, type Language } from "@/lib/languages";
+import { isLanguage, languageLabels, languageNames, languages, type Language } from "@/lib/languages";
 import { matchScore } from "@/lib/match";
 import { LIMITS, type ApplicationResult } from "@/lib/schema";
 import { freeThemes, isPremiumTheme, premiumThemes, type PremiumTheme, type Theme } from "@/lib/themes";
@@ -30,10 +33,16 @@ class ApiError extends Error {
   constructor(public code: ErrorCode) { super(code); }
 }
 
+/** The ?utm_source= label of this visit (e.g. "facebook-group"), kept for the tab only. */
+function visitSource(): string {
+  try { return window.sessionStorage.getItem("applyready.source") ?? ""; } catch { return ""; }
+}
+
 async function postJson(url: string, body: unknown): Promise<Response> {
   let response: Response;
   try {
-    response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const source = visitSource();
+    response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...(source ? { "X-ApplyReady-Source": source } : {}) }, body: JSON.stringify(body) });
   } catch {
     throw new ApiError("ai_unavailable");
   }
@@ -81,6 +90,10 @@ export default function Home() {
     fetch("/api/config").then((r) => r.json()).then((c: { premiumCheckout?: boolean; imageInput?: boolean }) => { setPremiumCheckout(Boolean(c.premiumCheckout)); setImageInput(Boolean(c.imageInput)); }).catch(() => undefined);
 
     const params = new URLSearchParams(window.location.search);
+    const utm = params.get("utm_source");
+    if (utm && /^[a-z0-9][a-z0-9._-]{0,39}$/i.test(utm)) {
+      try { window.sessionStorage.setItem("applyready.source", utm.toLowerCase()); } catch { /* private mode */ }
+    }
     const purchase = params.get("purchase");
     const sessionId = params.get("session_id");
     if (!purchase) return;
@@ -131,19 +144,23 @@ export default function Home() {
     if (!outputTouched) setOutputLang(lang);
   }
 
-  async function generate(isRevision: boolean) {
+  /** First version, a revision of the current one, or (with `override`) the current one in another language. */
+  async function generate(isRevision: boolean, override?: { revision: string; language: Language }) {
     if (busy) return;
     setNotice(null);
     setBusy(isRevision ? "revise" : "generate");
     const base = isRevision ? version : undefined;
+    const request = override?.revision ?? (isRevision ? revision : "");
+    const language = override?.language ?? outputLang;
     try {
       const response = await postJson("/api/generate", {
-        cvText, jobText, language: outputLang, theme,
-        revision: isRevision ? revision : "",
+        cvText, jobText, language, theme,
+        revision: request,
         previous: base?.result,
       });
       const data = (await response.json()) as { result: ApplicationResult; checks: string[] };
-      const next: Version = { result: data.result, checks: data.checks ?? [], revision: isRevision ? revision.trim() : undefined, parent: isRevision ? current : undefined };
+      const next: Version = { result: data.result, checks: data.checks ?? [], revision: isRevision ? request.trim() : undefined, parent: isRevision ? current : undefined };
+      if (override) { setOutputLang(override.language); setOutputTouched(true); }
       // Append, never replace: every earlier version stays available.
       setVersions((prev) => [...prev, next]);
       setCurrent(versions.length);
@@ -224,6 +241,23 @@ export default function Home() {
   }
 
   const letterhead = useMemo(() => (version ? parseBlocks(version.result.cv, { withName: true }).filter((b, i) => i < 3 && (b.kind === "name" || b.kind === "contact")) : []), [version]);
+  const [otherLang, setOtherLang] = useState<Language>("en");
+  // Keep the "other language" choice different from the current output language.
+  useEffect(() => { if (otherLang === outputLang) setOtherLang(outputLang === "en" ? "de" : "en"); }, [outputLang, otherLang]);
+  const assistCtx = version ? { language: outputLang, cvText, jobText, result: version.result } : null;
+
+  async function share() {
+    const url = window.location.origin;
+    const text = t.shareText;
+    try {
+      if (navigator.share) await navigator.share({ title: "ApplyReady AI", text, url });
+      else {
+        await navigator.clipboard.writeText(`${text} ${url}`);
+        setNotice({ kind: "success", text: t.linkCopied });
+      }
+    } catch { /* the user closed the share sheet */ }
+  }
+
   const enoughText = cvText.trim().length >= LIMITS.cvMin && jobText.trim().length >= LIMITS.jobMin;
   // Keyword match is computed locally: no request, no AI cost.
   const liveMatch = useMemo(() => (enoughText ? matchScore(cvText, jobText) : null), [enoughText, cvText, jobText]);
@@ -278,6 +312,11 @@ export default function Home() {
       <div className="layout">
         <form className="panel form-panel" onSubmit={(e) => { e.preventDefault(); if (canGenerate) generate(false); }}>
           <h2>{t.inputHeading}</h2>
+
+          <div className="example-row">
+            <button type="button" className="secondary" disabled={Boolean(busy || reading)} onClick={() => { const ex = exampleFor(uiLang); setCvText(ex.cv); setJobText(ex.job); }}>{t.example}</button>
+            <span className="small">{t.exampleNote}</span>
+          </div>
 
           <label htmlFor="cv">{t.cv}</label>
           <textarea id="cv" value={cvText} onChange={(e) => setCvText(e.target.value)} maxLength={LIMITS.cvMax} placeholder={t.cvPlaceholder} aria-describedby="cv-count cv-tools-hint" rows={9} onPaste={(e) => pasteImage(e, "cv")} />
@@ -417,6 +456,23 @@ export default function Home() {
                 </div>
               )}
 
+              <Practice key={`practice-${current}`} ctx={assistCtx!} t={t} post={postJson} onError={(e) => setNotice({ kind: "error", text: message(e) })} />
+              <Extras key={`extras-${current}`} ctx={assistCtx!} t={t} post={postJson} onError={(e) => setNotice({ kind: "error", text: message(e) })} />
+
+              <form className="result-section" onSubmit={(e) => {
+                e.preventDefault();
+                if (otherLang === outputLang || busy) return;
+                void generate(true, { language: otherLang, revision: `Rewrite the whole result (CV, cover letter, gaps, strengths, interview) in ${languageNames[otherLang]}. Keep every fact exactly as it is; change nothing else.` });
+              }}>
+                <label htmlFor="other-lang">{t.otherLanguage}</label>
+                <div className="inline-row">
+                  <select id="other-lang" value={otherLang} onChange={(e) => setOtherLang(e.target.value as Language)}>
+                    {languages.filter((l) => l !== outputLang).map((l) => <option key={l} value={l}>{languageLabels[l]}</option>)}
+                  </select>
+                  <button type="submit" className="secondary" disabled={Boolean(busy) || otherLang === outputLang}>{busy === "revise" ? t.revising : t.otherLanguageBtn}</button>
+                </div>
+              </form>
+
               <form className="result-section" onSubmit={(e) => { e.preventDefault(); if (revision.trim() && !busy) generate(true); }}>
                 <label htmlFor="revision">{t.revisionLabel}</label>
                 <textarea id="revision" value={revision} onChange={(e) => setRevision(e.target.value)} maxLength={LIMITS.revisionMax} placeholder={t.revisionPlaceholder} rows={3} aria-describedby="revision-note" />
@@ -425,8 +481,15 @@ export default function Home() {
               </form>
             </>
           )}
+          {version && (
+            <div className="result-section share">
+              <button type="button" className="secondary" onClick={share}>🙌 {t.share}</button>
+            </div>
+          )}
         </section>
       </div>
+
+      <Tracker t={t} onPractice={version ? () => document.getElementById("practice")?.scrollIntoView({ behavior: "smooth" }) : undefined} />
 
       <details className="privacy">
         <summary>{t.privacyTitle}</summary>

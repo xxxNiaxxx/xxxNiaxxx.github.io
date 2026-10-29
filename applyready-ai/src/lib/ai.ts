@@ -53,10 +53,11 @@ export function getAiConfig(env: NodeJS.ProcessEnv = process.env): AiConfig {
   };
 }
 
-const DATA_TAGS = ["source_cv", "job_ad", "previous_result", "revision_request"] as const;
+const DATA_TAGS = ["source_cv", "job_ad", "previous_result", "revision_request", "tailored_cv", "gaps", "interview_question", "user_answer"] as const;
+export type DataTag = (typeof DATA_TAGS)[number];
 
 /** Stops pasted text from closing our data sections early. */
-function fence(tag: (typeof DATA_TAGS)[number], text: string): string {
+export function fence(tag: DataTag, text: string): string {
   const neutralised = text.replace(new RegExp(`</?\\s*(${DATA_TAGS.join("|")})\\s*>`, "gi"), "[removed tag]");
   return `<${tag}>\n${neutralised}\n</${tag}>`;
 }
@@ -144,10 +145,10 @@ function normaliseResult(raw: unknown): ApplicationResult {
   return parsed.data;
 }
 
-type Fetch = typeof fetch;
+export type Fetch = typeof fetch;
 
 /** One Chat Completions call; returns the reply text or throws a safe AppError. */
-async function chatCompletion(config: AiConfig, payload: Record<string, unknown>, fetchImpl: Fetch, model = config.model): Promise<string> {
+export async function chatCompletion(config: AiConfig, payload: Record<string, unknown>, fetchImpl: Fetch, model = config.model): Promise<string> {
   let response: Response;
   try {
     response = await fetchImpl(`${config.baseUrl}/chat/completions`, {

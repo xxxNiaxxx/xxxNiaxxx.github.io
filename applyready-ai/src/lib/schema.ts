@@ -71,3 +71,35 @@ export function imageMatchesType(dataUrl: string): boolean {
   if (match[1] === "jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
   return bytes.subarray(0, 4).toString("latin1") === "RIFF" && bytes.subarray(8, 12).toString("latin1") === "WEBP";
 }
+
+const email = z.object({ subject: text(1, 200), body: text(1, 2_000) });
+
+export const assistResultSchemas = {
+  emails: z.object({ send: email, followUp: email, thankYou: email }),
+  plan: z.object({
+    plan: z.array(z.object({ gap: text(1, 300), steps: z.array(text(1, 400)).min(1).max(5) })).max(6),
+    honestLine: text(1, 600),
+  }),
+  linkedin: z.object({ headline: text(1, 260), about: text(1, 2_600), skills: z.array(text(1, 80)).max(12) }),
+  practice: z.object({ good: text(1, 800), improve: z.array(text(1, 400)).max(4), better: text(1, 1_200), confidence: text(1, 400) }),
+} as const;
+
+export type AssistTask = keyof typeof assistResultSchemas;
+export type AssistResult = z.infer<(typeof assistResultSchemas)[AssistTask]>;
+export type EmailsResult = z.infer<typeof assistResultSchemas.emails>;
+export type PlanResult = z.infer<typeof assistResultSchemas.plan>;
+export type LinkedinResult = z.infer<typeof assistResultSchemas.linkedin>;
+export type PracticeResult = z.infer<typeof assistResultSchemas.practice>;
+
+export const assistRequestSchema = z.object({
+  task: z.enum(["emails", "plan", "linkedin", "practice"]),
+  language: z.enum(languages),
+  cvText: text(LIMITS.cvMin, LIMITS.cvMax),
+  jobText: text(LIMITS.jobMin, LIMITS.jobMax),
+  tailoredCv: text(1, LIMITS.cvMax),
+  gaps: z.array(text(1, LIMITS.gapMax)).max(LIMITS.gapsMax).default([]),
+  question: text(1, 300).optional(),
+  answer: text(1, 2_000).optional(),
+}).refine((r) => r.task !== "practice" || (r.question && r.answer), { message: "Practice needs a question and an answer.", path: ["answer"] })
+  .refine((r) => r.task !== "plan" || r.gaps.length > 0, { message: "A plan needs gaps.", path: ["gaps"] });
+export type AssistRequest = z.infer<typeof assistRequestSchema>;

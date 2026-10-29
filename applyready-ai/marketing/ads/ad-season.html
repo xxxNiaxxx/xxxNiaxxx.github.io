@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<!-- Source for ad-season-square-1080.png and ad-season-story-1080x1920.png. ?format=square|story -->
+<style>
+  @font-face { font-family: Ad; src: url("../../fonts/DejaVuSans.ttf"); }
+  @font-face { font-family: Ad; font-weight: 700; src: url("../../fonts/DejaVuSans-Bold.ttf"); }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: Ad, sans-serif; background: #0f1420; color: #e6e9f2; width: 1080px; height: 1080px; padding: 72px; display: flex; flex-direction: column; gap: 32px; }
+  body.story { height: 1920px; padding: 120px 80px; gap: 56px; justify-content: center; }
+  .brand { font-size: 34px; font-weight: 700; } .brand span { color: #8da2ff; }
+  .tag { align-self: flex-start; font-size: 28px; font-weight: 700; color: #0f1420; background: #ffd27a; border-radius: 99px; padding: 8px 22px; }
+  h1 { font-size: 74px; line-height: 1.08; letter-spacing: -2px; }
+  .story h1 { font-size: 90px; }
+  h1 em { font-style: normal; color: #8fe0b0; }
+  .job { background: #171d2b; border: 1px solid #2a3245; border-radius: 24px; padding: 28px 34px; }
+  .job b { font-size: 32px; display: block; } .job span { font-size: 26px; color: #a3abbd; }
+  .langs { display: flex; gap: 16px; align-items: center; font-size: 30px; color: #a3abbd; }
+  .langs i { font-style: normal; font-weight: 700; color: #ffffff; background: #3c5ee8; border-radius: 16px; padding: 14px 24px; font-size: 34px; }
+  .langs i.on { background: #10301f; color: #8fe0b0; border: 2px solid #8fe0b0; }
+  .badges { display: flex; flex-wrap: wrap; gap: 14px; }
+  .badges span { font-size: 28px; font-weight: 700; color: #8fe0b0; background: #10301f; border-radius: 99px; padding: 10px 22px; }
+  .note { font-size: 20px; color: #7d869a; }
+  .square .extra { display: none; }
+  .extra { background: #10301f; border: 2px solid #8fe0b0; border-radius: 24px; padding: 28px 34px; font-size: 30px; line-height: 1.35; }
+  .extra b { color: #8fe0b0; display: block; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+  <div class="brand">ApplyReady <span>AI</span></div>
+  <span class="tag">☀ Σεζόν 2027</span>
+  <h1>Βιογραφικό για ξενοδοχείο;<br><em>Στα αγγλικά ή γερμανικά, σε 2 λεπτά.</em></h1>
+  <div class="job"><b>Front Desk Agent · 5* resort</b><span>Αγγελία στα αγγλικά → βιογραφικό και επιστολή γι' αυτήν</span></div>
+  <div class="langs"><i>EL</i>→<i class="on">EN</i>→<i class="on">DE</i></div>
+  <div class="extra"><b>«Ξέρετε Opera;»</b>Η εφαρμογή σε προετοιμάζει να απαντήσεις τίμια, από τη δική σου εμπειρία.</div>
+  <div class="badges"><span>✓ Δωρεάν</span><span>✓ Χωρίς λογαριασμό</span><span>✓ PDF & Word</span><span>✓ Τίποτα ψεύτικο</span></div>
+  <p class="note">Παράδειγμα με φανταστική αγγελία.</p>
+  <script>document.body.classList.add(new URLSearchParams(location.search).get("format") === "story" ? "story" : "square");</script>
+</body>
+</html>

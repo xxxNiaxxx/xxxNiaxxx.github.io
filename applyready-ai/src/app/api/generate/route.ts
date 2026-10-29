@@ -3,6 +3,7 @@ import { clientIp, handleError, hashKey, json, readJson } from "@/lib/http";
 import { logEvent } from "@/lib/log";
 import { consumeGeneration, lockDuplicate } from "@/lib/ratelimit";
 import { requestSchema } from "@/lib/schema";
+import { sourceFrom } from "@/lib/source";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
     await consumeGeneration(ipKey);
     const result = await generateApplication(input);
     const checks = findUnsupportedFigures(input.cvText, result.cv);
-    logEvent("generate_ok", { revision: Boolean(input.revision), ms: Date.now() - started, checks: checks.length });
+    logEvent("generate_ok", { revision: Boolean(input.revision), ms: Date.now() - started, checks: checks.length, source: sourceFrom(request) });
     return json({ result, checks });
   } catch (error) {
     return handleError("generate", error);

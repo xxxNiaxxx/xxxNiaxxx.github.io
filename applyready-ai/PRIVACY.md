@@ -13,7 +13,9 @@ This describes what the code does. It is **not** legal advice, and it does not m
 | Export requests (CV and letter text) | Browser → our function, rendered in memory | Not stored or logged. The file is streamed back. |
 | IP address | Used to build a rate-limit key: `sha256(RATE_LIMIT_SALT + IP)`, truncated | Daily counters in Upstash Redis, expiring after about 25 hours. A duplicate-request lock (a hash of the request) lasts up to 2 minutes and is deleted on completion. |
 | Stripe purchase (if enabled) | Stripe processes payment and email | We store `{theme, status, livemode, createdAt}` keyed by the Checkout Session id for 3 years (fulfilment and refunds), plus a payment-intent → session id mapping. No name, email or card data. |
-| Browser storage | `localStorage` on the visitor's device | Site language, light/dark choice and premium purchase tokens only. **Never** CV text. |
+| Browser storage | `localStorage` on the visitor's device | Site language, light/dark choice, premium purchase tokens and the optional "My applications" list (company, role, date, status, typed by the user). **Never** CV text. Nothing of it is sent to us. `sessionStorage` keeps the visit's `utm_source` label for the tab. |
+| Visit source | The `?utm_source=` label (e.g. `facebook-group`), sent as a header | Logged with `generate_ok` / `assist_ok` events as a short label only; no IP, no cookie, no profile. |
+| Extras on request (emails, gap plan, LinkedIn, interview practice answer) | Browser → our function → the AI provider | Same as the CV text: not stored, not logged. |
 | Server logs | Vercel function logs | JSON events with codes, durations and counts only (`src/lib/log.ts`). A test checks that CV text, job text and API keys never appear. |
 
 No cookies, analytics or third-party scripts are used. The Content Security Policy only allows the site's own origin.
