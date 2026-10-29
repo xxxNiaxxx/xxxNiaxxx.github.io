@@ -49,6 +49,29 @@ describe("PDF export", () => {
   });
 });
 
+describe("Europass-style theme", () => {
+  it("puts section titles in a left column next to their content (PDF)", async () => {
+    const bytes = await renderPdf(exportBlocks({ document: "cv", cv: greekCv, coverLetter: letter }), "europass", { title: "CV", language: "el" });
+    if (!hasPdftotext()) return;
+    const dir = mkdtempSync(path.join(tmpdir(), "applyready-"));
+    const file = path.join(dir, "cv.pdf");
+    writeFileSync(file, bytes);
+    const lines = execFileSync("pdftotext", ["-layout", file, "-"]).toString("utf8").split("\n");
+    expect(lines.find((l) => l.includes("Εμπειρία"))).toMatch(/Εμπειρία\s+•\s+Υπεύθυνη/);
+    expect(lines.find((l) => l.includes("Εκπαίδευση"))).toMatch(/Εκπαίδευση\s+Πτυχίο/);
+  });
+  it("uses a two-column table in Word", async () => {
+    const xml = readZipText(await renderDocx(exportBlocks({ document: "cv", cv: greekCv, coverLetter: letter }), "europass", { title: "CV", language: "el" }), "word/document.xml")!;
+    expect(xml).toContain("<w:tbl>");
+    expect(xml.match(/<w:tr>/g)).toHaveLength(3); // Εμπειρία, Εκπαίδευση, Δεξιότητες
+    expect(xml.indexOf("Εμπειρία")).toBeLessThan(xml.indexOf("Ξενοδοχείο Ακρόπολις"));
+  });
+  it("keeps the cover letter full width", async () => {
+    const xml = readZipText(await renderDocx(exportBlocks({ document: "letter", cv: greekCv, coverLetter: letter }), "europass", { title: "Letter", language: "el" }), "word/document.xml")!;
+    expect(xml).not.toContain("<w:tbl>");
+  });
+});
+
 describe("DOCX export", () => {
   it.each(allThemes)("writes Greek text and the theme font in the %s theme", async (theme) => {
     const buffer = await renderDocx(exportBlocks({ document: "cv", cv: greekCv, coverLetter: letter }), theme, { title: "CV", language: "el" });

@@ -55,7 +55,8 @@ Redeploy after changing variables. Never put secrets in `NEXT_PUBLIC_*` variable
 Every push creates a preview deployment. Test it with **fictional** CVs:
 
 - [ ] English and Greek generation; one revision; switch versions
-- [ ] All three free themes; PDF and DOCX for both the CV and the letter; open them in Word/LibreOffice and a PDF viewer; check the Greek and accented characters
+- [ ] The match score goes up after tailoring; a missing word fills the revision box
+- [ ] All four free themes (incl. Europass style); PDF and DOCX for both the CV and the letter; open them in Word/LibreOffice and a PDF viewer; check the Greek and accented characters
 - [ ] Import a PDF and a Word CV; add a screenshot of a job ad (if `AI_VISION_MODEL` is set)
 - [ ] Spanish, French and German output
 - [ ] Go past the per-IP limit → the "today's limit" message

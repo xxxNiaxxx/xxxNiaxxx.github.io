@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DocumentPreview } from "@/components/DocumentPreview";
+import { MatchPanel } from "@/components/MatchPanel";
 import { readImages, SourceTools, type SourceEvents } from "@/components/SourceTools";
 import { parseBlocks } from "@/lib/blocks";
 import type { ErrorCode } from "@/lib/errors";
 import { copy, format } from "@/lib/i18n";
 import { isLanguage, languageLabels, languages, type Language } from "@/lib/languages";
+import { matchScore } from "@/lib/match";
 import { LIMITS, type ApplicationResult } from "@/lib/schema";
 import { freeThemes, isPremiumTheme, premiumThemes, type PremiumTheme, type Theme } from "@/lib/themes";
 
@@ -222,7 +224,18 @@ export default function Home() {
   }
 
   const letterhead = useMemo(() => (version ? parseBlocks(version.result.cv, { withName: true }).filter((b, i) => i < 3 && (b.kind === "name" || b.kind === "contact")) : []), [version]);
-  const canGenerate = cvText.trim().length >= LIMITS.cvMin && jobText.trim().length >= LIMITS.jobMin && !busy && !reading;
+  const enoughText = cvText.trim().length >= LIMITS.cvMin && jobText.trim().length >= LIMITS.jobMin;
+  // Keyword match is computed locally: no request, no AI cost.
+  const liveMatch = useMemo(() => (enoughText ? matchScore(cvText, jobText) : null), [enoughText, cvText, jobText]);
+  const resultMatch = useMemo(() => (version ? { before: matchScore(cvText, jobText), after: matchScore(version.result.cv, jobText) } : null), [version, cvText, jobText]);
+
+  function askFor(word: string) {
+    const line = format(t.matchAsk, { word });
+    setRevision((prev) => (prev.includes(line) ? prev : `${prev.trim() ? `${prev.trimEnd()}\n` : ""}${line}`).slice(0, LIMITS.revisionMax));
+    document.getElementById("revision")?.focus();
+  }
+
+  const canGenerate = enoughText && !busy && !reading;
   const locked = isPremiumTheme(theme) && !tokens[theme];
 
   const downloadButtons = (document: "cv" | "letter") => (
@@ -272,6 +285,7 @@ export default function Home() {
 
           <label htmlFor="job">{t.job}</label>
           <textarea id="job" value={jobText} onChange={(e) => setJobText(e.target.value)} maxLength={LIMITS.jobMax} placeholder={t.jobPlaceholder} aria-describedby="job-count job-tools-hint" rows={7} onPaste={(e) => pasteImage(e, "job")} />
+          {liveMatch?.comparable && <p className="small live-match">{format(t.matchLive, { n: liveMatch.score })}</p>}
           <SourceTools kind="job" allowFiles={false} imageInput={imageInput} disabled={Boolean(reading || busy)} t={t} events={jobEvents} hintId="job-tools-hint" />
           <p id="job-count" className="small counter">{format(t.chars, { n: jobText.length, max: LIMITS.jobMax })}{jobText.trim().length < LIMITS.jobMin && ` · ${format(t.minChars, { min: LIMITS.jobMin })}`}</p>
 
@@ -294,6 +308,7 @@ export default function Home() {
             </div>
           </fieldset>
 
+          {theme === "europass" && <p className="small">{t.europassNote}</p>}
           <p className="warning">{t.sensitiveWarning}</p>
           <button type="submit" className="primary" disabled={!canGenerate}>{busy === "generate" ? t.generating : t.generate}</button>
 
@@ -351,6 +366,8 @@ export default function Home() {
               <p className="small">{t.reviewWarning}</p>
               {downloadButtons("cv")}
               <DocumentPreview text={version.result.cv} theme={theme} kind="cv" />
+
+              {resultMatch && <MatchPanel before={resultMatch.before} after={resultMatch.after} t={t} onAsk={askFor} />}
 
               {version.checks.length > 0 && (
                 <div className="callout">

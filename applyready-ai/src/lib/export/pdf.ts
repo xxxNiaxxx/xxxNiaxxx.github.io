@@ -29,6 +29,9 @@ function fontBytes(file: string): Promise<Buffer> {
 
 const PAGE = { width: 595.28, height: 841.89 }; // A4
 const MARGIN = 54;
+// "columns" theme: section titles in a left column, content to the right.
+const LABEL_WIDTH = 128;
+const COLUMN_GAP = 16;
 
 function color(hex: string): RGB {
   const n = Number.parseInt(hex, 16);
@@ -97,7 +100,7 @@ function ensure(ctx: Ctx, height: number) {
   if (ctx.y - height < MARGIN) newPage(ctx);
 }
 
-function drawLines(ctx: Ctx, text: string, opts: { font: PDFFont; size: number; color: RGB; indent?: number; align?: "left" | "center"; lineHeight?: number }) {
+function drawLines(ctx: Ctx, text: string, opts: { font: PDFFont; size: number; color: RGB; indent?: number; align?: "left" | "center" | "right"; lineHeight?: number }) {
   const x0 = ctx.left + (opts.indent ?? 0);
   const width = ctx.right - x0;
   const lineHeight = opts.size * (opts.lineHeight ?? 1.4);
@@ -105,7 +108,7 @@ function drawLines(ctx: Ctx, text: string, opts: { font: PDFFont; size: number; 
     ensure(ctx, lineHeight);
     ctx.y -= lineHeight;
     const lineWidth = opts.font.widthOfTextAtSize(line, opts.size);
-    const x = opts.align === "center" ? x0 + (width - lineWidth) / 2 : x0;
+    const x = opts.align === "center" ? x0 + (width - lineWidth) / 2 : opts.align === "right" ? ctx.right - lineWidth : x0;
     ctx.page.drawText(line, { x, y: ctx.y + opts.size * 0.3, size: opts.size, font: opts.font, color: opts.color });
   }
 }
@@ -130,14 +133,14 @@ function drawHeader(ctx: Ctx, name: string | undefined, contacts: string[]) {
   drawLines(ctx, name, {
     font: spec.header === "plain" ? ctx.regular : ctx.bold,
     size: spec.nameSize,
-    color: color(spec.header === "sidebar" ? spec.accent : spec.ink),
+    color: color(spec.header === "sidebar" || spec.header === "columns" ? spec.accent : spec.ink),
     align: center ? "center" : "left",
     lineHeight: 1.25,
   });
   for (const c of contacts) drawLines(ctx, c, { font: ctx.regular, size: spec.bodySize - 0.5, color: color(spec.muted), align: center ? "center" : "left" });
   ctx.y -= 8;
-  if (center) {
-    ctx.page.drawLine({ start: { x: ctx.left, y: ctx.y }, end: { x: ctx.right, y: ctx.y }, thickness: 1.2, color: color(spec.ink) });
+  if (center || spec.header === "columns") {
+    ctx.page.drawLine({ start: { x: ctx.left, y: ctx.y }, end: { x: ctx.right, y: ctx.y }, thickness: center ? 1.2 : 1.5, color: color(center ? spec.ink : spec.accent) });
     ctx.y -= 6;
   }
 }
@@ -165,9 +168,27 @@ export async function renderPdf(blocks: Block[], theme: Theme, meta: { title: st
   drawHeader(ctx, name?.kind === "name" ? name.text : undefined, contacts);
 
   const ink = color(spec.ink);
+  const columns = spec.header === "columns";
+  let label: { page: PDFPage; bottom: number } | undefined;
   for (const block of blocks) {
     switch (block.kind) {
       case "heading": {
+        if (columns) {
+          const size = spec.bodySize + 1;
+          // Start below the previous section's title if that title ran longer than its content.
+          if (label?.page === ctx.page) ctx.y = Math.min(ctx.y, label.bottom);
+          ctx.left = MARGIN;
+          ctx.right = MARGIN + LABEL_WIDTH;
+          ensure(ctx, size * 3.2);
+          ctx.y -= size * 0.9;
+          const top = ctx.y;
+          drawLines(ctx, block.text, { font: ctx.bold, size, color: color(spec.accent), align: "right", lineHeight: 1.3 });
+          label = { page: ctx.page, bottom: ctx.y };
+          ctx.y = top;
+          ctx.left = MARGIN + LABEL_WIDTH + COLUMN_GAP;
+          ctx.right = PAGE.width - MARGIN;
+          break;
+        }
         const size = spec.bodySize + (spec.header === "plain" ? 1 : 2.5);
         ensure(ctx, size * 3.2); // keep a heading with at least one line after it
         ctx.y -= size * 0.7;

@@ -1,4 +1,4 @@
-export const freeThemes = ["classic", "modern", "minimal"] as const;
+export const freeThemes = ["classic", "modern", "minimal", "europass"] as const;
 export const premiumThemes = ["executive", "creative"] as const;
 export const allThemes = [...freeThemes, ...premiumThemes] as const;
 
@@ -17,8 +17,11 @@ export type ThemeSpec = {
   muted: string;
   /** Header band colour (used when header is "band"). */
   band: string;
-  /** Header style: centred name with rule, coloured band, or plain. */
-  header: "centered" | "band" | "plain" | "sidebar";
+  /**
+   * Header style: centred name with rule, coloured band, plain, side stripe,
+   * or "columns" (Europass-like: section titles in a left column).
+   */
+  header: "centered" | "band" | "plain" | "sidebar" | "columns";
   headingCase: "upper" | "normal";
   headingRule: boolean;
   nameSize: number;
@@ -37,6 +40,12 @@ export const themeSpecs: Record<Theme, ThemeSpec> = {
   minimal: {
     family: "sans", docxFont: "Arial", ink: "2B2B2B", accent: "8A8F98", muted: "8A8F98", band: "8A8F98",
     header: "plain", headingCase: "upper", headingRule: false, nameSize: 18, bodySize: 9.5,
+  },
+  // Two-column layout in the spirit of the European CV. Not the official Europass
+  // format or branding; the official editor is at europass.europa.eu.
+  europass: {
+    family: "sans", docxFont: "Arial", ink: "1E1E1E", accent: "0E4194", muted: "555555", band: "0E4194",
+    header: "columns", headingCase: "normal", headingRule: false, nameSize: 20, bodySize: 10,
   },
   executive: {
     family: "serif", docxFont: "Cambria", ink: "14213D", accent: "B08D57", muted: "4A5568", band: "14213D",

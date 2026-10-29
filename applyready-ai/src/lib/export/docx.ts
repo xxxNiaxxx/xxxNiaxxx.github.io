@@ -1,4 +1,4 @@
-import { AlignmentType, BorderStyle, Document, Packer, Paragraph, ShadingType, TextRun, type IBorderOptions } from "docx";
+import { AlignmentType, BorderStyle, Document, Packer, Paragraph, ShadingType, Table, TableCell, TableRow, TextRun, WidthType, type IBorderOptions } from "docx";
 import type { Block } from "../blocks";
 import { themeSpecs, type Theme } from "../themes";
 
@@ -14,7 +14,38 @@ export async function renderDocx(blocks: Block[], theme: Theme, meta: { title: s
   const band = spec.header === "band";
   const centered = spec.header === "centered";
   const sidebar = spec.header === "sidebar";
-  const children: Paragraph[] = [];
+  const columns = spec.header === "columns";
+  const children: (Paragraph | Table)[] = [];
+  // "columns" theme: each titled section becomes a row of a borderless table (title | content).
+  const rows: TableRow[] = [];
+  let sectionTitle: string | undefined;
+  let sectionBody: Paragraph[] = [];
+  const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+  const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+  const flushSection = () => {
+    if (sectionTitle === undefined) return;
+    rows.push(new TableRow({
+      cantSplit: false,
+      children: [
+        new TableCell({
+          width: { size: 2700, type: WidthType.DXA },
+          borders: noBorders,
+          margins: { right: 240 },
+          children: [new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { before: 160 }, children: [run(sectionTitle, { bold: true, color: spec.accent, size: spec.bodySize + 1 })] })],
+        }),
+        new TableCell({
+          width: { size: 7046, type: WidthType.DXA },
+          borders: noBorders,
+          children: sectionBody.length ? sectionBody : [new Paragraph({ children: [] })],
+        }),
+      ],
+    }));
+    sectionTitle = undefined;
+    sectionBody = [];
+  };
+  // The first paragraph of a section lines up with the title's top spacing.
+  const firstInSection = () => (columns && sectionTitle !== undefined && !sectionBody.length ? 160 : 0);
+  const push = (paragraph: Paragraph) => (columns && sectionTitle !== undefined ? sectionBody.push(paragraph) : children.push(paragraph));
 
   for (const block of blocks) {
     switch (block.kind) {
@@ -24,7 +55,7 @@ export async function renderDocx(blocks: Block[], theme: Theme, meta: { title: s
           shading: band ? { type: ShadingType.CLEAR, fill: spec.band, color: "auto" } : undefined,
           border: sidebar ? { left: leftBar } : undefined,
           spacing: { after: 60 },
-          children: [run(block.text, { bold: spec.header !== "plain", size: spec.nameSize, color: band ? "FFFFFF" : sidebar ? spec.accent : spec.ink })],
+          children: [run(block.text, { bold: spec.header !== "plain", size: spec.nameSize, color: band ? "FFFFFF" : sidebar || columns ? spec.accent : spec.ink })],
         }));
         break;
       case "contact": {
@@ -32,8 +63,8 @@ export async function renderDocx(blocks: Block[], theme: Theme, meta: { title: s
         children.push(new Paragraph({
           alignment: centered ? AlignmentType.CENTER : AlignmentType.LEFT,
           shading: band ? { type: ShadingType.CLEAR, fill: spec.band, color: "auto" } : undefined,
-          border: centered && isLastContact
-            ? { bottom: { style: BorderStyle.SINGLE, size: 12, color: spec.ink, space: 6 } }
+          border: (centered || columns) && isLastContact
+            ? { bottom: { style: BorderStyle.SINGLE, size: 12, color: columns ? spec.accent : spec.ink, space: 6 } }
             : band && spec.headingRule && isLastContact
               ? { bottom: { style: BorderStyle.SINGLE, size: 24, color: spec.accent, space: 2 } }
               : sidebar ? { left: leftBar } : undefined,
@@ -43,6 +74,11 @@ export async function renderDocx(blocks: Block[], theme: Theme, meta: { title: s
         break;
       }
       case "heading":
+        if (columns) {
+          flushSection();
+          sectionTitle = block.text;
+          break;
+        }
         children.push(new Paragraph({
           keepNext: true,
           spacing: { before: 240, after: 80 },
@@ -56,16 +92,19 @@ export async function renderDocx(blocks: Block[], theme: Theme, meta: { title: s
         }));
         break;
       case "bullet":
-        children.push(new Paragraph({ bullet: { level: 0 }, spacing: { after: 40 }, children: [run(block.text)] }));
+        push(new Paragraph({ bullet: { level: 0 }, spacing: { after: 40, before: firstInSection() }, children: [run(block.text)] }));
         break;
       case "paragraph":
-        children.push(new Paragraph({ spacing: { after: 60, line: 276 }, children: [run(block.text)] }));
+        push(new Paragraph({ spacing: { after: 60, line: 276, before: firstInSection() }, children: [run(block.text)] }));
         break;
       case "spacer":
-        children.push(new Paragraph({ spacing: { after: 60 }, children: [] }));
+        push(new Paragraph({ spacing: { after: 60 }, children: [] }));
         break;
     }
   }
+
+  flushSection();
+  if (rows.length) children.push(new Table({ rows, width: { size: 9746, type: WidthType.DXA }, columnWidths: [2700, 7046], borders: { ...noBorders, insideHorizontal: noBorder, insideVertical: noBorder } }));
 
   const doc = new Document({
     title: meta.title,
