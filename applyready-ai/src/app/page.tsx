@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DocumentPreview } from "@/components/DocumentPreview";
+import { readImages, SourceTools, type SourceEvents } from "@/components/SourceTools";
 import { parseBlocks } from "@/lib/blocks";
 import type { ErrorCode } from "@/lib/errors";
 import { copy, format } from "@/lib/i18n";
@@ -57,6 +58,8 @@ export default function Home() {
   const [notice, setNotice] = useState<Notice>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [premiumCheckout, setPremiumCheckout] = useState(false);
+  const [imageInput, setImageInput] = useState(false);
+  const [reading, setReading] = useState<string | null>(null);
   const [tokens, setTokens] = useState<Partial<Record<PremiumTheme, string>>>({});
   const outputRef = useRef<HTMLElement>(null);
 
@@ -72,7 +75,7 @@ export default function Home() {
     const restored: Partial<Record<PremiumTheme, string>> = {};
     for (const p of premiumThemes) { const token = load(`applyready.theme.${p}`); if (token) restored[p] = token; }
     setTokens(restored);
-    fetch("/api/config").then((r) => r.json()).then((c: { premiumCheckout?: boolean }) => setPremiumCheckout(Boolean(c.premiumCheckout))).catch(() => undefined);
+    fetch("/api/config").then((r) => r.json()).then((c: { premiumCheckout?: boolean; imageInput?: boolean }) => { setPremiumCheckout(Boolean(c.premiumCheckout)); setImageInput(Boolean(c.imageInput)); }).catch(() => undefined);
 
     const params = new URLSearchParams(window.location.search);
     const purchase = params.get("purchase");
@@ -186,8 +189,27 @@ export default function Home() {
     }
   }
 
+  // Imported or read text is added after what is already in the box, never replacing it.
+  const sourceEvents = (setText: (update: (prev: string) => string) => void, max: number): SourceEvents => ({
+    onText: (text) => setText((prev) => (prev.trim() ? `${prev.trimEnd()}\n\n${text}` : text).slice(0, max)),
+    onBusy: (label) => { setReading(label); if (label) setNotice(null); },
+    onError: (code) => setNotice({ kind: "error", text: t.errors[code] ?? t.errors.server_error }),
+    onDone: (text) => setNotice({ kind: "success", text }),
+  });
+  const cvEvents = sourceEvents(setCvText, LIMITS.cvMax);
+  const jobEvents = sourceEvents(setJobText, LIMITS.jobMax);
+
+  /** Ctrl+V of a screenshot into a text box reads it with the AI. */
+  function pasteImage(event: React.ClipboardEvent, kind: "cv" | "job") {
+    if (!imageInput || reading) return;
+    const files = [...event.clipboardData.files].filter((f) => f.type.startsWith("image/"));
+    if (!files.length) return;
+    event.preventDefault();
+    void readImages(files.slice(0, 4), kind, t, kind === "cv" ? cvEvents : jobEvents);
+  }
+
   const letterhead = useMemo(() => (version ? parseBlocks(version.result.cv, { withName: true }).filter((b, i) => i < 3 && (b.kind === "name" || b.kind === "contact")) : []), [version]);
-  const canGenerate = cvText.trim().length >= LIMITS.cvMin && jobText.trim().length >= LIMITS.jobMin && !busy;
+  const canGenerate = cvText.trim().length >= LIMITS.cvMin && jobText.trim().length >= LIMITS.jobMin && !busy && !reading;
   const locked = isPremiumTheme(theme) && !tokens[theme];
 
   const downloadButtons = (document: "cv" | "letter") => (
@@ -226,11 +248,13 @@ export default function Home() {
           <h2>{t.inputHeading}</h2>
 
           <label htmlFor="cv">{t.cv}</label>
-          <textarea id="cv" value={cvText} onChange={(e) => setCvText(e.target.value)} maxLength={LIMITS.cvMax} placeholder={t.cvPlaceholder} aria-describedby="cv-count" rows={9} />
+          <textarea id="cv" value={cvText} onChange={(e) => setCvText(e.target.value)} maxLength={LIMITS.cvMax} placeholder={t.cvPlaceholder} aria-describedby="cv-count cv-tools-hint" rows={9} onPaste={(e) => pasteImage(e, "cv")} />
+          <SourceTools kind="cv" allowFiles imageInput={imageInput} disabled={Boolean(reading || busy)} t={t} events={cvEvents} hintId="cv-tools-hint" />
           <p id="cv-count" className="small counter">{format(t.chars, { n: cvText.length, max: LIMITS.cvMax })}{cvText.trim().length < LIMITS.cvMin && ` · ${format(t.minChars, { min: LIMITS.cvMin })}`}</p>
 
           <label htmlFor="job">{t.job}</label>
-          <textarea id="job" value={jobText} onChange={(e) => setJobText(e.target.value)} maxLength={LIMITS.jobMax} placeholder={t.jobPlaceholder} aria-describedby="job-count" rows={7} />
+          <textarea id="job" value={jobText} onChange={(e) => setJobText(e.target.value)} maxLength={LIMITS.jobMax} placeholder={t.jobPlaceholder} aria-describedby="job-count job-tools-hint" rows={7} onPaste={(e) => pasteImage(e, "job")} />
+          <SourceTools kind="job" allowFiles={false} imageInput={imageInput} disabled={Boolean(reading || busy)} t={t} events={jobEvents} hintId="job-tools-hint" />
           <p id="job-count" className="small counter">{format(t.chars, { n: jobText.length, max: LIMITS.jobMax })}{jobText.trim().length < LIMITS.jobMin && ` · ${format(t.minChars, { min: LIMITS.jobMin })}`}</p>
 
           <label htmlFor="output-lang">{t.outputLanguage}</label>
@@ -281,6 +305,7 @@ export default function Home() {
         <section className="panel output" ref={outputRef} tabIndex={-1} aria-busy={Boolean(busy)} aria-labelledby="output-title">
           <div aria-live="polite" role="status" className="live">
             {notice && <div className={`status ${notice.kind}`} role={notice.kind === "error" ? "alert" : undefined}>{notice.text}</div>}
+            {reading && <div className="status info"><span className="spinner" aria-hidden="true" />{reading}</div>}
             {busy && <div className="status info"><span className="spinner" aria-hidden="true" />{busy === "generate" ? t.generating : t.revising}</div>}
           </div>
 

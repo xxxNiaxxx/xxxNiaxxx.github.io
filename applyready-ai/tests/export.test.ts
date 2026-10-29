@@ -8,7 +8,7 @@ import { contentDisposition, exportBlocks, exportFilename } from "@/lib/export/c
 import { renderDocx } from "@/lib/export/docx";
 import { renderPdf } from "@/lib/export/pdf";
 import { allThemes } from "@/lib/themes";
-import { greekCv, readZipEntry } from "./helpers";
+import { greekCv, readZipText } from "./helpers";
 
 const letter = "Αξιότιμη κυρία, κύριε,\n\nΜε ιδιαίτερο ενδιαφέρον υποβάλλω την αίτησή μου. Größe, niño, garçon.\n\nΜε εκτίμηση,\nΜαρία";
 
@@ -52,7 +52,7 @@ describe("PDF export", () => {
 describe("DOCX export", () => {
   it.each(allThemes)("writes Greek text and the theme font in the %s theme", async (theme) => {
     const buffer = await renderDocx(exportBlocks({ document: "cv", cv: greekCv, coverLetter: letter }), theme, { title: "CV", language: "el" });
-    const xml = readZipEntry(buffer, "word/document.xml");
+    const xml = readZipText(buffer, "word/document.xml");
     expect(xml).toContain("Μαρία Παπαδοπούλου");
     expect(xml).toContain("Größe, Straße");
     expect(xml).toMatch(/w:ascii="(Georgia|Calibri|Arial|Cambria|Segoe UI)"/);
@@ -60,7 +60,7 @@ describe("DOCX export", () => {
 
   it("uses the CV name as letterhead for the cover letter", async () => {
     const buffer = await renderDocx(exportBlocks({ document: "letter", cv: greekCv, coverLetter: letter }), "modern", { title: "Cover letter", language: "el" });
-    const xml = readZipEntry(buffer, "word/document.xml")!;
+    const xml = readZipText(buffer, "word/document.xml")!;
     expect(xml.indexOf("Μαρία Παπαδοπούλου")).toBeLessThan(xml.indexOf("Αξιότιμη"));
     expect(xml).not.toContain("Εμπειρία");
   });

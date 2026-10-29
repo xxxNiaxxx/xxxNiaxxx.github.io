@@ -42,6 +42,8 @@ label, legend { display: block; font-weight: 650; font-size: 13px; margin: 14px 
 textarea, input, select { width: 100%; border: 1px solid #c9ced8; border-radius: 10px; padding: 11px 12px; background: white; }
 textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
 .counter { margin: 4px 0 0; text-align: right; }
+.source-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; }
+.source-tools .small { flex: 1 1 200px; }
 fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 
 button.primary { border: 0; color: white; background: var(--accent); border-radius: 10px; padding: 12px 16px; font-weight: 750; width: 100%; margin-top: 14px; }

@@ -45,7 +45,11 @@ export async function readJson<T extends z.ZodType>(request: Request, schema: T,
 }
 
 export async function readLimited(request: Request, maxBytes: number): Promise<string> {
-  if (!request.body) return "";
+  return (await readLimitedBytes(request, maxBytes)).toString("utf8");
+}
+
+export async function readLimitedBytes(request: Request, maxBytes: number): Promise<Buffer> {
+  if (!request.body) return Buffer.alloc(0);
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
@@ -59,7 +63,7 @@ export async function readLimited(request: Request, maxBytes: number): Promise<s
     }
     chunks.push(value);
   }
-  return Buffer.concat(chunks).toString("utf8");
+  return Buffer.concat(chunks);
 }
 
 /** First address in x-forwarded-for (set by Vercel), else x-real-ip. */

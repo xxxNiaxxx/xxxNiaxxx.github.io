@@ -12,6 +12,8 @@ No account and no card are needed. The app does not store CVs.
 |---|---|
 | Site in 5 languages (`en`, `el`, `es`, `fr`, `de`); output language chosen separately | Done |
 | 3 free themes (Classic, Modern, Minimal) that look different in the preview, PDF and DOCX | Done |
+| CV from a file: PDF (text layer), Word DOCX or TXT, read in memory on the server | Done |
+| CV and job ad from screenshots (upload, or paste with Ctrl+V), read by a vision model; the text lands in the box for the user to check | Done (needs `AI_VISION_MODEL`) |
 | Generation and repeated revisions, schema-validated; earlier versions kept, never overwritten | Done |
 | Fabrication guards: strict prompt, CV/job ad treated as data (prompt-injection fencing), unsupported requirements go to "verify", new years/percentages/amounts are flagged | Done |
 | PDF export (pdf-lib + bundled DejaVu fonts: Greek, accents, ß, ñ, ç as real, searchable text) | Done |
@@ -33,6 +35,8 @@ ollama pull llama3.1:8b         # or another model you prefer
 ollama serve                    # if it is not already running
 npm run dev                     # http://localhost:3000
 ```
+
+To try screenshot import locally: `ollama pull llama3.2-vision` and set `AI_VISION_MODEL=llama3.2-vision` in `.env.local`. Without it, the screenshot buttons are hidden.
 
 The defaults in `.env.example` point at Ollama on `http://localhost:11434/v1`. Small local models are slower and less reliable at following the JSON format; the app retries once on malformed output. Larger models give better Greek.
 
@@ -56,6 +60,8 @@ The PDF test also extracts the text with `pdftotext` when Poppler is installed, 
 src/app/page.tsx                 UI (client): form, themes, versions, preview, downloads
 src/components/DocumentPreview   on-screen version of the export layouts
 src/app/api/generate             validate → AI config → duplicate lock → rate limit → AI → checks
+src/app/api/import               CV file (multipart) → type checked from the bytes → text (PDF/DOCX/TXT)
+src/app/api/extract              screenshot (data URL, shrunk in the browser) → vision model → text
 src/app/api/export/{pdf,docx}    validate → rate limit → premium check → render file
 src/app/api/stripe/checkout      creates a Checkout Session with a server-side Price ID
 src/app/api/stripe/webhook       verifies the signature on the raw body, idempotent fulfilment
@@ -78,6 +84,9 @@ All are runtime-necessary and widely used:
 - `pdf-lib` + `@pdf-lib/fontkit` to build PDFs with embedded Unicode fonts (pure JavaScript, works on Vercel)
 - `docx` to build Word files
 - `stripe` for Checkout and webhook signature verification
+- `unpdf` (MIT, pdf.js packaged for serverless) to read the text of uploaded PDF CVs. It is pinned to 1.8.x; 2.0 was released the day before this was added.
+
+Word files are read with a small built-in zip reader (`src/lib/zip.ts`, with a cap on the unpacked size) instead of another dependency.
 
 The original scaffold's `openai` SDK was removed: its peer dependency conflicts with zod 4, and plain `fetch` covers the one endpoint we call. `@react-pdf/renderer` was replaced by `pdf-lib`. `postcss` is pinned through `overrides` to a patched version. `npm audit` reports 0 vulnerabilities.
 

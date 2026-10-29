@@ -13,6 +13,7 @@ export function limits() {
     perIpPerDay: intEnv("MAX_GENERATIONS_PER_IP_PER_DAY", intEnv("MAX_GENERATIONS_PER_DAY", 10)),
     globalPerDay: intEnv("MAX_GENERATIONS_GLOBAL_PER_DAY", 300),
     exportsPerIpPerDay: intEnv("MAX_EXPORTS_PER_IP_PER_DAY", 100),
+    imagesPerIpPerDay: intEnv("MAX_IMAGE_READS_PER_IP_PER_DAY", 20),
   };
 }
 
@@ -40,6 +41,20 @@ export async function consumeGeneration(ipKey: string): Promise<void> {
   if (mine > perIpPerDay) throw new AppError("rate_limited");
   const global = await kv.incr(`rl:gen:global:${day}`, DAY + 3600);
   if (global > globalPerDay) throw new AppError("global_limit");
+}
+
+/**
+ * Counts one screenshot read. Image calls cost about as much as a generation,
+ * so they also count against the global daily budget.
+ */
+export async function consumeImageRead(ipKey: string): Promise<void> {
+  assertLimiterReady();
+  const kv = getKv();
+  const day = today();
+  const mine = await kv.incr(`rl:img:ip:${ipKey}:${day}`, DAY + 3600);
+  if (mine > limits().imagesPerIpPerDay) throw new AppError("rate_limited");
+  const global = await kv.incr(`rl:gen:global:${day}`, DAY + 3600);
+  if (global > limits().globalPerDay) throw new AppError("global_limit");
 }
 
 export async function consumeExport(ipKey: string): Promise<void> {

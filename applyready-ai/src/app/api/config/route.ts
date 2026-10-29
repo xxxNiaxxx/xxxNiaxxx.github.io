@@ -1,3 +1,4 @@
+import { imageInputEnabled } from "@/lib/ai";
 import { json } from "@/lib/http";
 import { checkoutReady } from "@/lib/stripe";
 
@@ -6,5 +7,5 @@ export const dynamic = "force-dynamic";
 
 /** What the browser may show. Reveals only booleans, never which variable is missing. */
 export function GET() {
-  return json({ premiumCheckout: checkoutReady() });
+  return json({ premiumCheckout: checkoutReady(), imageInput: imageInputEnabled() });
 }

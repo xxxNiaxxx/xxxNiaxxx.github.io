@@ -46,3 +46,22 @@ export const exportSchema = z.object({
   entitlement: z.string().max(2_000).optional(),
 });
 export type ExportRequest = z.infer<typeof exportSchema>;
+
+/** Largest image the server accepts after the browser has shrunk it (base64 adds ~33 %). */
+export const MAX_IMAGE_BYTES = 3_000_000;
+
+export const extractSchema = z.object({
+  kind: z.enum(["cv", "job"]),
+  image: z.string().max(Math.ceil(MAX_IMAGE_BYTES * 4 / 3) + 40).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/),
+});
+export type ExtractRequest = z.infer<typeof extractSchema>;
+
+/** Checks the decoded bytes really are the image type the data URL claims. */
+export function imageMatchesType(dataUrl: string): boolean {
+  const match = /^data:image\/(png|jpeg|webp);base64,(.*)$/.exec(dataUrl);
+  if (!match) return false;
+  const bytes = Buffer.from(match[2].slice(0, 32), "base64");
+  if (match[1] === "png") return bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (match[1] === "jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  return bytes.subarray(0, 4).toString("latin1") === "RIFF" && bytes.subarray(8, 12).toString("latin1") === "WEBP";
+}

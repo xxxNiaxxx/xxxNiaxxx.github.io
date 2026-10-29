@@ -8,6 +8,8 @@ This describes what the code does. It is **not** legal advice, and it does not m
 |---|---|---|
 | CV text, job ad, revision request, previous result | Browser → our serverless function → the configured AI provider | **Not stored by the app.** Not written to logs. Exists in the browser tab until reload or close. The AI provider handles it under its own terms (see below). |
 | Generated CV / letter / gaps | AI provider → our function → browser | Same as above. |
+| Uploaded CV files (PDF/DOCX/TXT) | Browser → our function; the text is extracted in memory | Not stored or logged. Only the extracted text goes back to the browser. |
+| Screenshots of a CV or job ad | Shrunk in the browser (max 2000 px, JPEG) → our function → the AI provider's vision model | Not stored or logged by the app. The provider handles it like the text (see below). Screenshots can show more than intended (other tabs, notifications), so users should crop them. |
 | Export requests (CV and letter text) | Browser → our function, rendered in memory | Not stored or logged. The file is streamed back. |
 | IP address | Used to build a rate-limit key: `sha256(RATE_LIMIT_SALT + IP)`, truncated | Daily counters in Upstash Redis, expiring after about 25 hours. A duplicate-request lock (a hash of the request) lasts up to 2 minutes and is deleted on completion. |
 | Stripe purchase (if enabled) | Stripe processes payment and email | We store `{theme, status, livemode, createdAt}` keyed by the Checkout Session id for 3 years (fulfilment and refunds), plus a payment-intent → session id mapping. No name, email or card data. |

@@ -93,7 +93,7 @@ describe("export routes", () => {
 });
 
 describe("GET /api/config", () => {
-  it("keeps premium checkout off by default", async () => {
-    expect(await (await configGet()).json()).toEqual({ premiumCheckout: false });
+  it("keeps premium checkout and screenshot import off by default", async () => {
+    expect(await (await configGet()).json()).toEqual({ premiumCheckout: false, imageInput: false });
   });
 });
