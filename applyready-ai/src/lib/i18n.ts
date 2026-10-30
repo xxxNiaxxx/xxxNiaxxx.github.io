@@ -136,8 +136,8 @@ type Copy = {
 };
 
 const en: Copy = {
-  tagline: "Send every application with confidence.",
-  intro: "Paste your CV and a job ad. In 2 minutes you have a CV and cover letter made for that job, you know why you fit, and you're ready for the interview. Nothing made up.",
+  tagline: "Your experience counts. Send it with confidence.",
+  intro: "We help people who work in tourism, and feel their experience “doesn’t show” on paper, send every hotel a CV and cover letter written for it, in English or German, in 2 minutes. No need to know how to write a CV, no favours to ask anyone and not a single made-up qualification: just what you have already done and didn’t know how much it counts.",
   steps: ["Paste your CV and the job ad", "See why you fit and how well you match", "Download PDF or Word and apply with confidence"],
   badges: ["Free", "No account", "No card", "No subscription"],
   extrasTitle: "Extra help for this application",
@@ -304,8 +304,8 @@ const en: Copy = {
 };
 
 const el: Copy = {
-  tagline: "Στείλε κάθε αίτηση με σιγουριά.",
-  intro: "Επικόλλησε το βιογραφικό σου και μια αγγελία. Σε 2 λεπτά έχεις βιογραφικό και επιστολή γι' αυτή τη θέση, ξέρεις γιατί ταιριάζεις και είσαι έτοιμος/η για τη συνέντευξη. Χωρίς τίποτα ψεύτικο.",
+  tagline: "Η εμπειρία σου μετράει. Στείλ' τη με σιγουριά.",
+  intro: "Βοηθάμε όσους δουλεύουν στον τουρισμό και νιώθουν ότι η εμπειρία τους «δεν φαίνεται» στο χαρτί, να στέλνουν σε κάθε ξενοδοχείο βιογραφικό και συνοδευτική επιστολή γραμμένα γι' αυτό, στα αγγλικά ή στα γερμανικά, σε 2 λεπτά. Χωρίς να ξέρεις να γράφεις βιογραφικό, χωρίς να ζητήσεις χάρη από κανέναν και χωρίς ούτε ένα ψεύτικο προσόν, μόνο με όσα έχεις ήδη κάνει και δεν ήξερες πόσο μετράνε.",
   steps: ["Επικόλλησε βιογραφικό και αγγελία", "Δες γιατί ταιριάζεις και πόσο", "Κατέβασε PDF ή Word και στείλ' το με σιγουριά"],
   badges: ["Δωρεάν", "Χωρίς λογαριασμό", "Χωρίς κάρτα", "Χωρίς συνδρομή"],
   extrasTitle: "Επιπλέον βοήθεια για την αίτηση",
@@ -472,8 +472,8 @@ const el: Copy = {
 };
 
 const es: Copy = {
-  tagline: "Envía cada candidatura con seguridad.",
-  intro: "Pega tu CV y una oferta. En 2 minutos tienes un CV y una carta hechos para ese puesto, sabes por qué encajas y estás listo/a para la entrevista. Nada inventado.",
+  tagline: "Tu experiencia cuenta. Envíala con seguridad.",
+  intro: "Ayudamos a quienes trabajan en turismo, y sienten que su experiencia «no se ve» en el papel, a enviar a cada hotel un CV y una carta escritos para él, en inglés o alemán, en 2 minutos. Sin saber redactar un CV, sin pedirle favores a nadie y sin una sola cualificación inventada: solo con lo que ya has hecho y no sabías cuánto vale.",
   steps: ["Pega tu CV y la oferta", "Mira por qué encajas y cuánto", "Descarga PDF o Word y envíalo con seguridad"],
   badges: ["Gratis", "Sin cuenta", "Sin tarjeta", "Sin suscripción"],
   extrasTitle: "Ayuda extra para esta candidatura",
@@ -640,8 +640,8 @@ const es: Copy = {
 };
 
 const fr: Copy = {
-  tagline: "Envoyez chaque candidature en confiance.",
-  intro: "Collez votre CV et une offre. En 2 minutes, vous avez un CV et une lettre faits pour ce poste, vous savez pourquoi vous correspondez et vous êtes prêt·e pour l’entretien. Rien d’inventé.",
+  tagline: "Votre expérience compte. Envoyez-la en confiance.",
+  intro: "Nous aidons celles et ceux qui travaillent dans le tourisme, et qui sentent que leur expérience « ne se voit pas » sur le papier, à envoyer à chaque hôtel un CV et une lettre écrits pour lui, en anglais ou en allemand, en 2 minutes. Sans savoir rédiger un CV, sans demander de service à personne et sans aucune qualification inventée : seulement avec ce que vous avez déjà fait, sans savoir combien cela compte.",
   steps: ["Collez votre CV et l’offre", "Voyez pourquoi vous correspondez, et à quel point", "Téléchargez en PDF ou Word et postulez en confiance"],
   badges: ["Gratuit", "Sans compte", "Sans carte", "Sans abonnement"],
   extrasTitle: "Aide supplémentaire pour cette candidature",
@@ -808,8 +808,8 @@ const fr: Copy = {
 };
 
 const de: Copy = {
-  tagline: "Schick jede Bewerbung mit Selbstvertrauen ab.",
-  intro: "Füge deinen Lebenslauf und eine Stellenanzeige ein. In 2 Minuten hast du Lebenslauf und Anschreiben für genau diese Stelle, weißt, warum du passt, und bist bereit fürs Vorstellungsgespräch. Nichts erfunden.",
+  tagline: "Deine Erfahrung zählt. Schick sie mit Selbstvertrauen ab.",
+  intro: "Wir helfen allen, die im Tourismus arbeiten und das Gefühl haben, dass ihre Erfahrung auf dem Papier „nicht sichtbar“ ist: Sie schicken jedem Hotel einen Lebenslauf und ein Anschreiben, die genau dafür geschrieben sind, auf Englisch oder Deutsch, in 2 Minuten. Ohne einen Lebenslauf schreiben zu können, ohne jemanden um einen Gefallen zu bitten und ohne eine einzige erfundene Qualifikation: nur mit dem, was du schon gemacht hast und von dem du nicht wusstest, wie viel es zählt.",
   steps: ["Lebenslauf und Anzeige einfügen", "Sehen, warum und wie gut du passt", "Als PDF oder Word laden und selbstbewusst bewerben"],
   badges: ["Kostenlos", "Ohne Konto", "Ohne Karte", "Ohne Abo"],
   extrasTitle: "Extra-Hilfe für diese Bewerbung",
