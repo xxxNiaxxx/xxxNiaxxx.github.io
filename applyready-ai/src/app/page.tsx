@@ -453,6 +453,7 @@ export default function Home() {
                       <p>{item.answer}</p>
                     </details>
                   ))}
+                  <p className="small rights">⚖ {t.interviewRights}</p>
                 </div>
               )}
 

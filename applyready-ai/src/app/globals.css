@@ -151,6 +151,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .fit strong { color: var(--ink); }
 .fit-evidence { display: block; margin-top: 2px; }
 .qa { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 8px; background: var(--field); }
+.rights { margin-top: 12px; }
 .qa summary { font-weight: 650; cursor: pointer; }
 .qa p { color: var(--ink); margin: 8px 0 0; }
 .example-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 4px; }

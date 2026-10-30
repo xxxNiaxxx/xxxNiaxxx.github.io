@@ -93,6 +93,9 @@ describe("generateApplication", () => {
     expect(system).toContain('"strengths"');
     expect(system).toContain("Only strengths the CV really shows");
     expect(system).toContain("never by claiming the missing skill");
+    expect(system).toContain("STAR");
+    expect(system).toContain("availability for the full season");
+    expect(system).toContain("Never include questions about family, children, pregnancy, health, religion, politics or age");
   });
   it("retries once on bad output, then gives up", async () => {
     const fetchImpl = vi.fn(async () => aiReply("not json"));

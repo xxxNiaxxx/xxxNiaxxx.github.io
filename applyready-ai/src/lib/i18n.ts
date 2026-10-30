@@ -59,6 +59,7 @@ type Copy = {
   fitHint: string;
   interviewTitle: string;
   interviewHint: string;
+  interviewRights: string;
   inputHeading: string;
   uiLanguage: string;
   lightMode: string;
@@ -189,6 +190,7 @@ const en: Copy = {
   fitHint: "Your real strengths for this role. Say them out loud before the interview.",
   interviewTitle: "Interview preparation",
   interviewHint: "Likely questions with answers built from your own experience. Put them in your own words.",
+  interviewRights: "Questions about marital status, children or pregnancy, health, religion, political views or age have nothing to do with the job and may be unlawful under equal-treatment law (in Greece, Law 4443/2016). You can politely decline: “I don’t think that affects the job, but I can tell you about my availability.”",
   inputHeading: "Your information",
   uiLanguage: "Site language",
   lightMode: "Light mode",
@@ -356,6 +358,7 @@ const el: Copy = {
   fitHint: "Τα πραγματικά δυνατά σου σημεία γι' αυτή τη θέση. Πες τα μία φορά φωναχτά πριν από τη συνέντευξη.",
   interviewTitle: "Προετοιμασία συνέντευξης",
   interviewHint: "Πιθανές ερωτήσεις, με απαντήσεις από τη δική σου εμπειρία. Πες τες με δικά σου λόγια.",
+  interviewRights: "Ερωτήσεις για οικογενειακή κατάσταση, παιδιά ή εγκυμοσύνη, υγεία, θρησκεία, πολιτικές πεποιθήσεις ή ηλικία δεν αφορούν τη δουλειά και μπορεί να είναι παράνομες (ν. 4443/2016 για την ίση μεταχείριση). Μπορείς ευγενικά να μην απαντήσεις: «Δεν νομίζω ότι επηρεάζει τη δουλειά· μπορώ να σας πω για τη διαθεσιμότητά μου».",
   inputHeading: "Τα στοιχεία σου",
   uiLanguage: "Γλώσσα σελίδας",
   lightMode: "Φωτεινό θέμα",
@@ -523,6 +526,7 @@ const es: Copy = {
   fitHint: "Tus fortalezas reales para este puesto. Dilas en voz alta antes de la entrevista.",
   interviewTitle: "Preparación de la entrevista",
   interviewHint: "Preguntas probables con respuestas basadas en tu propia experiencia. Dilas con tus palabras.",
+  interviewRights: "Las preguntas sobre estado civil, hijos o embarazo, salud, religión, ideas políticas o edad no tienen que ver con el trabajo y pueden ser ilegales según la normativa de igualdad de trato. Puedes no responder con educación: «No creo que afecte al trabajo, pero puedo hablarle de mi disponibilidad».",
   inputHeading: "Tu información",
   uiLanguage: "Idioma del sitio",
   lightMode: "Modo claro",
@@ -690,6 +694,7 @@ const fr: Copy = {
   fitHint: "Vos vrais points forts pour ce poste. Dites-les à voix haute avant l’entretien.",
   interviewTitle: "Préparation à l’entretien",
   interviewHint: "Questions probables, avec des réponses tirées de votre propre expérience. Reformulez-les avec vos mots.",
+  interviewRights: "Les questions sur la situation familiale, les enfants ou la grossesse, la santé, la religion, les opinions politiques ou l’âge n’ont rien à voir avec le poste et peuvent être illégales au regard du droit de l’égalité de traitement. Vous pouvez poliment ne pas répondre : « Je ne pense pas que cela concerne le poste, mais je peux vous parler de ma disponibilité. »",
   inputHeading: "Vos informations",
   uiLanguage: "Langue du site",
   lightMode: "Mode clair",
@@ -857,6 +862,7 @@ const de: Copy = {
   fitHint: "Deine echten Stärken für diese Stelle. Sag sie vor dem Gespräch einmal laut.",
   interviewTitle: "Vorbereitung aufs Vorstellungsgespräch",
   interviewHint: "Wahrscheinliche Fragen mit Antworten aus deiner eigenen Erfahrung. Formuliere sie mit deinen Worten.",
+  interviewRights: "Fragen zu Familienstand, Kindern oder Schwangerschaft, Gesundheit, Religion, politischer Einstellung oder Alter haben nichts mit der Stelle zu tun und können nach dem Gleichbehandlungsrecht unzulässig sein. Du kannst höflich nicht antworten: „Ich glaube, das betrifft die Stelle nicht, aber ich erzähle Ihnen gern von meiner Verfügbarkeit.“",
   inputHeading: "Deine Angaben",
   uiLanguage: "Sprache der Seite",
   lightMode: "Heller Modus",
