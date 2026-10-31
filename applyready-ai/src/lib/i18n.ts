@@ -9,6 +9,16 @@ type Copy = {
   intro: string;
   steps: [string, string, string];
   badges: string[];
+  companyLabel: string;
+  companyPlaceholder: string;
+  companyHint: string;
+  valuesTitle: string;
+  valuesHint: string;
+  valuesEvidence: string;
+  valuesNoEvidence: string;
+  valuesHow: string;
+  valuesReflect: string;
+  valuesTwoWay: string;
   extrasTitle: string;
   extrasHint: string;
   emailsBtn: string;
@@ -140,6 +150,16 @@ const en: Copy = {
   intro: "We help people who work in tourism, and feel their experience “doesn’t show” on paper, send every hotel a CV and cover letter written for it, in English or German, in 2 minutes. No need to know how to write a CV, no favours to ask anyone and not a single made-up qualification: just what you have already done and didn’t know how much it counts.",
   steps: ["Paste your CV and the job ad", "See why you fit and how well you match", "Download PDF or Word and apply with confidence"],
   badges: ["Free", "No account", "No card", "No subscription"],
+  companyLabel: "What the company says about itself (optional)",
+  companyPlaceholder: "Paste the company’s “About us”, values or careers page…",
+  companyHint: "So we can see its values and how you fit. Leave it empty and we take them from the job ad.",
+  valuesTitle: "The company’s values and you",
+  valuesHint: "What your CV shows went into the cover letter. What it doesn’t show, we didn’t write.",
+  valuesEvidence: "From your CV:",
+  valuesNoEvidence: "Your CV doesn’t show this.",
+  valuesHow: "How to show it:",
+  valuesReflect: "Think about it / ask:",
+  valuesTwoWay: "The interview is for you too: does this company fit what matters to you?",
   extrasTitle: "Extra help for this application",
   extrasHint: "Made only when you ask for it.",
   emailsBtn: "Emails: send, follow-up, thank-you",
@@ -308,6 +328,16 @@ const el: Copy = {
   intro: "Βοηθάμε όσους δουλεύουν στον τουρισμό και νιώθουν ότι η εμπειρία τους «δεν φαίνεται» στο χαρτί, να στέλνουν σε κάθε ξενοδοχείο βιογραφικό και συνοδευτική επιστολή γραμμένα γι' αυτό, στα αγγλικά ή στα γερμανικά, σε 2 λεπτά. Χωρίς να ξέρεις να γράφεις βιογραφικό, χωρίς να ζητήσεις χάρη από κανέναν και χωρίς ούτε ένα ψεύτικο προσόν, μόνο με όσα έχεις ήδη κάνει και δεν ήξερες πόσο μετράνε.",
   steps: ["Επικόλλησε βιογραφικό και αγγελία", "Δες γιατί ταιριάζεις και πόσο", "Κατέβασε PDF ή Word και στείλ' το με σιγουριά"],
   badges: ["Δωρεάν", "Χωρίς λογαριασμό", "Χωρίς κάρτα", "Χωρίς συνδρομή"],
+  companyLabel: "Τι λέει η εταιρεία για τον εαυτό της (προαιρετικό)",
+  companyPlaceholder: "Επικόλλησε το «Ποιοι είμαστε», τις αξίες ή τη σελίδα καριέρας της εταιρείας…",
+  companyHint: "Έτσι βλέπουμε τις αξίες της και πόσο ταιριάζεις. Αν το αφήσεις κενό, τις βρίσκουμε από την αγγελία.",
+  valuesTitle: "Οι αξίες της εταιρείας και εσύ",
+  valuesHint: "Ό,τι δείχνει το βιογραφικό σου μπήκε στην επιστολή. Ό,τι δεν δείχνει, δεν το γράψαμε.",
+  valuesEvidence: "Από το βιογραφικό σου:",
+  valuesNoEvidence: "Δεν φαίνεται στο βιογραφικό σου.",
+  valuesHow: "Πώς να το δείξεις:",
+  valuesReflect: "Σκέψου ή ρώτησε:",
+  valuesTwoWay: "Η συνέντευξη είναι και για σένα: ταιριάζει αυτή η εταιρεία σε όσα έχουν σημασία για σένα;",
   extrasTitle: "Επιπλέον βοήθεια για την αίτηση",
   extrasHint: "Τα φτιάχνουμε μόνο αν τα ζητήσεις.",
   emailsBtn: "Email: αποστολή, follow-up, ευχαριστήριο",
@@ -476,6 +506,16 @@ const es: Copy = {
   intro: "Ayudamos a quienes trabajan en turismo, y sienten que su experiencia «no se ve» en el papel, a enviar a cada hotel un CV y una carta escritos para él, en inglés o alemán, en 2 minutos. Sin saber redactar un CV, sin pedirle favores a nadie y sin una sola cualificación inventada: solo con lo que ya has hecho y no sabías cuánto vale.",
   steps: ["Pega tu CV y la oferta", "Mira por qué encajas y cuánto", "Descarga PDF o Word y envíalo con seguridad"],
   badges: ["Gratis", "Sin cuenta", "Sin tarjeta", "Sin suscripción"],
+  companyLabel: "Lo que la empresa dice de sí misma (opcional)",
+  companyPlaceholder: "Pega el «Quiénes somos», los valores o la página de empleo de la empresa…",
+  companyHint: "Así vemos sus valores y cuánto encajas. Si lo dejas vacío, los tomamos de la oferta.",
+  valuesTitle: "Los valores de la empresa y tú",
+  valuesHint: "Lo que muestra tu CV está en la carta. Lo que no muestra, no lo escribimos.",
+  valuesEvidence: "De tu CV:",
+  valuesNoEvidence: "Tu CV no lo muestra.",
+  valuesHow: "Cómo mostrarlo:",
+  valuesReflect: "Piénsalo o pregunta:",
+  valuesTwoWay: "La entrevista también es para ti: ¿encaja esta empresa con lo que te importa?",
   extrasTitle: "Ayuda extra para esta candidatura",
   extrasHint: "Solo se crea si lo pides.",
   emailsBtn: "Emails: envío, seguimiento, agradecimiento",
@@ -644,6 +684,16 @@ const fr: Copy = {
   intro: "Nous aidons celles et ceux qui travaillent dans le tourisme, et qui sentent que leur expérience « ne se voit pas » sur le papier, à envoyer à chaque hôtel un CV et une lettre écrits pour lui, en anglais ou en allemand, en 2 minutes. Sans savoir rédiger un CV, sans demander de service à personne et sans aucune qualification inventée : seulement avec ce que vous avez déjà fait, sans savoir combien cela compte.",
   steps: ["Collez votre CV et l’offre", "Voyez pourquoi vous correspondez, et à quel point", "Téléchargez en PDF ou Word et postulez en confiance"],
   badges: ["Gratuit", "Sans compte", "Sans carte", "Sans abonnement"],
+  companyLabel: "Ce que l’entreprise dit d’elle-même (facultatif)",
+  companyPlaceholder: "Collez le « Qui sommes-nous », les valeurs ou la page carrières de l’entreprise…",
+  companyHint: "Pour voir ses valeurs et à quel point vous correspondez. Si vous laissez vide, nous les tirons de l’offre.",
+  valuesTitle: "Les valeurs de l’entreprise et vous",
+  valuesHint: "Ce que votre CV montre est dans la lettre. Ce qu’il ne montre pas, nous ne l’avons pas écrit.",
+  valuesEvidence: "D’après votre CV :",
+  valuesNoEvidence: "Votre CV ne le montre pas.",
+  valuesHow: "Comment le montrer :",
+  valuesReflect: "À méditer ou à demander :",
+  valuesTwoWay: "L’entretien est aussi pour vous : cette entreprise correspond-elle à ce qui compte pour vous ?",
   extrasTitle: "Aide supplémentaire pour cette candidature",
   extrasHint: "Créé seulement si vous le demandez.",
   emailsBtn: "Emails : envoi, relance, remerciement",
@@ -812,6 +862,16 @@ const de: Copy = {
   intro: "Wir helfen allen, die im Tourismus arbeiten und das Gefühl haben, dass ihre Erfahrung auf dem Papier „nicht sichtbar“ ist: Sie schicken jedem Hotel einen Lebenslauf und ein Anschreiben, die genau dafür geschrieben sind, auf Englisch oder Deutsch, in 2 Minuten. Ohne einen Lebenslauf schreiben zu können, ohne jemanden um einen Gefallen zu bitten und ohne eine einzige erfundene Qualifikation: nur mit dem, was du schon gemacht hast und von dem du nicht wusstest, wie viel es zählt.",
   steps: ["Lebenslauf und Anzeige einfügen", "Sehen, warum und wie gut du passt", "Als PDF oder Word laden und selbstbewusst bewerben"],
   badges: ["Kostenlos", "Ohne Konto", "Ohne Karte", "Ohne Abo"],
+  companyLabel: "Was das Unternehmen über sich sagt (optional)",
+  companyPlaceholder: "Füge „Über uns“, die Werte oder die Karriereseite des Unternehmens ein…",
+  companyHint: "So sehen wir seine Werte und wie gut du passt. Bleibt das Feld leer, nehmen wir sie aus der Anzeige.",
+  valuesTitle: "Die Werte des Unternehmens und du",
+  valuesHint: "Was dein Lebenslauf zeigt, steht im Anschreiben. Was er nicht zeigt, haben wir nicht geschrieben.",
+  valuesEvidence: "Aus deinem Lebenslauf:",
+  valuesNoEvidence: "Dein Lebenslauf zeigt das nicht.",
+  valuesHow: "So kannst du es zeigen:",
+  valuesReflect: "Denk darüber nach oder frag:",
+  valuesTwoWay: "Das Gespräch ist auch für dich: Passt dieses Unternehmen zu dem, was dir wichtig ist?",
   extrasTitle: "Extra-Hilfe für diese Bewerbung",
   extrasHint: "Wird nur erstellt, wenn du es anforderst.",
   emailsBtn: "E-Mails: Versand, Nachfassen, Dank",

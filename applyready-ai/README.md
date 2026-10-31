@@ -19,6 +19,7 @@ No account and no card are needed. The app does not store CVs.
 | "Try an example": a fictional seasonal-hotel CV and job ad (`src/lib/examples.ts`) | Done |
 | "My applications": a follow-up-aware list kept only in the browser; marking "Interview" offers practice | Done |
 | Share button and visit source: `?utm_source=` is logged as a short label with generation events (no cookies, no analytics) | Done |
+| Company values fit: optional "what the company says about itself" field; the AI lists the employer's values with real evidence from the CV (or none, with a prompt to reflect or ask), weaves only evidenced values into the cover letter, and adds a "Why us?" interview question | Done |
 | Keyword match score (like ATS scanners): your CV vs the tailored CV, matched and missing words of the ad; click a missing word to ask for it in a revision. Runs in the browser, no AI cost (`src/lib/match.ts`) | Done |
 | CV from a file: PDF (text layer), Word DOCX or TXT, read in memory on the server | Done |
 | CV and job ad from screenshots (upload, or paste with Ctrl+V), read by a vision model; the text lands in the box for the user to check | Done (needs `AI_VISION_MODEL`) |

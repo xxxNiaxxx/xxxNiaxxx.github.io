@@ -8,8 +8,8 @@ import { sourceFrom } from "@/lib/source";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-// CV + job ad + previous result + revision, UTF-8 (Greek is 2 bytes per letter).
-const MAX_BODY_BYTES = 220_000;
+// CV + job ad + company text + previous result + revision, UTF-8 (Greek is 2 bytes per letter).
+const MAX_BODY_BYTES = 240_000;
 
 export async function POST(request: Request) {
   const started = Date.now();
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const input = await readJson(request, requestSchema, MAX_BODY_BYTES);
     getAiConfig(); // fail fast on configuration problems, before counting the request
     const ipKey = hashKey(clientIp(request));
-    release = await lockDuplicate(hashKey(ipKey, input.cvText, input.jobText, input.revision, input.language));
+    release = await lockDuplicate(hashKey(ipKey, input.cvText, input.jobText, input.companyText, input.revision, input.language));
     await consumeGeneration(ipKey);
     const result = await generateApplication(input);
     const checks = findUnsupportedFigures(input.cvText, result.cv);

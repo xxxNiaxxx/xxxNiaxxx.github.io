@@ -150,6 +150,14 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .fit li::marker { content: "✓  "; color: var(--ok-ink); }
 .fit strong { color: var(--ink); }
 .fit-evidence { display: block; margin-top: 2px; }
+.values { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; background: var(--surface-2); }
+.values ul { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 8px; }
+.values li { border-left: 4px solid var(--line); padding: 4px 0 4px 10px; }
+.values li.has { border-left-color: var(--ok-ink); }
+.values li.has strong { color: var(--ok-ink); }
+.values li.open { border-left-color: var(--warn-ink); }
+.values li.open strong { color: var(--warn-ink); }
+.block { display: block; margin-top: 2px; }
 .qa { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 8px; background: var(--field); }
 .rights { margin-top: 12px; }
 .qa summary { font-weight: 650; cursor: pointer; }

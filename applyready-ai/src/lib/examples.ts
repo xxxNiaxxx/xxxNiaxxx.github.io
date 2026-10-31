@@ -66,6 +66,14 @@ Requirements:
 
 We offer accommodation, meals and training.`;
 
-export function exampleFor(language: Language): { cv: string; job: string } {
-  return { cv: language === "el" ? cvEl : cvEn, job };
+const company = `About us
+A family-run beach resort in Chania since 1985. We believe in genuine Cretan hospitality: we treat every guest like family.
+What we value:
+- Warm, personal service: we remember names and preferences
+- Teamwork: front office, housekeeping and restaurant work as one team
+- Sustainability: we reduce plastic and support local producers
+- Growth from within: many of our managers started as seasonal staff`;
+
+export function exampleFor(language: Language): { cv: string; job: string; company: string } {
+  return { cv: language === "el" ? cvEl : cvEn, job, company };
 }

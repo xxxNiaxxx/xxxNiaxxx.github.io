@@ -13,6 +13,8 @@ export const LIMITS = {
   gapsMax: 30,
   strengthsMax: 5,
   interviewMax: 6,
+  companyMax: 6_000,
+  valuesMax: 5,
 } as const;
 
 /** Removes control characters (keeps newlines and tabs) that have no place in a CV. */
@@ -30,12 +32,19 @@ export const resultSchema = z.object({
   strengths: z.array(z.object({ strength: text(1, 200), evidence: text(0, 300) })).max(LIMITS.strengthsMax).default([]),
   /** Likely interview questions with honest answers built from the person's real experience. */
   interview: z.array(z.object({ question: text(1, 300), answer: text(1, 900) })).max(LIMITS.interviewMax).default([]),
+  /**
+   * The employer's values (from the job ad and the optional company text) and, for each, real evidence
+   * from the CV. Empty evidence means the CV does not show it: never claimed, only suggested to reflect on.
+   */
+  values: z.array(z.object({ value: text(1, 120), evidence: text(0, 300), howToShow: text(0, 400) })).max(LIMITS.valuesMax).default([]),
 });
 export type ApplicationResult = z.infer<typeof resultSchema>;
 
 export const requestSchema = z.object({
   cvText: text(LIMITS.cvMin, LIMITS.cvMax),
   jobText: text(LIMITS.jobMin, LIMITS.jobMax),
+  /** Optional: what the company says about itself (about us, careers page, values). */
+  companyText: z.string().transform(cleanText).pipe(z.string().trim().max(LIMITS.companyMax)).optional().default(""),
   language: z.enum(languages),
   theme: z.enum(allThemes),
   revision: z.string().transform(cleanText).pipe(z.string().trim().max(LIMITS.revisionMax)).optional().default(""),
@@ -97,6 +106,7 @@ export const assistRequestSchema = z.object({
   cvText: text(LIMITS.cvMin, LIMITS.cvMax),
   jobText: text(LIMITS.jobMin, LIMITS.jobMax),
   tailoredCv: text(1, LIMITS.cvMax),
+  companyText: z.string().transform(cleanText).pipe(z.string().trim().max(LIMITS.companyMax)).optional().default(""),
   gaps: z.array(text(1, LIMITS.gapMax)).max(LIMITS.gapsMax).default([]),
   question: text(1, 300).optional(),
   answer: text(1, 2_000).optional(),

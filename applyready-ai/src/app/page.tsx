@@ -61,6 +61,7 @@ export default function Home() {
   const [outputTouched, setOutputTouched] = useState(false);
   const [cvText, setCvText] = useState("");
   const [jobText, setJobText] = useState("");
+  const [companyText, setCompanyText] = useState("");
   const [theme, setTheme] = useState<Theme>("classic");
   const [versions, setVersions] = useState<Version[]>([]);
   const [current, setCurrent] = useState(0);
@@ -154,7 +155,7 @@ export default function Home() {
     const language = override?.language ?? outputLang;
     try {
       const response = await postJson("/api/generate", {
-        cvText, jobText, language, theme,
+        cvText, jobText, companyText, language, theme,
         revision: request,
         previous: base?.result,
       });
@@ -244,7 +245,7 @@ export default function Home() {
   const [otherLang, setOtherLang] = useState<Language>("en");
   // Keep the "other language" choice different from the current output language.
   useEffect(() => { if (otherLang === outputLang) setOtherLang(outputLang === "en" ? "de" : "en"); }, [outputLang, otherLang]);
-  const assistCtx = version ? { language: outputLang, cvText, jobText, result: version.result } : null;
+  const assistCtx = version ? { language: outputLang, cvText, jobText, companyText, result: version.result } : null;
 
   async function share() {
     const url = window.location.origin;
@@ -314,7 +315,7 @@ export default function Home() {
           <h2>{t.inputHeading}</h2>
 
           <div className="example-row">
-            <button type="button" className="secondary" disabled={Boolean(busy || reading)} onClick={() => { const ex = exampleFor(uiLang); setCvText(ex.cv); setJobText(ex.job); }}>{t.example}</button>
+            <button type="button" className="secondary" disabled={Boolean(busy || reading)} onClick={() => { const ex = exampleFor(uiLang); setCvText(ex.cv); setJobText(ex.job); setCompanyText(ex.company); }}>{t.example}</button>
             <span className="small">{t.exampleNote}</span>
           </div>
 
@@ -328,6 +329,10 @@ export default function Home() {
           {liveMatch?.comparable && <p className="small live-match">{format(t.matchLive, { n: liveMatch.score })}</p>}
           <SourceTools kind="job" allowFiles={false} imageInput={imageInput} disabled={Boolean(reading || busy)} t={t} events={jobEvents} hintId="job-tools-hint" />
           <p id="job-count" className="small counter">{format(t.chars, { n: jobText.length, max: LIMITS.jobMax })}{jobText.trim().length < LIMITS.jobMin && ` · ${format(t.minChars, { min: LIMITS.jobMin })}`}</p>
+
+          <label htmlFor="company">{t.companyLabel}</label>
+          <textarea id="company" value={companyText} onChange={(e) => setCompanyText(e.target.value)} maxLength={LIMITS.companyMax} placeholder={t.companyPlaceholder} aria-describedby="company-hint" rows={3} />
+          <p id="company-hint" className="small">{t.companyHint}</p>
 
           <label htmlFor="output-lang">{t.outputLanguage}</label>
           <select id="output-lang" value={outputLang} onChange={(e) => { setOutputLang(e.target.value as Language); setOutputTouched(true); }}>
@@ -414,6 +419,25 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
+                </section>
+              )}
+
+              {version.result.values.length > 0 && (
+                <section className="values" aria-labelledby="values-title">
+                  <h2 id="values-title">{t.valuesTitle}</h2>
+                  <p className="small">{t.valuesHint}</p>
+                  <ul>
+                    {version.result.values.map((v, i) => (
+                      <li key={i} className={v.evidence ? "has" : "open"}>
+                        <strong>{v.evidence ? "✓ " : "? "}{v.value}</strong>
+                        {v.evidence
+                          ? <span className="small block">{t.valuesEvidence} {v.evidence}</span>
+                          : <span className="small block">{t.valuesNoEvidence}</span>}
+                        {v.howToShow && <span className="small block">{v.evidence ? t.valuesHow : t.valuesReflect} {v.howToShow}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="small">{t.valuesTwoWay}</p>
                 </section>
               )}
 

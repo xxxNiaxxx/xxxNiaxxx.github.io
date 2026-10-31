@@ -63,6 +63,13 @@ describe("buildAssistMessages", () => {
   });
 });
 
+describe("company text in extras", () => {
+  it("is passed to the AI as fenced data when given", () => {
+    const [, user] = buildAssistMessages(assistRequestSchema.parse({ ...base, task: "emails", companyText: "Family-run resort, genuine hospitality." }));
+    expect(user.content).toContain("<company_info>\nFamily-run resort, genuine hospitality.\n</company_info>");
+  });
+});
+
 describe("cleanSource", () => {
   it("keeps short labels only", () => {
     expect(cleanSource("Facebook-Group")).toBe("facebook-group");

@@ -6,7 +6,7 @@ This describes what the code does. It is **not** legal advice, and it does not m
 
 | Data | Where it goes | Kept? |
 |---|---|---|
-| CV text, job ad, revision request, previous result | Browser → our serverless function → the configured AI provider | **Not stored by the app.** Not written to logs. Exists in the browser tab until reload or close. The AI provider handles it under its own terms (see below). |
+| CV text, job ad, optional company text, revision request, previous result | Browser → our serverless function → the configured AI provider | **Not stored by the app.** Not written to logs. Exists in the browser tab until reload or close. The AI provider handles it under its own terms (see below). |
 | Generated CV / letter / gaps | AI provider → our function → browser | Same as above. |
 | Uploaded CV files (PDF/DOCX/TXT) | Browser → our function; the text is extracted in memory | Not stored or logged. Only the extracted text goes back to the browser. |
 | Screenshots of a CV or job ad | Shrunk in the browser (max 2000 px, JPEG) → our function → the AI provider's vision model | Not stored or logged by the app. The provider handles it like the text (see below). Screenshots can show more than intended (other tabs, notifications), so users should crop them. |

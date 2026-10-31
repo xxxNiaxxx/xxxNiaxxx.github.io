@@ -8,7 +8,7 @@ import type { ApplicationResult, EmailsResult, LinkedinResult, PlanResult, Pract
 
 type Copy = (typeof copy)["en"];
 type Task = "emails" | "plan" | "linkedin";
-export type AssistContext = { language: Language; cvText: string; jobText: string; result: ApplicationResult };
+export type AssistContext = { language: Language; cvText: string; jobText: string; companyText: string; result: ApplicationResult };
 export type Post = (url: string, body: unknown) => Promise<Response>;
 
 function CopyButton({ text, t }: { text: string; t: Copy }) {
@@ -31,7 +31,7 @@ export function Extras({ ctx, t, post, onError }: { ctx: AssistContext; t: Copy;
     if (busy) return;
     setBusy(task);
     try {
-      const response = await post("/api/assist", { task, language: ctx.language, cvText: ctx.cvText, jobText: ctx.jobText, tailoredCv: ctx.result.cv, gaps: ctx.result.gaps });
+      const response = await post("/api/assist", { task, language: ctx.language, cvText: ctx.cvText, jobText: ctx.jobText, companyText: ctx.companyText, tailoredCv: ctx.result.cv, gaps: ctx.result.gaps });
       const { result } = (await response.json()) as { result: unknown };
       if (task === "emails") setEmails(result as EmailsResult);
       if (task === "plan") setPlan(result as PlanResult);
@@ -102,7 +102,7 @@ export function Practice({ ctx, t, post, onError }: { ctx: AssistContext; t: Cop
     setBusy(true);
     setFeedback(null);
     try {
-      const response = await post("/api/assist", { task: "practice", language: ctx.language, cvText: ctx.cvText, jobText: ctx.jobText, tailoredCv: ctx.result.cv, gaps: ctx.result.gaps, question, answer });
+      const response = await post("/api/assist", { task: "practice", language: ctx.language, cvText: ctx.cvText, jobText: ctx.jobText, companyText: ctx.companyText, tailoredCv: ctx.result.cv, gaps: ctx.result.gaps, question, answer });
       setFeedback(((await response.json()) as { result: PracticeResult }).result);
     } catch (error) {
       onError(error);
