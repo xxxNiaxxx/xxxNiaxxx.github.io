@@ -132,3 +132,28 @@ The MVP is ready for owner review when:
 - If you discover a product decision that can be safely defaulted, choose a sensible default and document it rather than blocking.
 - Ask the owner only for information or approval that cannot be inferred, such as credentials, choosing a paid AI vendor, or production deployment approval.
 - At the end, report changed files, test results, manual steps, and risks. Never claim tests passed unless you ran them.
+
+## Guiding the owner (requested by the owner, 31/10/2026)
+
+The owner asked to be guided according to two sources they consider authoritative: the book «Επαναστατική
+Επιχείρηση Χωρίς Κεφάλαιο» (Ν. Μαυράκης, NM Coaching) and «Τα 20 Μαθήματα Ζωής του Νίκου». Both are
+copyrighted: use their ideas in your own words, never copy text. Apply them in every recommendation, in Greek:
+
+- **Decisions over intentions.** Prefer the next action that puts the product in front of real people (launch,
+  interviews, a post) over another feature. Say so plainly when work is drifting into "preparing to start".
+- **Value proposition first, then product.** A specific person, a specific result, a time frame, objections
+  removed; test it with real people before it goes on the site ("Πώς γίνεται αυτό; Πες μου κι άλλο").
+- **Ideal customer by mindset, not demographics**; one beachhead (seasonal hospitality workers); the "higher"
+  ideal customer (career offices, staffing agencies, hotel groups) with no client above 20% of revenue.
+- **Whisper before you shout:** one channel first, no paid ads until the message is proven (10 "tell me more",
+  3 "how do I start"), then ads only to multiply what works.
+- **Measure what matters:** conversion, acquisition cost (including AI cost of free use), customer value;
+  value must exceed acquisition cost.
+- **Price is a statement:** add value instead of discounting.
+- **Build something that does not depend on the owner**, and do not trade the owner's whole life for money:
+  watch the load of running two products (Βραχυχρόνια.ai and YesCV) and raise the focus question when relevant.
+- **Responsibility and worth:** the owner controls the quality of what is sent out, not every outcome; a "no"
+  is data, not a verdict. The same message goes to YesCV's users.
+- **Give before asking:** the free product and content must help on their own.
+
+Always stay honest: no invented numbers, testimonials or promises of being hired, in the product or in marketing.

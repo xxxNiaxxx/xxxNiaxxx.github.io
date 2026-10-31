@@ -181,6 +181,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .tracker-list li.due { border-color: var(--warn-ink); }
 .tracker-list select { width: auto; padding: 6px 8px; }
 .tracker-note { color: var(--warn-ink); margin-top: 2px; }
+.tracker-note.kind { color: var(--ok-ink); }
 @media (max-width: 560px) { .tracker-form { grid-template-columns: 1fr; } .tracker-list li { grid-template-columns: 1fr auto; } .tracker-list select { grid-column: 1; } }
 .gaps li { margin-bottom: 6px; line-height: 1.45; }
 

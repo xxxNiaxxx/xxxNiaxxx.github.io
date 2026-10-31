@@ -39,6 +39,13 @@ export function Tracker({ t, onPractice }: { t: Copy; onPractice?: () => void })
                 <strong>{app.company}</strong>{app.role && <span> · {app.role}</span>}
                 <span className="small"> · {app.sentOn}</span>
                 {followUpDue(app) && <div className="small tracker-note">{format(t.trackerFollowUp, { n: daysSince(app.sentOn) })}</div>}
+                {app.status === "rejected" && (
+                  // A rejection is the moment confidence drops: say what is true, and give one useful next step.
+                  <div className="small tracker-note kind">
+                    {t.trackerRejected}{" "}
+                    <button type="button" className="link-btn" onClick={() => navigator.clipboard.writeText(t.trackerFeedbackText).catch(() => undefined)}>{t.trackerFeedback}</button>
+                  </div>
+                )}
                 {app.status === "interview" && (
                   <div className="small tracker-note">{t.trackerInterview} {onPractice && <button type="button" className="link-btn" onClick={onPractice}>{t.trackerPractice}</button>}</div>
                 )}

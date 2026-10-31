@@ -58,6 +58,9 @@ type Copy = {
   trackerEmpty: string;
   trackerFollowUp: string;
   trackerInterview: string;
+  trackerRejected: string;
+  trackerFeedback: string;
+  trackerFeedbackText: string;
   trackerPractice: string;
   trackerDelete: string;
   statusSent: string;
@@ -199,6 +202,9 @@ const en: Copy = {
   trackerEmpty: "Add every application you send, so you know when to follow up.",
   trackerFollowUp: "{n} days since you applied: time for a follow-up",
   trackerInterview: "You got an interview! Practise before you go.",
+  trackerRejected: "A “no” is about this role, not about your worth. Ask them for one piece of feedback, keep what you learn, and send the next one.",
+  trackerFeedback: "Ask for feedback (email)",
+  trackerFeedbackText: "Thank you for letting me know. Could you share one thing that would have made my application stronger? It would help me a lot.",
   trackerPractice: "Practise now",
   trackerDelete: "Delete",
   statusSent: "Sent",
@@ -377,6 +383,9 @@ const el: Copy = {
   trackerEmpty: "Πρόσθεσε κάθε αίτηση που στέλνεις, για να ξέρεις πότε να κάνεις follow-up.",
   trackerFollowUp: "Πέρασαν {n} μέρες από την αίτηση: ώρα για follow-up",
   trackerInterview: "Σε κάλεσαν για συνέντευξη! Κάνε εξάσκηση πριν πας.",
+  trackerRejected: "Ένα «όχι» αφορά αυτή τη θέση, όχι την αξία σου. Ζήτα τους μία παρατήρηση, κράτα ό,τι μάθεις και στείλε την επόμενη.",
+  trackerFeedback: "Ζήτα ανατροφοδότηση (email)",
+  trackerFeedbackText: "Σας ευχαριστώ που με ενημερώσατε. Θα μπορούσατε να μου πείτε ένα πράγμα που θα έκανε την αίτησή μου πιο δυνατή; Θα με βοηθούσε πολύ.",
   trackerPractice: "Εξάσκηση τώρα",
   trackerDelete: "Διαγραφή",
   statusSent: "Στάλθηκε",
@@ -555,6 +564,9 @@ const es: Copy = {
   trackerEmpty: "Añade cada candidatura que envíes para saber cuándo hacer seguimiento.",
   trackerFollowUp: "Han pasado {n} días: momento de hacer seguimiento",
   trackerInterview: "¡Te han llamado para una entrevista! Practica antes de ir.",
+  trackerRejected: "Un «no» habla de este puesto, no de tu valor. Pídeles un comentario, quédate con lo que aprendas y envía la siguiente.",
+  trackerFeedback: "Pide una opinión (email)",
+  trackerFeedbackText: "Gracias por avisarme. ¿Podrían decirme una cosa que habría hecho más fuerte mi candidatura? Me ayudaría mucho.",
   trackerPractice: "Practicar ahora",
   trackerDelete: "Eliminar",
   statusSent: "Enviada",
@@ -733,6 +745,9 @@ const fr: Copy = {
   trackerEmpty: "Ajoutez chaque candidature envoyée pour savoir quand relancer.",
   trackerFollowUp: "{n} jours depuis votre candidature : c’est le moment de relancer",
   trackerInterview: "Vous avez un entretien ! Entraînez-vous avant d’y aller.",
+  trackerRejected: "Un « non » concerne ce poste, pas votre valeur. Demandez-leur un retour, gardez ce que vous apprenez et envoyez la suivante.",
+  trackerFeedback: "Demander un retour (email)",
+  trackerFeedbackText: "Merci de m’avoir informé·e. Pourriez-vous me dire une chose qui aurait rendu ma candidature plus solide ? Cela m’aiderait beaucoup.",
   trackerPractice: "S’entraîner maintenant",
   trackerDelete: "Supprimer",
   statusSent: "Envoyée",
@@ -911,6 +926,9 @@ const de: Copy = {
   trackerEmpty: "Füge jede Bewerbung hinzu, die du verschickst, damit du weißt, wann du nachfassen solltest.",
   trackerFollowUp: "{n} Tage seit der Bewerbung: Zeit zum Nachfassen",
   trackerInterview: "Du hast ein Vorstellungsgespräch! Übe, bevor du hingehst.",
+  trackerRejected: "Ein „Nein“ betrifft diese Stelle, nicht deinen Wert. Bitte um ein kurzes Feedback, behalte, was du lernst, und schick die nächste Bewerbung ab.",
+  trackerFeedback: "Um Feedback bitten (E-Mail)",
+  trackerFeedbackText: "Vielen Dank für Ihre Rückmeldung. Könnten Sie mir eine Sache nennen, die meine Bewerbung stärker gemacht hätte? Das würde mir sehr helfen.",
   trackerPractice: "Jetzt üben",
   trackerDelete: "Löschen",
   statusSent: "Gesendet",
