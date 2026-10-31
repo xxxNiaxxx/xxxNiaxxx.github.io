@@ -1,10 +1,27 @@
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import { StatusBadge, SOURCE_LABELS } from "@/components/ui/status";
+import { todayISO, zonedISODate } from "@/lib/dates";
 import { formatDay, formatMoney } from "@/lib/format";
 import type { ReservationDTO } from "@/lib/services/serializers";
+import { SHORT_TERM_MAX_NIGHTS_EXCLUSIVE } from "@/lib/tax/gr";
+
+/**
+ * The AADE stay declaration at a glance, with the same rule as the tax page:
+ * shown once it is due (after check-out, or after a paid cancellation), hidden
+ * for free stays, long stays and ones marked "not required".
+ */
+function DeclarationBadge({ r, today }: { r: ReservationDTO; today: string }) {
+  if (r.declarationStatus === "DECLARED") return <Badge tone="success">ΑΑΔΕ ✓ Δηλώθηκε</Badge>;
+  const earns = r.status === "CONFIRMED" || r.status === "COMPLETED" || (r.status === "CANCELLED" && r.totalAmount > 0);
+  if (r.declarationStatus !== "PENDING" || !earns || r.complimentary || r.nights >= SHORT_TERM_MAX_NIGHTS_EXCLUSIVE) return null;
+  const trigger = r.status === "CANCELLED" && r.cancelledAt ? zonedISODate(new Date(r.cancelledAt)) : r.checkOut;
+  return trigger <= today ? <Badge tone="warning">ΑΑΔΕ: προς δήλωση</Badge> : null;
+}
 
 /** Responsive reservation list: table on desktop, cards on mobile. */
 export function ReservationTable({ reservations, hideProperty, hideGuest }: { reservations: ReservationDTO[]; hideProperty?: boolean; hideGuest?: boolean }) {
+  const today = todayISO();
   return (
     <>
       <div className="hidden overflow-x-auto md:block">
@@ -48,7 +65,7 @@ export function ReservationTable({ reservations, hideProperty, hideGuest }: { re
                   <div className="text-xs text-muted-foreground">{r.nights} νύχτες · {r.guestsCount} άτομα</div>
                 </td>
                 <td className="px-5 py-3 text-muted-foreground">{SOURCE_LABELS[r.source]}</td>
-                <td className="px-5 py-3"><StatusBadge value={r.status} /></td>
+                <td className="px-5 py-3"><div className="flex flex-col items-start gap-1"><StatusBadge value={r.status} /><DeclarationBadge r={r} today={today} /></div></td>
                 <td className="px-5 py-3 text-right font-medium tabular-nums">{r.complimentary ? <span className="text-muted-foreground">Δωρεάν</span> : r.fromCalendar && r.totalAmount === 0 ? <span className="text-xs font-normal text-warning">Λείπει ποσό</span> : formatMoney(r.totalAmount, r.currency)}</td>
               </tr>
             ))}
@@ -69,6 +86,7 @@ export function ReservationTable({ reservations, hideProperty, hideGuest }: { re
               <div className="flex shrink-0 flex-col items-end gap-1">
                 <span className="text-sm font-medium tabular-nums">{r.complimentary ? "Δωρεάν" : r.fromCalendar && r.totalAmount === 0 ? "Λείπει ποσό" : formatMoney(r.totalAmount, r.currency)}</span>
                 <StatusBadge value={r.status} />
+                <DeclarationBadge r={r} today={today} />
               </div>
             </Link>
           </li>
