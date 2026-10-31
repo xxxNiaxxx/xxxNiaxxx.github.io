@@ -1,4 +1,4 @@
-import { AlertTriangle, Download, FolderOpen, Info, Wand2 } from "lucide-react";
+import { AlertTriangle, ChevronDown, Download, FolderOpen, Info, Wand2 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DeclareButton, FilingButton, NotRequiredButton, OtherIncomeInput, PricingSettings, RegimeSelect } from "@/components/tax/actions";
@@ -50,17 +50,24 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
         }
       />
 
-      <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Φορολογικό καθεστώς:</span>
-          <Badge tone={business ? "accent" : "info"}>{business ? "Επιχείρηση (έναρξη εργασιών)" : "Ιδιώτης (εισόδημα από ακίνητα)"}</Badge>
-          <span className="text-muted-foreground">· {o.propertiesWithAma} {o.propertiesWithAma === 1 ? "ακίνητο" : "ακίνητα"} με ΑΜΑ</span>
+      {/* Collapsed by default: the settings rarely change, and open they push the obligations below the fold on phones. */}
+      <details className="group mb-5 rounded-2xl border border-border bg-surface shadow-[var(--shadow-card)]">
+        <summary className="flex cursor-pointer list-none items-center gap-2 p-4 text-sm [&::-webkit-details-marker]:hidden">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <span className="text-muted-foreground">Φορολογικό καθεστώς:</span>
+            <Badge tone={business ? "accent" : "info"}>{business ? "Επιχείρηση (έναρξη εργασιών)" : "Ιδιώτης (εισόδημα από ακίνητα)"}</Badge>
+            <span className="text-muted-foreground">· {o.propertiesWithAma} {o.propertiesWithAma === 1 ? "ακίνητο" : "ακίνητα"} με ΑΜΑ</span>
+          </div>
+          <span className="hidden shrink-0 text-[13px] text-muted-foreground sm:inline">Ρυθμίσεις & προμήθειες</span>
+          <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="flex flex-col gap-3 border-t border-border p-4">
+          <RegimeSelect value={o.regimeSetting} disabled={!hasRole(ctx, "ADMIN")} />
+          <div className="border-t border-border pt-3">
+            <PricingSettings commissionRates={taxContext.commissionRates} paymentFeeRates={taxContext.paymentFeeRates} businessTaxRate={taxContext.businessTaxRate} business={business} disabled={!hasRole(ctx, "ADMIN")} />
+          </div>
         </div>
-        <RegimeSelect value={o.regimeSetting} disabled={!hasRole(ctx, "ADMIN")} />
-        <div className="w-full border-t border-border pt-3 sm:basis-full">
-          <PricingSettings commissionRates={taxContext.commissionRates} paymentFeeRates={taxContext.paymentFeeRates} businessTaxRate={taxContext.businessTaxRate} business={business} disabled={!hasRole(ctx, "ADMIN")} />
-        </div>
-      </div>
+      </details>
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Δηλώσεις διαμονής" value={o.totals.declarationsDue} hint={o.totals.declarationsOverdue ? `${o.totals.declarationsOverdue} εκπρόθεσμες` : "καμία εκπρόθεσμη"} />
