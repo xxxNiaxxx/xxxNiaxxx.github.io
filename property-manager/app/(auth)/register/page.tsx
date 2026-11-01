@@ -15,15 +15,15 @@ const ACCESS_MESSAGES = {
   INVALID: "Αυτός ο σύνδεσμος εγγραφής δεν ισχύει πια. Αν σας στείλαμε περισσότερα email ή μηνύματα, ανοίξτε τον σύνδεσμο από το πιο πρόσφατο· αλλιώς γράψτε μας για να σας στείλουμε νέο.",
 } as const;
 
-export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ invite?: string; access?: string }> }) {
-  const { invite, access } = await searchParams;
+export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ invite?: string; access?: string; ref?: string }> }) {
+  const { invite, access, ref } = await searchParams;
   const invitation = invite ? await getInvitationByToken(invite) : null;
   const joining = invitation?.status === "VALID" ? { token: invite!, ...invitation } : null;
   const approved = !joining && access ? await getWaitlistAccess(access, new Date(), { recordOpen: true }) : null;
   const accessOk = approved?.status === "VALID";
 
   if (!joining && !accessOk && !(await isRegistrationOpen())) {
-    if (!access) redirect("/waitlist");
+    if (!access) redirect(ref ? `/waitlist?ref=${encodeURIComponent(ref)}` : "/waitlist");
     return (
       <>
         <h1 className="text-2xl font-semibold tracking-tight">Δημιουργία λογαριασμού</h1>
@@ -52,6 +52,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
       <RegisterForm
         invite={joining ? { token: joining.token, email: joining.email } : undefined}
         access={accessOk ? { token: access!, email: approved.email, name: approved.name } : undefined}
+        referral={joining ? undefined : ref}
       />
       <p className="mt-6 text-sm text-muted-foreground">
         Έχετε ήδη λογαριασμό;{" "}

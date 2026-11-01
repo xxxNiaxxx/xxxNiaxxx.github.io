@@ -62,11 +62,18 @@ function stripe() {
   return stripeClient;
 }
 
+/** For «Φέρτε έναν φίλο» (lib/services/referrals.ts). */
+export const stripeForReferrals = () => stripe();
+
+/** End of the organization's free use: 1 January 2027, later with months earned by referrals. */
+export const freeUntilOf = (org: { freeUntil?: Date | null }) => (org.freeUntil && org.freeUntil > FREE_UNTIL ? org.freeUntil : FREE_UNTIL);
+
 type BillingOrg = {
   id: string;
   billingExempt: boolean;
   subscriptionStatus: string | null;
   currentPeriodEnd: Date | null;
+  freeUntil?: Date | null;
 };
 
 /** Organizations owned by one of the app's administrators never pay. */
@@ -77,7 +84,7 @@ async function ownedByPlatformAdmin(organizationId: string) {
 
 /** Can the organization use the app right now? */
 export async function hasAccess(org: BillingOrg, now = new Date()) {
-  if (now < FREE_UNTIL || org.billingExempt) return true;
+  if (now < freeUntilOf(org) || org.billingExempt) return true;
   if (org.subscriptionStatus && PAID_STATUSES.has(org.subscriptionStatus)) return true;
   // Cancelled: paid until the end of the period.
   if (org.currentPeriodEnd && org.currentPeriodEnd > now) return true;
@@ -87,7 +94,7 @@ export async function hasAccess(org: BillingOrg, now = new Date()) {
 /** For requireOrganizationMember: a clear message instead of the app when the free period is over and nothing is paid. */
 export async function assertAccess(organizationId: string, now = new Date()) {
   if (now < FREE_UNTIL) return;
-  const org = await db.organization.findUniqueOrThrow({ where: { id: organizationId }, select: { id: true, billingExempt: true, subscriptionStatus: true, currentPeriodEnd: true } });
+  const org = await db.organization.findUniqueOrThrow({ where: { id: organizationId }, select: { id: true, billingExempt: true, subscriptionStatus: true, currentPeriodEnd: true, freeUntil: true } });
   if (!(await hasAccess(org, now))) {
     throw new AppError("PAYMENT_REQUIRED", "Η δωρεάν περίοδος έληξε. Ο ιδιοκτήτης του λογαριασμού μπορεί να ενεργοποιήσει τη συνδρομή από την ιστοσελίδα.");
   }
@@ -103,9 +110,10 @@ const addMonth = (d: Date) => {
 
 const athensDay = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Athens" }).format(d);
 
-/** The period the next charge pays for: after the current period, else from 1 January 2027 (free period) or from now. */
-export function nextBillingPeriod(org: { currentPeriodEnd: Date | null }, now = new Date()) {
-  const start = org.currentPeriodEnd && org.currentPeriodEnd > now ? org.currentPeriodEnd : now < FREE_UNTIL ? FREE_UNTIL : now;
+/** The period the next charge pays for: after the current period, else from the end of the free use (1 January 2027 or later) or from now. */
+export function nextBillingPeriod(org: { currentPeriodEnd: Date | null; freeUntil?: Date | null }, now = new Date()) {
+  const free = freeUntilOf(org);
+  const start = org.currentPeriodEnd && org.currentPeriodEnd > now ? org.currentPeriodEnd : now < free ? free : now;
   return { start, end: addMonth(start) };
 }
 
@@ -138,8 +146,8 @@ export async function billingState(ctx: OrgContext, now = new Date()) {
     configured: billingConfigured(),
     canManage: hasRole(ctx, "ADMIN"),
     exempt: org.billingExempt || adminOwned,
-    freePeriod: now < FREE_UNTIL,
-    freeUntil: "2026-12-31",
+    freePeriod: now < freeUntilOf(org),
+    freeUntil: athensDay(new Date(freeUntilOf(org).getTime() - 1)),
     hasAccess: await hasAccess(org, now),
     subscribed: paid,
     status: org.subscriptionStatus,
@@ -189,9 +197,9 @@ export async function startCheckout(ctx: OrgContext, user: { email: string; name
     line_items: lineItems(quantitiesFor(await billableProperties(org.id, first.start, first.end))),
     subscription_data: {
       metadata: { organizationId: org.id },
-      // During the free period the first charge is on 1 January (Stripe needs a trial end at least 48 hours ahead;
-      // in the last two days of December the subscription simply starts now).
-      ...(FREE_UNTIL.getTime() - now.getTime() > 50 * 3_600_000 ? { trial_end: Math.floor(FREE_UNTIL.getTime() / 1000) } : {}),
+      // During the free use the first charge is when it ends (1 January, or later with referral months). Stripe needs
+      // a trial end at least 48 hours ahead; in the last two days the subscription simply starts now.
+      ...(freeUntilOf(org).getTime() - now.getTime() > 50 * 3_600_000 ? { trial_end: Math.floor(freeUntilOf(org).getTime() / 1000) } : {}),
     },
     customer_update: { name: "auto", address: "auto" },
     billing_address_collection: "required",
@@ -331,6 +339,8 @@ export async function sendFreePeriodReminders(origin: string, now = new Date()) 
   for (const org of orgs) {
     const emails = org.members.map((m) => m.user.email);
     if (emails.some((e) => isPlatformAdmin(e)) || !emails.length) continue;
+    // Free months from referrals: their free use does not end on 31 December.
+    if (freeUntilOf(org) > FREE_UNTIL) continue;
     const units = await db.property.findMany({ where: { organizationId: org.id, status: "ACTIVE" }, select: { rentalUnits: true } });
     const properties = Math.max(1, units.length);
     const fullMonth = units.length ? units.reduce((a, p, i) => a + propertyMonthlyPrice(p.rentalUnits, i + 1), 0) : PRICE_PER_PROPERTY;

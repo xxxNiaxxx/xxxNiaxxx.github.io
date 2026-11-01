@@ -51,12 +51,14 @@ export async function registerAction(_prev: AuthFormState, form: FormData): Prom
   };
   const invite = String(form.get("invite") ?? "") || undefined;
   const access = String(form.get("access") ?? "") || undefined;
+  const ref = String(form.get("ref") ?? "") || undefined;
   try {
     await registerAccount({
       ...values,
       organizationName: values.organizationName || undefined,
       invite,
       access,
+      ref,
       password: String(form.get("password") ?? ""),
       acceptTerms: form.get("acceptTerms") === "on",
     });
@@ -78,7 +80,7 @@ const fieldErrorsOf = (e: ZodError) => {
 export async function waitlistAction(_prev: AuthFormState, form: FormData): Promise<AuthFormState> {
   const platforms = form.getAll("platforms").map(String);
   const values: Record<string, string> = {
-    ...Object.fromEntries(["name", "email", "phone", "city", "propertiesCount", "regime", "device", "playEmail", "message", "source"].map((k) => [k, String(form.get(k) ?? "")])),
+    ...Object.fromEntries(["name", "email", "phone", "city", "propertiesCount", "regime", "device", "playEmail", "message", "source", "referralCode"].map((k) => [k, String(form.get(k) ?? "")])),
     platforms: platforms.join(","),
     consent: form.get("consent") === "on" ? "on" : "",
   };

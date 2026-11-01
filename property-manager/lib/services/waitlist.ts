@@ -10,6 +10,7 @@ import { followUpEmailsOn } from "@/lib/services/welcome-emails";
 import { AppError, conflict } from "@/lib/errors";
 import { email, optionalEmail, optionalText, requiredText } from "@/lib/validation/common";
 import { ACCESS_DAYS, WAITLIST_PLATFORM_VALUES, WAITLIST_PLATFORMS } from "@/lib/waitlist-options";
+import { normalizeReferralCode } from "./referrals";
 
 export { ACCESS_DAYS };
 
@@ -44,6 +45,8 @@ export const waitlistSchema = z.object({
   message: optionalText(1000),
   /** Where the visitor came from (utm_source / ad click), set by the page. */
   source: z.preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, 40) || null : null), z.string().nullish()),
+  /** «Φέρτε έναν φίλο»: the code of the friend's link, set by the page. */
+  referralCode: z.preprocess(normalizeReferralCode, z.string().nullish()),
   consent: z.literal(true, { error: "Χρειάζεται η συναίνεσή σας για να σας καταχωρίσουμε" }),
 });
 
@@ -92,7 +95,7 @@ export async function joinWaitlist(input: unknown, origin: string, now = new Dat
   const existing = await db.waitlistEntry.findUnique({ where: { email: data.email } });
   if (existing) {
     if (existing.status === "PENDING" || existing.status === "REJECTED") {
-      await db.waitlistEntry.update({ where: { id: existing.id }, data: { ...data, source: existing.source ?? data.source, consentAt: now } });
+      await db.waitlistEntry.update({ where: { id: existing.id }, data: { ...data, source: existing.source ?? data.source, referralCode: existing.referralCode ?? data.referralCode, consentAt: now } });
     }
     if ((existing.status === "PENDING" || existing.status === "APPROVED") && (await isAutoApprove())) {
       return { joined: true, path: (await approveEntry(existing.id, origin, now, { instant: true })).path };
@@ -323,6 +326,7 @@ export async function claimWaitlistAccess(tx: Prisma.TransactionClient, user: { 
     data: { status: "REGISTERED", registeredAt: now, userId: user.id },
   });
   if (claimed.count === 0) throw new AppError("BAD_REQUEST", ACCESS_ERRORS.USED);
+  return { referralCode: entry.referralCode };
 }
 
 const csvCell = (v: unknown) => {

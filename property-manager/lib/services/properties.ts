@@ -11,6 +11,7 @@ import {
 import { getRevenueSummary } from "./financials";
 import { assertProperty } from "./scope";
 import { reservationForViewer, serializeProperty, serializeReservation, serializeTask } from "./serializers";
+import { rewardReferral } from "./referrals";
 
 export async function listProperties(ctx: OrgContext, query: PropertyListQuery = {}) {
   const { q, status } = propertyListQuery.parse(query);
@@ -92,6 +93,8 @@ export async function getPropertyDetails(ctx: OrgContext, id: string, now: Date 
 export async function createProperty(ctx: OrgContext, input: unknown) {
   const data = propertyCreateSchema.parse(input);
   const row = await db.property.create({ data: { ...data, organizationId: ctx.organizationId } });
+  // «Φέρτε έναν φίλο»: the first property of an organization that came through a friend's link.
+  await rewardReferral(ctx.organizationId);
   return serializeProperty(row);
 }
 

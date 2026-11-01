@@ -5,6 +5,7 @@ import { registerSchema } from "@/lib/validation/auth";
 import { isPlatformAdmin } from "@/lib/email";
 import { TERMS_VERSION } from "@/lib/legal";
 import { acceptInvitation, getInvitationByToken } from "./invitations";
+import { linkReferral } from "./referrals";
 import { claimWaitlistAccess, getWaitlistAccess, isRegistrationOpen } from "./waitlist";
 
 export const CLOSED_REGISTRATION_MESSAGE = "Η εγγραφή γίνεται προς το παρόν μόνο με πρόσκληση. Γραφτείτε στη λίστα αναμονής και θα σας στείλουμε σύνδεσμο.";
@@ -34,9 +35,10 @@ export async function registerAccount(input: unknown) {
       const { organizationId } = await acceptInvitation(tx, user, data.invite);
       return { userId: user.id, organizationId };
     }
-    if (data.access) await claimWaitlistAccess(tx, user, data.access);
+    const fromWaitlist = data.access ? await claimWaitlistAccess(tx, user, data.access) : null;
     const organization = await tx.organization.create({ data: { name: data.organizationName! } });
     await tx.organizationMember.create({ data: { organizationId: organization.id, userId: user.id, role: "OWNER" } });
+    await linkReferral(tx, organization.id, data.ref || fromWaitlist?.referralCode);
     return { userId: user.id, organizationId: organization.id };
   });
 }

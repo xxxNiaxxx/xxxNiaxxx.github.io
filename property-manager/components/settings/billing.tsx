@@ -28,7 +28,9 @@ export function BillingPanel({ state, justSubscribed }: { state: BillingState; j
   const { run, pending } = useMutation();
   const go = (endpoint: string) =>
     run(() => api<{ url: string }>(endpoint, { method: "POST" }), { refresh: false, onSuccess: ({ url }) => window.location.assign(url) });
-  const status = state.status ? STATUS[state.status] ?? { label: state.status, tone: "neutral" as const } : null;
+  const known = state.status ? STATUS[state.status] ?? { label: state.status, tone: "neutral" as const } : null;
+  // The first charge is when the free use ends (later than 1/1/2027 with months from referrals).
+  const status = known && state.status === "trialing" ? { ...known, label: `Ενεργή · πρώτη χρέωση ${formatDay(state.nextPeriod.from, { day: "numeric", month: "numeric", year: "numeric" })}` } : known;
 
   return (
     <div className="grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6">
@@ -82,7 +84,7 @@ export function BillingPanel({ state, justSubscribed }: { state: BillingState; j
               </ul>
               {state.freePeriod && !state.subscribed && (
                 <p className="rounded-lg bg-accent-soft p-3 text-sm text-accent">
-                  Η εφαρμογή είναι δωρεάν μέχρι {formatDate(state.freeUntil)}. Αν ενεργοποιήσετε τη συνδρομή τώρα, η πρώτη χρέωση γίνεται 1 Ιανουαρίου 2027.
+                  Η εφαρμογή είναι δωρεάν μέχρι {formatDate(state.freeUntil)}. Αν ενεργοποιήσετε τη συνδρομή τώρα, η πρώτη χρέωση γίνεται {formatDate(state.nextPeriod.from)}.
                 </p>
               )}
               {state.subscribed && (

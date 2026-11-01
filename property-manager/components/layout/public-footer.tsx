@@ -11,6 +11,7 @@ export function PublicFooter({ className }: { className?: string }) {
         <span>© {new Date().getFullYear()} {APP_NAME}</span>
         {SUPPORT_EMAIL && <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-foreground">{SUPPORT_EMAIL}</a>}
         <Link href="/ypologistis" className="hover:text-foreground">Υπολογιστής καθαρών</Link>
+        <Link href="/odigoi" className="hover:text-foreground">Οδηγοί</Link>
         <Link href="/help" className="hover:text-foreground">Βοήθεια</Link>
         <Link href="/privacy" className="hover:text-foreground">Απόρρητο</Link>
         <Link href="/terms" className="hover:text-foreground">Όροι χρήσης</Link>
