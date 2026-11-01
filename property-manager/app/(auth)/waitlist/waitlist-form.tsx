@@ -11,7 +11,7 @@ import { waitlistAction, type AuthFormState } from "../actions";
 /** Optional details, folded away so the form looks short. */
 const MORE_FIELDS = ["phone", "city", "propertiesCount", "regime", "platforms", "message"];
 
-export function WaitlistForm({ source }: { source?: string | null }) {
+export function WaitlistForm({ source, referral }: { source?: string | null; referral?: string | null }) {
   const [state, action, pending] = useActionState<AuthFormState, FormData>(waitlistAction, {});
   const err = state.fieldErrors ?? {};
   const v = state.values ?? {};
@@ -50,6 +50,7 @@ export function WaitlistForm({ source }: { source?: string | null }) {
   return (
     <form action={action} className="mt-5 grid gap-4">
       <input type="hidden" name="source" value={v.source ?? source ?? ""} />
+      <input type="hidden" name="referralCode" value={v.referralCode ?? referral ?? ""} />
       {/* Honeypot: hidden from people, filled in by bots. */}
       <div aria-hidden className="absolute -left-[9999px] h-0 overflow-hidden">
         <label htmlFor="website">Website</label>

@@ -10,6 +10,8 @@ export const registerSchema = z.object({
   invite: z.string().trim().min(1).max(200).optional(),
   /** Personal sign-up link from the waitlist. */
   access: z.string().trim().min(1).max(200).optional(),
+  /** «Φέρτε έναν φίλο»: the code of the link the person came with. */
+  ref: z.string().trim().max(40).optional(),
   acceptTerms: z.literal(true, "Χρειάζεται να αποδεχτείτε τους όρους χρήσης και τη σύμβαση επεξεργασίας δεδομένων"),
 }).refine((v) => v.invite || v.organizationName, { message: "Το πεδίο «Όνομα οργανισμού» είναι υποχρεωτικό", path: ["organizationName"] });
 

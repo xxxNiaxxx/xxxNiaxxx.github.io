@@ -5,6 +5,7 @@ import { BENEFITS } from "@/lib/marketing";
 import { PRICE_SUMMARY } from "@/lib/services/billing";
 import { isAutoApprove } from "@/lib/services/waitlist";
 import { WaitlistForm } from "./waitlist-form";
+import { normalizeReferralCode, REFERRAL_MONTHS } from "@/lib/services/referrals";
 
 export const metadata: Metadata = {
   title: "Δοκιμάστε δωρεάν",
@@ -27,7 +28,10 @@ function sourceOf(params: Record<string, string | string[] | undefined>) {
 }
 
 export default async function WaitlistPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const [source, auto] = [sourceOf(await searchParams), await isAutoApprove()];
+  const params = await searchParams;
+  const [source, auto] = [sourceOf(params), await isAutoApprove()];
+  // «Φέρτε έναν φίλο»: the code of the friend's link.
+  const referral = normalizeReferralCode(Array.isArray(params.ref) ? params.ref[0] : params.ref);
   return (
     <>
       <h1 className="text-2xl font-semibold tracking-tight">Η δήλωση στην ΑΑΔΕ γεμίζει μόνη της.</h1>
@@ -82,7 +86,12 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
       <p className="mt-1 text-sm text-muted-foreground">
         {auto ? "Συμπληρώστε όνομα και email: στο επόμενο βήμα φτιάχνετε αμέσως τον λογαριασμό σας." : "Θα σας στείλουμε email με τον σύνδεσμο εγγραφής."}
       </p>
-      <WaitlistForm source={source} />
+      {referral && (
+        <p className="mt-3 rounded-lg bg-success-soft px-3 py-2 text-sm text-success">
+          🎁 Ήρθατε με σύνδεσμο φίλου: όταν προσθέσετε το πρώτο σας κατάλυμα, παίρνετε {REFERRAL_MONTHS} επιπλέον μήνες δωρεάν από το 2027.
+        </p>
+      )}
+      <WaitlistForm source={source} referral={referral} />
       <h2 className="mt-10 text-lg font-semibold tracking-tight">Συχνές ερωτήσεις</h2>
       <div className="mt-2 divide-y divide-border rounded-xl border border-border bg-surface">
         {FAQ.map(([q, a]) => (

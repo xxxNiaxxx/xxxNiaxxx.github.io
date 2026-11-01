@@ -134,6 +134,17 @@ model Organization {
   isDemo               Boolean          @default(false)
   /// Key of the last "the free period ends" email (e.g. 2026-12-01), sent once each.
   billingReminderSent  String?
+  /// «Φέρτε έναν φίλο» (lib/services/referrals.ts): this organization's code for the link.
+  referralCode         String?          @unique
+  /// The organization whose link brought this one.
+  referredById         String?
+  referredBy           Organization?    @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals            Organization[]   @relation("Referrals")
+  /// When both sides got their free months (the referred organization added its first property).
+  referralRewardedAt   DateTime?
+  /// Free months earned through referrals (capped), and the day the free use ends with them.
+  referralMonths       Int              @default(0)
+  freeUntil            DateTime?
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
 
@@ -691,6 +702,8 @@ model WaitlistEntry {
   message           String?
   /// Where the visitor came from: utm_source of the link, or "google-ads" for an ad click.
   source            String?
+  /// «Φέρτε έναν φίλο»: the referral code of the link the visitor came with.
+  referralCode      String?
   consentAt         DateTime
   status            WaitlistStatus @default(PENDING)
   tokenHash         String?        @unique

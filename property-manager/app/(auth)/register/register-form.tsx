@@ -9,9 +9,12 @@ import { registerAction, type AuthFormState } from "../actions";
 export function RegisterForm({
   invite,
   access,
+  referral,
 }: {
   invite?: { token: string; email: string };
   access?: { token: string; email: string; name: string };
+  /** «Φέρτε έναν φίλο»: the code of the friend's link. */
+  referral?: string;
 }) {
   const [state, action, pending] = useActionState<AuthFormState, FormData>(registerAction, {});
   const err = state.fieldErrors ?? {};
@@ -19,6 +22,7 @@ export function RegisterForm({
     <form action={action} className="mt-8 grid gap-4">
       {invite && <input type="hidden" name="invite" value={invite.token} />}
       {access && <input type="hidden" name="access" value={access.token} />}
+      {referral && <input type="hidden" name="ref" value={referral} />}
       <Field label="Ονοματεπώνυμο" htmlFor="name" error={err.name}>
         <Input id="name" name="name" autoComplete="name" required defaultValue={state.values?.name ?? access?.name} aria-invalid={!!err.name} />
       </Field>
